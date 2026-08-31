@@ -77,9 +77,12 @@ export default function ViewerPage() {
         canvas.style.width = `${Math.floor(viewport.width)}px`;
         canvas.style.height = "auto"; // keeps aspect ratio correct when maxWidth shrinks the display width
         canvas.style.display = "block";
-        canvas.style.marginBottom = "16px";
+        canvas.style.marginBottom = "20px";
         canvas.style.maxWidth = "100%";
         canvas.style.userSelect = "none";
+        canvas.style.borderRadius = "8px";
+        canvas.style.boxShadow = "0 1px 3px rgba(15,23,42,0.1), 0 4px 12px rgba(15,23,42,0.08)";
+        canvas.style.border = "1px solid #e2e8f0";
 
         const ctx = canvas.getContext("2d");
         const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
@@ -141,14 +144,19 @@ export default function ViewerPage() {
   }, []);
 
   return (
-    <div style={{ maxWidth: 900, margin: "24px auto", fontFamily: "sans-serif", padding: "0 16px" }}>
+    <div className="page" style={{ maxWidth: 900 }}>
       <div style={{ marginBottom: 16 }}>
-        <Link href="/viewer" style={{ textDecoration: "none", fontSize: 14 }}>
+        <Link href="/viewer" className="back-link">
           ← Kembali ke Dokumen Saya
         </Link>
       </div>
-      {status === "loading" && <p>Memuat dokumen...</p>}
-      {status === "error" && <p style={{ color: "red" }}>{errorMsg}</p>}
+      {status === "loading" && (
+        <p className="muted">
+          <span className="spinner" style={{ marginRight: 8 }} />
+          Memuat dokumen...
+        </p>
+      )}
+      {status === "error" && <p className="error-text">{errorMsg}</p>}
       <div ref={containerRef} />
     </div>
   );

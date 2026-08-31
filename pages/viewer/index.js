@@ -6,6 +6,7 @@ export default function DocumentListPage() {
   const [docs, setDocs] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -22,8 +23,17 @@ export default function DocumentListPage() {
       .finally(() => setLoading(false));
   }, [router]);
 
+  const filtered = docs.filter((doc) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      doc.namaDokumen.toLowerCase().includes(q) ||
+      (doc.kategori || "").toLowerCase().includes(q)
+    );
+  });
+
   // Group by kategori so the list reads cleanly when there are many documents.
-  const grouped = docs.reduce((acc, doc) => {
+  const grouped = filtered.reduce((acc, doc) => {
     const key = doc.kategori || "Lainnya";
     if (!acc[key]) acc[key] = [];
     acc[key].push(doc);
@@ -31,70 +41,56 @@ export default function DocumentListPage() {
   }, {});
 
   return (
-    <div style={{ maxWidth: 680, margin: "40px auto", fontFamily: "sans-serif", padding: "0 16px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+    <div className="page">
+      <div className="topbar">
         <div>
-          <h2 style={{ marginBottom: 4 }}>Dokumen Saya</h2>
-          <p style={{ color: "#888", marginTop: 0, fontSize: 14 }}>
-            Dokumen yang telah dibagikan kepada Anda.
-          </p>
+          <h1 className="page-title">Dokumen Saya</h1>
+          <p className="page-subtitle">Dokumen yang telah dibagikan kepada Anda</p>
         </div>
         <LogoutButton />
       </div>
 
-      {loading && <p>Memuat...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {!loading && docs.length > 0 && (
+        <div className="search-wrap">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            className="input search-input"
+            placeholder="Cari nama dokumen atau kategori..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+      )}
+
+      {loading && <p className="muted">Memuat...</p>}
+      {error && <p className="error-text">{error}</p>}
 
       {!loading &&
         Object.entries(grouped).map(([kategori, items]) => (
-          <div key={kategori} style={{ marginBottom: 24 }}>
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: "bold",
-                color: "#888",
-                textTransform: "uppercase",
-                marginBottom: 8,
-                letterSpacing: 0.5,
-              }}
-            >
-              {kategori}
-            </div>
+          <div key={kategori}>
+            <div className="section-label">{kategori}</div>
             {items.map((doc) => (
               <div
                 key={doc.documentId}
+                className="doc-row"
                 onClick={() => router.push(`/viewer/${doc.documentId}`)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "14px 16px",
-                  border: "1px solid #e5e5e5",
-                  borderRadius: 8,
-                  marginBottom: 8,
-                  cursor: "pointer",
-                  transition: "background 0.15s, border-color 0.15s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#fafafa";
-                  e.currentTarget.style.borderColor = "#ccc";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.borderColor = "#e5e5e5";
-                }}
               >
-                <span style={{ fontSize: 20 }} aria-hidden>
+                <span className="doc-row-icon" aria-hidden>
                   📄
                 </span>
-                <span style={{ fontWeight: 500 }}>{doc.namaDokumen}</span>
+                <span className="doc-row-name">{doc.namaDokumen}</span>
               </div>
             ))}
           </div>
         ))}
 
+      {!loading && docs.length > 0 && filtered.length === 0 && (
+        <div className="empty-state">Tidak ada dokumen yang cocok dengan pencarian.</div>
+      )}
+
       {!loading && docs.length === 0 && !error && (
-        <p style={{ color: "#888" }}>Belum ada dokumen yang dibagikan ke Anda.</p>
+        <div className="empty-state">Belum ada dokumen yang dibagikan ke Anda.</div>
       )}
     </div>
   );

@@ -32,34 +32,42 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ maxWidth: 360, margin: "80px auto", fontFamily: "sans-serif" }}>
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 12 }}>
-          <label>Username</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            style={{ width: "100%", padding: 8 }}
-          />
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <label>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ width: "100%", padding: 8 }}
-          />
-        </div>
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        <button type="submit" disabled={loading} style={{ padding: "8px 16px" }}>
-          {loading ? "Memproses..." : "Login"}
-        </button>
-      </form>
+    <div className="page page-narrow" style={{ paddingTop: 80 }}>
+      <div className="brand-header">
+        <div className="brand-badge">📄</div>
+        <h1 className="page-title">Document Viewer</h1>
+        <p className="page-subtitle">Masuk untuk mengakses dokumen kantor</p>
+      </div>
+
+      <div className="auth-card">
+        <form onSubmit={handleSubmit}>
+          <div className="field">
+            <label className="label">Username</label>
+            <input
+              type="text"
+              className="input"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              autoFocus
+            />
+          </div>
+          <div className="field">
+            <label className="label">Password</label>
+            <input
+              type="password"
+              className="input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          {error && <p className="error-text" style={{ marginBottom: 16 }}>{error}</p>}
+          <button type="submit" disabled={loading} className="btn btn-primary btn-block">
+            {loading ? <span className="spinner" /> : "Login"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
