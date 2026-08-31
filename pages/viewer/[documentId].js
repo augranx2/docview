@@ -75,7 +75,7 @@ export default function ViewerPage() {
         canvas.width = Math.floor(viewport.width * outputScale);
         canvas.height = Math.floor(viewport.height * outputScale);
         canvas.style.width = `${Math.floor(viewport.width)}px`;
-        canvas.style.height = `${Math.floor(viewport.height)}px`;
+        canvas.style.height = "auto"; // keeps aspect ratio correct when maxWidth shrinks the display width
         canvas.style.display = "block";
         canvas.style.marginBottom = "16px";
         canvas.style.maxWidth = "100%";
