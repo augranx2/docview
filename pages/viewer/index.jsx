@@ -10,7 +10,7 @@ export default function DocumentListPage() {
   const [user, setUser] = useState({ role: null, nama: "", username: "" });
   const [loggingOut, setLoggingOut] = useState(false);
   
-  // State untuk Modal Profil & Ganti Password & Audit Trail
+  // State Modal Profil, Ganti Password, & Audit Trail
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showAuditModal, setShowAuditModal] = useState(false);
@@ -112,7 +112,7 @@ export default function DocumentListPage() {
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", color: "#0f172a", paddingBottom: 60 }}>
       
-      {/* HEADER BAR KELAS ATAS */}
+      {/* HEADER BAR */}
       <header style={{ height: 64, borderBottom: "1px solid #e2e8f0", background: "rgba(255,255,255,0.9)", backdropFilter: "blur(8px)", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 30 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <img src="/logo-rama.png" alt="Logo" style={{ height: 32, width: 32, objectFit: "contain" }} />
@@ -123,10 +123,10 @@ export default function DocumentListPage() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {/* USER PROFILE YANG BISA DIKLIK */}
+          {/* KOTAK PROFIL YANG BISA DIKLIK */}
           <div
             onClick={() => setShowProfileModal(true)}
-            style={{ display: "flex", alignItems: "center", gap: 8, background: "#f1f5f9", padding: "6px 14px", borderRadius: 12, fontSize: 12, fontWeight: 600, color: "#334155", cursor: "pointer", border: "1px solid #cbd5e1", transition: "background 0.15s" }}
+            style={{ display: "flex", alignItems: "center", gap: 8, background: "#f1f5f9", padding: "6px 14px", borderRadius: 12, fontSize: 12, fontWeight: 600, color: "#334155", cursor: "pointer", border: "1px solid #cbd5e1" }}
             title="Klik untuk melihat Detail Profil"
           >
             <div style={{ width: 26, height: 26, borderRadius: 8, background: "#8a1f2f", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: "bold" }}>
@@ -190,7 +190,7 @@ export default function DocumentListPage() {
           </div>
         </div>
 
-        {/* KOTAK PENCARIAN */}
+        {/* PENCARIAN */}
         {!loading && docs.length > 0 && (
           <div style={{ position: "relative", marginBottom: 20 }}>
             <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}>🔍</span>
@@ -218,7 +218,7 @@ export default function DocumentListPage() {
               filtered.map((doc) => (
                 <div
                   key={doc.documentId}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "16px 20px", background: "white", border: "1px solid #e2e8f0", borderRadius: 16, boxShadow: "0 1px 3px rgba(15,23,42,0.04)", transition: "all 0.15s ease" }}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "16px 20px", background: "white", border: "1px solid #e2e8f0", borderRadius: 16, boxShadow: "0 1px 3px rgba(15,23,42,0.04)" }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
                     <div style={{ width: 40, height: 40, borderRadius: 12, background: "#fdf2f2", color: "#8a1f2f", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
@@ -244,7 +244,7 @@ export default function DocumentListPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                     <Link
                       href={`/viewer/${doc.documentId}`}
-                      style={{ padding: "8px 16px", borderRadius: 10, background: "#0f172a", color: "white", fontSize: 12, fontWeight: 600, textDecoration: "none", boxShadow: "0 1px 2px rgba(15,23,42,0.06)" }}
+                      style={{ padding: "8px 16px", borderRadius: 10, background: "#0f172a", color: "white", fontSize: 12, fontWeight: 600, textDecoration: "none" }}
                     >
                       Lihat
                     </Link>
@@ -266,7 +266,7 @@ export default function DocumentListPage() {
         )}
       </div>
 
-      {/* ================= MODAL USER PROFILE ================= */}
+      {/* MODAL PROFIL */}
       {showProfileModal && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(15,23,42,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, backdropFilter: "blur(2px)" }}>
           <div style={{ width: "100%", maxWidth: 380, background: "white", borderRadius: 24, padding: 24, boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0" }}>
@@ -318,7 +318,7 @@ export default function DocumentListPage() {
         </div>
       )}
 
-      {/* ================= MODAL GANTI PASSWORD ================= */}
+      {/* MODAL GANTI PASSWORD */}
       {showPasswordModal && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(15,23,42,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, backdropFilter: "blur(2px)" }}>
           <div style={{ width: "100%", maxWidth: 380, background: "white", borderRadius: 24, padding: 24, boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0" }}>
@@ -371,7 +371,7 @@ export default function DocumentListPage() {
         </div>
       )}
 
-      {/* ================= MODAL AUDIT TRAIL (KHUSUS ADMIN) ================= */}
+      {/* MODAL AUDIT TRAIL */}
       {showAuditModal && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(15,23,42,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, backdropFilter: "blur(2px)" }}>
           <div style={{ width: "100%", maxWidth: 700, background: "white", borderRadius: 24, padding: 24, boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0", maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
@@ -396,7 +396,7 @@ export default function DocumentListPage() {
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {auditLogs.map((log, idx) => (
-                    <div key={idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: 10, display: "flex", justifyContent: "between", alignItems: "flex-start", gap: 12 }}>
+                    <div key={idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: 10, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
                       <div>
                         <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 2 }}>
                           <span style={{ fontWeight: 700, color: "#1e293b" }}>{log.userEmail || "Sistem"}</span>
