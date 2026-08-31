@@ -17,8 +17,11 @@ export default function ViewerPage() {
       // pdf.js is loaded dynamically because it relies on browser APIs
       // (no SSR) and needs its worker file set up.
       const pdfjsLib = await import("pdfjs-dist/build/pdf.mjs");
-      pdfjsLib.GlobalWorkerOptions.workerSrc =
-        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs";
+      // Use whatever version actually got installed (npm may resolve a
+      // newer patch than what's pinned in package.json) so the worker file
+      // always matches the API version exactly — a mismatch here is a hard
+      // error in pdf.js.
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
       // 0. Get current user email for the watermark.
       const meRes = await fetch("/api/auth/me");
