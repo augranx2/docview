@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import LogoutButton from "../../components/LogoutButton";
 
 export default function DocumentListPage() {
@@ -7,6 +8,7 @@ export default function DocumentListPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [role, setRole] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -21,7 +23,14 @@ export default function DocumentListPage() {
       })
       .catch(() => setError("Gagal memuat daftar dokumen"))
       .finally(() => setLoading(false));
+
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((me) => setRole(me?.role || null))
+      .catch(() => {});
   }, [router]);
+
+  const canDownload = role === "Admin" || role === "Downloader";
 
   const filtered = docs.filter((doc) => {
     const q = query.trim().toLowerCase();
@@ -71,15 +80,30 @@ export default function DocumentListPage() {
           <div key={kategori}>
             <div className="section-label">{kategori}</div>
             {items.map((doc) => (
-              <div
-                key={doc.documentId}
-                className="doc-row"
-                onClick={() => router.push(`/viewer/${doc.documentId}`)}
-              >
+              <div key={doc.documentId} className="doc-row" style={{ cursor: "default" }}>
                 <span className="doc-row-icon" aria-hidden>
                   📄
                 </span>
-                <span className="doc-row-name">{doc.namaDokumen}</span>
+                <span className="doc-row-name" style={{ flex: 1 }}>
+                  {doc.namaDokumen}
+                </span>
+                <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                  <Link
+                    href={`/viewer/${doc.documentId}`}
+                    className="btn btn-outline btn-sm"
+                  >
+                    Lihat
+                  </Link>
+                  {canDownload && (
+                    <a
+                      href={`/api/documents/download?documentId=${doc.documentId}`}
+                      className="btn btn-outline btn-sm"
+                      title="Download file asli"
+                    >
+                      ⬇ Download
+                    </a>
+                  )}
+                </div>
               </div>
             ))}
           </div>
