@@ -16,9 +16,9 @@ export default function ViewerPage() {
     async function loadAndRender() {
       // pdf.js is loaded dynamically because it relies on browser APIs
       // (no SSR) and needs its worker file set up.
-      const pdfjsLib = await import("pdfjs-dist/build/pdf");
+      const pdfjsLib = await import("pdfjs-dist/build/pdf.mjs");
       pdfjsLib.GlobalWorkerOptions.workerSrc =
-        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js";
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs";
 
       // 0. Get current user email for the watermark.
       const meRes = await fetch("/api/auth/me");
@@ -96,7 +96,7 @@ export default function ViewerPage() {
       console.error(err);
       if (!cancelled) {
         setStatus("error");
-        setErrorMsg("Terjadi kesalahan saat memuat dokumen");
+        setErrorMsg(`Terjadi kesalahan saat memuat dokumen: ${err.message || err}`);
       }
     });
 
