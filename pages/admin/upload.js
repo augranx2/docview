@@ -83,7 +83,7 @@ export default function AdminUploadPage() {
       setKategori("");
     } catch (err) {
       console.error(err);
-      setStatus("Terjadi kesalahan tak terduga");
+      setStatus(`Terjadi kesalahan: ${err.message || "tidak diketahui"}`);
     }
   }
 

@@ -26,12 +26,15 @@ export default async function handler(req, res) {
   const documentId = uuidv4();
   const driveFileName = `${documentId}.pdf`;
 
+  const origin = req.headers.origin || `https://${req.headers.host}`;
+
   let resumableSessionUrl;
   try {
     resumableSessionUrl = await createResumableUploadSession({
       fileName: driveFileName,
       mimeType,
       fileSize,
+      origin,
     });
   } catch (err) {
     console.error(err);
