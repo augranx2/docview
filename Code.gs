@@ -21,7 +21,7 @@
  *
  * TAB YANG DIBUTUHKAN:
  *   Users            : Nama | Role | Username | Status | PasswordBaru | PasswordHash | Salt
- *                       (Role: Admin / Viewer — Status: Aktif / Nonaktif)
+ *                       (Role: Admin / Downloader / Viewer — Status: Aktif / Nonaktif)
  *   Documents        : documentId | namaDokumen | kategori | driveFileId |
  *                       uploadedBy | uploadedAt | status
  *   Document_Access  : documentId | userEmail | grantedBy | grantedAt
@@ -199,7 +199,8 @@ function login_(username, password) {
     writeAuditLog_(username, "LOGIN_FAILED", "Password salah");
     return { error: "Username atau password salah." };
   }
-  if (user.role !== "Admin" && user.role !== "Viewer") {
+  const VALID_ROLES = ["Admin", "Downloader", "Viewer"];
+  if (VALID_ROLES.indexOf(user.role) === -1) {
     writeAuditLog_(username, "LOGIN_FAILED", "Role tidak valid");
     return { error: "Role akun ini belum diatur dengan benar. Hubungi Administrator." };
   }

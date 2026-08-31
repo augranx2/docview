@@ -172,19 +172,35 @@ export default function AdminDashboard() {
                     {doc.uploadedBy}
                   </div>
                 </div>
-                <button
-                  disabled={isBusy || doc.sharedTo.length > 0}
-                  onClick={() => handleDelete(doc.documentId, doc.namaDokumen)}
-                  title={
-                    doc.sharedTo.length > 0
-                      ? "Akhiri semua share dulu sebelum menghapus"
-                      : "Hapus dokumen permanen"
-                  }
-                  className="btn-danger-text"
-                  style={{ flexShrink: 0, fontWeight: 600, fontSize: 13, cursor: "pointer" }}
-                >
-                  Hapus
-                </button>
+                <div style={{ display: "flex", gap: 8, alignItems: "flex-start", flexShrink: 0 }}>
+                  <Link
+                    href={`/viewer/${doc.documentId}`}
+                    className="btn btn-outline btn-sm"
+                    title="Lihat dokumen"
+                  >
+                    Lihat
+                  </Link>
+                  <a
+                    href={`/api/documents/download?documentId=${doc.documentId}`}
+                    className="btn btn-outline btn-sm"
+                    title="Download file asli"
+                  >
+                    ⬇
+                  </a>
+                  <button
+                    disabled={isBusy || doc.sharedTo.length > 0}
+                    onClick={() => handleDelete(doc.documentId, doc.namaDokumen)}
+                    title={
+                      doc.sharedTo.length > 0
+                        ? "Akhiri semua share dulu sebelum menghapus"
+                        : "Hapus dokumen permanen"
+                    }
+                    className="btn-danger-text"
+                    style={{ fontWeight: 600, fontSize: 13, cursor: "pointer" }}
+                  >
+                    Hapus
+                  </button>
+                </div>
               </div>
 
               <hr className="divider" />
