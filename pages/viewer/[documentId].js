@@ -63,18 +63,27 @@ export default function ViewerPage() {
 
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
         const page = await pdf.getPage(pageNum);
-        const viewport = page.getViewport({ scale: 1.4 });
+
+        // Base scale controls the on-screen size; outputScale multiplies
+        // the actual pixel density on top of that so pages stay sharp when
+        // zoomed in, instead of blurring past their rendered resolution.
+        const baseScale = 1.8;
+        const outputScale = window.devicePixelRatio || 1;
+        const viewport = page.getViewport({ scale: baseScale });
 
         const canvas = document.createElement("canvas");
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+        canvas.style.width = `${Math.floor(viewport.width)}px`;
+        canvas.style.height = `${Math.floor(viewport.height)}px`;
         canvas.style.display = "block";
         canvas.style.marginBottom = "16px";
         canvas.style.maxWidth = "100%";
         canvas.style.userSelect = "none";
 
         const ctx = canvas.getContext("2d");
-        await page.render({ canvasContext: ctx, viewport }).promise;
+        const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+        await page.render({ canvasContext: ctx, viewport, transform }).promise;
 
         // Watermark overlay: identifies the viewer if the page is ever
         // photographed or screenshotted. This is a deterrent, not a
@@ -82,10 +91,10 @@ export default function ViewerPage() {
         ctx.save();
         ctx.globalAlpha = 0.15;
         ctx.fillStyle = "#000000";
-        ctx.font = "20px sans-serif";
+        ctx.font = `${20 * outputScale}px sans-serif`;
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.rotate(-Math.PI / 6);
-        for (let y = -canvas.height; y < canvas.height; y += 120) {
+        for (let y = -canvas.height; y < canvas.height; y += 120 * outputScale) {
           ctx.fillText(watermarkText, -canvas.width / 2, y);
         }
         ctx.restore();

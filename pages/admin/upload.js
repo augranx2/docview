@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Link from "next/link";
+import LogoutButton from "../../components/LogoutButton";
 
 export default function AdminUploadPage() {
   const [file, setFile] = useState(null);
@@ -90,8 +91,9 @@ export default function AdminUploadPage() {
 
   return (
     <div style={{ maxWidth: 480, margin: "40px auto", fontFamily: "sans-serif" }}>
-      <div style={{ marginBottom: 8 }}>
+      <div style={{ marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Link href="/admin/dashboard">← Kembali ke Dashboard</Link>
+        <LogoutButton />
       </div>
       <h2>Upload Dokumen</h2>
       <form onSubmit={handleUpload}>

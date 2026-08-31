@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import LogoutButton from "../../components/LogoutButton";
 
 export default function AdminDashboard() {
   const [documents, setDocuments] = useState([]);
@@ -101,7 +102,10 @@ export default function AdminDashboard() {
     <div style={{ maxWidth: 800, margin: "40px auto", fontFamily: "sans-serif" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h2>Dashboard Dokumen</h2>
-        <Link href="/admin/upload">+ Upload Dokumen Baru</Link>
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <Link href="/admin/upload">+ Upload Dokumen Baru</Link>
+          <LogoutButton />
+        </div>
       </div>
 
       {loading && <p>Memuat...</p>}

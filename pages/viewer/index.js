@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import LogoutButton from "../../components/LogoutButton";
 
 export default function DocumentListPage() {
   const [docs, setDocs] = useState([]);
@@ -31,10 +32,15 @@ export default function DocumentListPage() {
 
   return (
     <div style={{ maxWidth: 680, margin: "40px auto", fontFamily: "sans-serif", padding: "0 16px" }}>
-      <h2 style={{ marginBottom: 4 }}>Dokumen Saya</h2>
-      <p style={{ color: "#888", marginTop: 0, fontSize: 14 }}>
-        Dokumen yang telah dibagikan kepada Anda.
-      </p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <h2 style={{ marginBottom: 4 }}>Dokumen Saya</h2>
+          <p style={{ color: "#888", marginTop: 0, fontSize: 14 }}>
+            Dokumen yang telah dibagikan kepada Anda.
+          </p>
+        </div>
+        <LogoutButton />
+      </div>
 
       {loading && <p>Memuat...</p>}
       {error && <p style={{ color: "red" }}>{error}</p>}
