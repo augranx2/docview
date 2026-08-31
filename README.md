@@ -52,10 +52,17 @@ lewat HTTPS ke action `login`, dan Apps Script yang membalas cocok/tidak.
 
 **Audit_Log**
 `timestamp | userEmail | documentId | action | detail`
-- `action`: `LOGIN`, `LOGIN_FAILED`, `LOGOUT`, `UPLOAD`, `VIEW`, `ACCESS_DENIED`
+- `action`: `LOGIN`, `LOGIN_FAILED`, `LOGOUT`, `UPLOAD`, `VIEW`, `ACCESS_DENIED`, `ACCESS_GRANTED`, `ACCESS_REVOKED`, `DOCUMENT_DELETED`
 - Baris `LOGIN`/`LOGIN_FAILED` ditulis langsung oleh Apps Script (di dalam action `login`)
 
 ## Alur
+
+**Dashboard Admin (`/admin/dashboard`)** — halaman awal setelah login sebagai Admin:
+- Lihat semua dokumen yang sudah diupload beserta daftar user yang punya akses ke masing-masing
+- Tambah akses: pilih user dari dropdown → "Tambah Akses"
+- Akhiri akses: klik "×" di sebelah nama user pada dokumen tsb
+- Hapus dokumen: hanya bisa kalau dokumen itu sudah tidak dibagikan ke siapa pun (0 akses) — hapus file dari Drive + baris di sheet `Documents` sekaligus
+- Semua aksi ini tercatat di `Audit_Log` (`ACCESS_GRANTED`, `ACCESS_REVOKED`, `DOCUMENT_DELETED`)
 
 1. Admin login → `/admin/upload` → pilih file + user yang diberi akses
 2. Upload file dikirim **langsung ke Google Drive** dari browser (resumable session),

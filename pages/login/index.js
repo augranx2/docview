@@ -23,7 +23,7 @@ export default function LoginPage() {
         setError(data.error || "Login gagal");
         return;
       }
-      router.push(data.role === "Admin" ? "/admin/upload" : "/viewer");
+      router.push(data.role === "Admin" ? "/admin/dashboard" : "/viewer");
     } catch {
       setError("Terjadi kesalahan, coba lagi");
     } finally {

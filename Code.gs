@@ -1,4 +1,7 @@
 /**
+ * @OnlyCurrentDoc
+ */
+/**
  * Code.gs — Office Document Viewer backend
  *
  * Pola hashing & auth IDENTIK dengan EM Viable / EM Non Viable: SHA-256(password
@@ -27,7 +30,7 @@
  *   Audit_Log        : timestamp | userEmail | documentId | action | detail
  */
 
-const WEBAPP_SECRET = "REPLACE_WITH_A_LONG_RANDOM_STRING";
+const WEBAPP_SECRET = "rms-2026-x7Kp9qL3vN8wZmT2";
 
 const USERS_SHEET = "Users";
 
@@ -66,6 +69,13 @@ function doPost(e) {
       case "updateRowByKey":
         assertGenericTab_(body.tab);
         return jsonOut_(updateRowByKey_(body.tab, body.keyCol, body.keyValue, body.patch));
+
+      case "deleteRows":
+        assertGenericTab_(body.tab);
+        return jsonOut_(deleteRows_(body.tab, body.match));
+
+      case "getUsersSafe":
+        return jsonOut_({ users: getUsersSafe_() });
 
       default:
         return jsonOut_({ error: "Unknown action: " + body.action });
@@ -251,4 +261,51 @@ function updateRowByKey_(tab, keyCol, keyValue, patch) {
   const sheetRowNumber = rowIndex + 2;
   sheet.getRange(sheetRowNumber, 1, 1, cols.length).setValues([objectToRow_(tab, merged)]);
   return { success: true };
+}
+
+/**
+ * Deletes every row where ALL columns in `match` equal the given values
+ * (e.g. { documentId: "...", userEmail: "..." } to revoke one user's access
+ * to one document, or { documentId: "..." } to delete a document row).
+ * Deletes bottom-to-top so row indices don't shift mid-loop.
+ */
+function deleteRows_(tab, match) {
+  const sheet = getSheet_(tab);
+  const cols = GENERIC_SCHEMAS[tab];
+  const matchKeys = Object.keys(match || {});
+  if (matchKeys.length === 0) throw new Error("deleteRows requires at least one match field");
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { success: true, deleted: 0 };
+
+  const values = sheet.getRange(2, 1, lastRow - 1, cols.length).getValues();
+  let deleted = 0;
+  for (let i = values.length - 1; i >= 0; i--) {
+    const obj = rowToObject_(tab, values[i]);
+    const isMatch = matchKeys.every((k) => String(obj[k]) === String(match[k]));
+    if (isMatch) {
+      sheet.deleteRow(i + 2); // +1 header, +1 for 1-index
+      deleted++;
+    }
+  }
+  return { success: true, deleted };
+}
+
+/**
+ * User list WITHOUT passwordHash/salt — safe to expose to Node for building
+ * an "add access" dropdown on the admin dashboard.
+ */
+function getUsersSafe_() {
+  const sheet = getUsersSheet_();
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+  const values = sheet.getRange(2, 1, lastRow - 1, 7).getValues();
+  return values
+    .filter((row) => String(row[2] || "").trim() !== "")
+    .map((row) => ({
+      nama: row[0],
+      role: String(row[1] || "").trim(),
+      username: row[2],
+      status: String(row[3] || "").trim(),
+    }));
 }

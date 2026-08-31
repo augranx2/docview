@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 
 export default function ViewerPage() {
   const router = useRouter();
@@ -131,7 +132,12 @@ export default function ViewerPage() {
   }, []);
 
   return (
-    <div style={{ maxWidth: 900, margin: "24px auto", fontFamily: "sans-serif" }}>
+    <div style={{ maxWidth: 900, margin: "24px auto", fontFamily: "sans-serif", padding: "0 16px" }}>
+      <div style={{ marginBottom: 16 }}>
+        <Link href="/viewer" style={{ textDecoration: "none", fontSize: 14 }}>
+          ← Kembali ke Dokumen Saya
+        </Link>
+      </div>
       {status === "loading" && <p>Memuat dokumen...</p>}
       {status === "error" && <p style={{ color: "red" }}>{errorMsg}</p>}
       <div ref={containerRef} />

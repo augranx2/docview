@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Link from "next/link";
 
 export default function AdminUploadPage() {
   const [file, setFile] = useState(null);
@@ -89,6 +90,9 @@ export default function AdminUploadPage() {
 
   return (
     <div style={{ maxWidth: 480, margin: "40px auto", fontFamily: "sans-serif" }}>
+      <div style={{ marginBottom: 8 }}>
+        <Link href="/admin/dashboard">← Kembali ke Dashboard</Link>
+      </div>
       <h2>Upload Dokumen</h2>
       <form onSubmit={handleUpload}>
         <div style={{ marginBottom: 12 }}>

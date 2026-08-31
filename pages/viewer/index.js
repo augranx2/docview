@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 export default function DocumentListPage() {
   const [docs, setDocs] = useState([]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -16,32 +17,79 @@ export default function DocumentListPage() {
         const data = await res.json();
         setDocs(data.documents || []);
       })
-      .catch(() => setError("Gagal memuat daftar dokumen"));
+      .catch(() => setError("Gagal memuat daftar dokumen"))
+      .finally(() => setLoading(false));
   }, [router]);
 
+  // Group by kategori so the list reads cleanly when there are many documents.
+  const grouped = docs.reduce((acc, doc) => {
+    const key = doc.kategori || "Lainnya";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(doc);
+    return acc;
+  }, {});
+
   return (
-    <div style={{ maxWidth: 640, margin: "40px auto", fontFamily: "sans-serif" }}>
-      <h2>Dokumen Saya</h2>
+    <div style={{ maxWidth: 680, margin: "40px auto", fontFamily: "sans-serif", padding: "0 16px" }}>
+      <h2 style={{ marginBottom: 4 }}>Dokumen Saya</h2>
+      <p style={{ color: "#888", marginTop: 0, fontSize: 14 }}>
+        Dokumen yang telah dibagikan kepada Anda.
+      </p>
+
+      {loading && <p>Memuat...</p>}
       {error && <p style={{ color: "red" }}>{error}</p>}
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {docs.map((doc) => (
-          <li
-            key={doc.documentId}
-            style={{
-              padding: 12,
-              border: "1px solid #ddd",
-              borderRadius: 6,
-              marginBottom: 8,
-              cursor: "pointer",
-            }}
-            onClick={() => router.push(`/viewer/${doc.documentId}`)}
-          >
-            <strong>{doc.namaDokumen}</strong>
-            {doc.kategori && <span style={{ color: "#888" }}> · {doc.kategori}</span>}
-          </li>
+
+      {!loading &&
+        Object.entries(grouped).map(([kategori, items]) => (
+          <div key={kategori} style={{ marginBottom: 24 }}>
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: "bold",
+                color: "#888",
+                textTransform: "uppercase",
+                marginBottom: 8,
+                letterSpacing: 0.5,
+              }}
+            >
+              {kategori}
+            </div>
+            {items.map((doc) => (
+              <div
+                key={doc.documentId}
+                onClick={() => router.push(`/viewer/${doc.documentId}`)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "14px 16px",
+                  border: "1px solid #e5e5e5",
+                  borderRadius: 8,
+                  marginBottom: 8,
+                  cursor: "pointer",
+                  transition: "background 0.15s, border-color 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#fafafa";
+                  e.currentTarget.style.borderColor = "#ccc";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.borderColor = "#e5e5e5";
+                }}
+              >
+                <span style={{ fontSize: 20 }} aria-hidden>
+                  📄
+                </span>
+                <span style={{ fontWeight: 500 }}>{doc.namaDokumen}</span>
+              </div>
+            ))}
+          </div>
         ))}
-        {docs.length === 0 && !error && <p>Belum ada dokumen yang dibagikan ke Anda.</p>}
-      </ul>
+
+      {!loading && docs.length === 0 && !error && (
+        <p style={{ color: "#888" }}>Belum ada dokumen yang dibagikan ke Anda.</p>
+      )}
     </div>
   );
 }
