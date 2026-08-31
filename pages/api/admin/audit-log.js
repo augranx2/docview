@@ -1,5 +1,5 @@
-import { requireSession } from "../../lib/auth";
-import { getAllRows } from "../../lib/sheets";
+import { requireSession } from "../../../lib/auth";
+import { getAllRows } from "../../../lib/sheets";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).end();
