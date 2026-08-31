@@ -1,6 +1,6 @@
 import { loginViaAppsScript } from "../../../lib/sheets";
 import { generateToken, setSessionCookie } from "../../../lib/auth";
-import { createSession, registerFailedLogin, clearFailedLogin, redis } from "../../../lib/redis";
+import { createSession, registerFailedLogin, clearFailedLogin, getFailedLoginCount } from "../../../lib/redis";
 
 const SESSION_TTL = Number(process.env.SESSION_TTL_SECONDS || 28800);
 
@@ -21,8 +21,7 @@ export default async function handler(req, res) {
   }
 
   // Lock out after 5 failed attempts within 5 minutes
-  const failCountKey = `failedlogin:${username}`;
-  const currentFails = Number((await redis.get(failCountKey)) || 0);
+  const currentFails = await getFailedLoginCount(username);
   if (currentFails >= 5) {
     return res.status(429).json({ error: "Terlalu banyak percobaan gagal. Coba lagi nanti." });
   }
