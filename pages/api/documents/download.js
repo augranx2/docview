@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import { PDFDocument } from "pdf-lib";
+import { google } from "googleapis";
 import { requireSession } from "../../../lib/auth";
-import { getDriveFileBuffer } from "../../../lib/drive"; // Sesuaikan nama helper drive/storage Anda
 
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).end();
@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   const session = await requireSession(req, res);
   if (!session) return res.status(401).json({ error: "Belum login" });
 
-  // 2. Cek Role (Mendukung role / HakAkses dari Google Sheets atau Session)
+  // 2. Cek Role
   const userRole = String(session.role || session.HakAkses || "").toLowerCase();
   const allowedRoles = ["admin", "downloader"];
 
@@ -19,18 +19,29 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: "Akses ditolak: Anda tidak memiliki hak akses unduh" });
   }
 
-  // 3. Tangkap ID Dokumen (Mendukung documentId maupun fileId)
+  // 3. Tangkap ID Dokumen
   const id = req.query.documentId || req.query.fileId || req.query.id;
   if (!id) return res.status(400).json({ error: "ID Dokumen tidak ditemukan" });
 
   try {
-    // 4. Ambil Buffer File dari Storage/Drive
-    const pdfBuffer = await getDriveFileBuffer(id);
+    // Setup Google Drive Auth dari Environment Variable
+    const auth = new google.auth.GoogleAuth({
+      credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY || "{}"),
+      scopes: ["https://www.googleapis.com/auth/drive.readonly"],
+    });
+    const drive = google.drive({ version: "v3", auth });
 
-    // 5. Muat PDF dengan pdf-lib
+    // Download file dari Drive sebagai Buffer
+    const response = await drive.files.get(
+      { fileId: id, alt: "media" },
+      { responseType: "arraybuffer" }
+    );
+    const pdfBuffer = Buffer.from(response.data);
+
+    // Load PDF
     const pdfDoc = await PDFDocument.load(pdfBuffer);
 
-    // 6. Tempel Watermark jika file watermark-controlled.png ada
+    // Tempel Watermark
     const watermarkPath = path.join(process.cwd(), "public", "watermark-controlled.png");
     if (fs.existsSync(watermarkPath)) {
       const watermarkBytes = fs.readFileSync(watermarkPath);
@@ -50,7 +61,6 @@ export default async function handler(req, res) {
       }
     }
 
-    // 7. Simpan dan Send File
     const modifiedPdfBytes = await pdfDoc.save();
 
     res.setHeader("Content-Type", "application/pdf");
