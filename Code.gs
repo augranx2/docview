@@ -69,6 +69,10 @@ function doPost(e) {
         assertGenericTab_(body.tab);
         return jsonOut_(appendRow_(body.tab, body.data));
 
+      case "appendRows":
+        assertGenericTab_(body.tab);
+        return jsonOut_(appendRows_(body.tab, body.rows));
+
       case "updateRowByKey":
         assertGenericTab_(body.tab);
         return jsonOut_(updateRowByKey_(body.tab, body.keyCol, body.keyValue, body.patch));
@@ -286,6 +290,19 @@ function appendRow_(tab, obj) {
   const sheet = getSheet_(tab);
   sheet.appendRow(objectToRow_(tab, obj));
   return { success: true };
+}
+
+/**
+ * Appends multiple rows in a single sheet write — used for "share to all
+ * users" so granting access to many users doesn't mean many round trips.
+ */
+function appendRows_(tab, rows) {
+  if (!Array.isArray(rows) || rows.length === 0) return { success: true, added: 0 };
+  const sheet = getSheet_(tab);
+  const cols = GENERIC_SCHEMAS[tab];
+  const values = rows.map((obj) => objectToRow_(tab, obj));
+  sheet.getRange(sheet.getLastRow() + 1, 1, values.length, cols.length).setValues(values);
+  return { success: true, added: values.length };
 }
 
 function updateRowByKey_(tab, keyCol, keyValue, patch) {

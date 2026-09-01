@@ -67,6 +67,25 @@ export default function AdminDashboard() {
     }
   }
 
+  async function handleGrantAll(documentId) {
+    if (!confirm("Bagikan dokumen ini ke SEMUA user aktif?")) return;
+    setBusyDoc(documentId);
+    try {
+      const res = await fetch("/api/admin/grant-access-all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal membagikan ke semua user");
+      await loadAll();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setBusyDoc(null);
+    }
+  }
+
   async function handleRevoke(documentId, username) {
     if (!confirm(`Akhiri akses ${username} ke dokumen ini?`)) return;
     setBusyDoc(documentId);
@@ -293,6 +312,14 @@ export default function AdminDashboard() {
                           style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #8a1f2f", background: "#8a1f2f", color: "white", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
                         >
                           Tambah
+                        </button>
+                        <button
+                          disabled={isBusy}
+                          onClick={() => handleGrantAll(doc.documentId)}
+                          title={`Bagikan ke ${availableUsers.length} user aktif lainnya sekaligus`}
+                          style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+                        >
+                          Bagikan ke Semua
                         </button>
                       </div>
                     )}
