@@ -23,30 +23,71 @@ export default function UploadPage() {
       setError("Pilih file PDF terlebih dahulu");
       return;
     }
+    if (file.type !== "application/pdf") {
+      setError("Hanya file PDF yang diperbolehkan");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      setError("Ukuran file melebihi 20MB");
+      return;
+    }
 
     setUploading(true);
     setMessage("");
     setError("");
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("kategori", kategori);
-    formData.append("allowedUsers", allowedUsers);
-
     try {
-      const res = await fetch("/api/documents/upload", {
+      // 1. Minta sesi upload resumable ke Google Drive (dibuat di server,
+      //    supaya kredensial Drive tidak pernah sampai ke browser).
+      const initRes = await fetch("/api/documents/init-upload", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: file.name,
+          mimeType: file.type,
+          fileSize: file.size,
+          kategori,
+        }),
       });
+      const initData = await initRes.json();
+      if (!initRes.ok) throw new Error(initData.error || "Gagal memulai upload");
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal mengunggah dokumen");
+      // 2. Upload file LANGSUNG dari browser ke Google Drive (tidak lewat
+      //    server Vercel), supaya tidak kena limit ukuran body function.
+      const uploadRes = await fetch(initData.resumableSessionUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type,
+          "Content-Length": String(file.size),
+        },
+        body: file,
+      });
+      if (!uploadRes.ok) throw new Error("Upload ke Google Drive gagal");
+      const driveFile = await uploadRes.json();
+
+      // 3. Selesaikan proses: set permission private, catat akses share.
+      const accessUserEmails = allowedUsers
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const completeRes = await fetch("/api/documents/complete-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentId: initData.documentId,
+          driveFileId: driveFile.id,
+          accessUserEmails,
+        }),
+      });
+      const completeData = await completeRes.json();
+      if (!completeRes.ok) throw new Error(completeData.error || "Gagal menyelesaikan upload");
 
       setMessage("Dokumen berhasil diunggah!");
       setFile(null);
       setKategori("");
       setAllowedUsers("");
-      
+
       // Reset input file elemen
       const fileInput = document.getElementById("file-input");
       if (fileInput) fileInput.value = "";
@@ -163,7 +204,7 @@ export default function UploadPage() {
                 style={{ width: "100%", padding: "10px 14px", border: "1px solid #cbd5e1", borderRadius: 10, fontSize: 13, outline: "none", color: "#0f172a", fontFamily: "inherit", resize: "vertical" }}
               />
               <p style={{ fontSize: 11, color: "#94a3b8", margin: "4px 0 0" }}>
-                Biarkan kosong jika dokumen boleh diakses oleh semua pengguna.
+                Biarkan kosong jika belum ingin membagikan ke siapa pun sekarang — bisa ditambahkan nanti dari Dashboard.
               </p>
             </div>
 
