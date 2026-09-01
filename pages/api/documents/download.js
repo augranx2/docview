@@ -3,6 +3,7 @@ import path from "path";
 import { PDFDocument } from "pdf-lib";
 import { requireSession } from "../../../lib/auth";
 import { downloadFileBuffer } from "../../../lib/googleDrive";
+import { getDocumentById } from "../../../lib/sheets"; // atau helper database dokumenmu
 
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).end();
@@ -17,13 +18,26 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: "Akses ditolak: Anda tidak memiliki hak akses unduh" });
   }
 
-  const id = req.query.documentId || req.query.fileId || req.query.id;
-  if (!id) return res.status(400).json({ error: "ID Dokumen tidak ditemukan" });
+  const docId = req.query.documentId || req.query.fileId || req.query.id;
+  if (!docId) return res.status(400).json({ error: "ID Dokumen tidak ditemukan" });
 
   try {
-    const pdfBuffer = await downloadFileBuffer(id);
+    let driveFileId = docId;
+
+    // Cek apakah yang dikirim UUID/DB ID (bukan langsung Drive ID)
+    // Jika ada helper getDocumentById, ambil Drive File ID aslinya
+    if (typeof getDocumentById === "function") {
+      const doc = await getDocumentById(docId);
+      if (doc && (doc.driveFileId || doc.fileId)) {
+        driveFileId = doc.driveFileId || doc.fileId;
+      }
+    }
+
+    // Ambil Buffer dari Google Drive pakai ID Drive yang benar
+    const pdfBuffer = await downloadFileBuffer(driveFileId);
     const pdfDoc = await PDFDocument.load(pdfBuffer);
 
+    // Tempel Watermark CONTROLLED
     const watermarkPath = path.join(process.cwd(), "public", "watermark-controlled.png");
     if (fs.existsSync(watermarkPath)) {
       const watermarkBytes = fs.readFileSync(watermarkPath);
@@ -46,7 +60,7 @@ export default async function handler(req, res) {
     const modifiedPdfBytes = await pdfDoc.save();
 
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="CONTROLLED_${id}.pdf"`);
+    res.setHeader("Content-Disposition", `attachment; filename="CONTROLLED_${docId}.pdf"`);
     return res.send(Buffer.from(modifiedPdfBytes));
 
   } catch (err) {
