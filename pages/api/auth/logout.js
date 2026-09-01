@@ -1,8 +1,9 @@
 import { getCurrentSession, clearSessionCookie } from "../../../lib/auth";
 import { destroySession } from "../../../lib/redis";
 import { logAudit } from "../../../lib/sheets";
+import { withErrorHandling } from "../../../lib/apiHandler";
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
   const session = await getCurrentSession(req);
@@ -13,3 +14,5 @@ export default async function handler(req, res) {
   clearSessionCookie(res);
   return res.status(200).json({ success: true });
 }
+
+export default withErrorHandling(handler);

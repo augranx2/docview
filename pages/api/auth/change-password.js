@@ -1,5 +1,6 @@
 import { requireSession } from "../../../lib/auth";
 import { changePasswordViaAppsScript } from "../../../lib/sheets";
+import { withErrorHandling } from "../../../lib/apiHandler";
 
 /**
  * Old password is verified inside Code.gs (same SHA-256+salt check used for
@@ -7,7 +8,7 @@ import { changePasswordViaAppsScript } from "../../../lib/sheets";
  * hashes itself, and never touches the Users sheet directly (that tab is
  * intentionally blocked from the generic getRows/updateRowByKey actions).
  */
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
   const session = await requireSession(req, res);
@@ -28,3 +29,5 @@ export default async function handler(req, res) {
 
   return res.status(200).json({ success: true });
 }
+
+export default withErrorHandling(handler);

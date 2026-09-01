@@ -2,8 +2,9 @@ import { v4 as uuidv4 } from "uuid";
 import { requireSession } from "../../../lib/auth";
 import { findRows, logAudit } from "../../../lib/sheets";
 import { createViewToken } from "../../../lib/redis";
+import { withErrorHandling } from "../../../lib/apiHandler";
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
   const session = await requireSession(req, res);
@@ -32,3 +33,5 @@ export default async function handler(req, res) {
 
   return res.status(200).json({ viewToken });
 }
+
+export default withErrorHandling(handler);

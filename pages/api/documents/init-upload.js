@@ -2,10 +2,11 @@ import { v4 as uuidv4 } from "uuid";
 import { requireAdmin } from "../../../lib/auth";
 import { createResumableUploadSession } from "../../../lib/googleDrive";
 import { appendRow } from "../../../lib/sheets";
+import { withErrorHandling } from "../../../lib/apiHandler";
 
 const MAX_SIZE = Number(process.env.MAX_UPLOAD_SIZE_BYTES || 20 * 1024 * 1024);
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
   const session = await requireAdmin(req, res);
@@ -41,15 +42,22 @@ export default async function handler(req, res) {
     return res.status(502).json({ error: "Gagal membuat sesi upload ke Google Drive" });
   }
 
-  await appendRow("Documents", {
-    documentId,
-    namaDokumen: fileName,
-    kategori: kategori || "",
-    driveFileId: "",
-    uploadedBy: session.email,
-    uploadedAt: new Date().toISOString(),
-    status: "pending",
-  });
+  try {
+    await appendRow("Documents", {
+      documentId,
+      namaDokumen: fileName,
+      kategori: kategori || "",
+      driveFileId: "",
+      uploadedBy: session.email,
+      uploadedAt: new Date().toISOString(),
+      status: "pending",
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(502).json({ error: `Gagal mencatat dokumen ke spreadsheet: ${err.message}` });
+  }
 
   return res.status(200).json({ documentId, resumableSessionUrl });
 }
+
+export default withErrorHandling(handler);

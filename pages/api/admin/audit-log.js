@@ -1,7 +1,8 @@
 import { requireSession } from "../../../lib/auth";
 import { getAllRows } from "../../../lib/sheets";
+import { withErrorHandling } from "../../../lib/apiHandler";
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).end();
 
   const session = await requireSession(req, res);
@@ -19,3 +20,5 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Gagal memuat audit log" });
   }
 }
+
+export default withErrorHandling(handler);

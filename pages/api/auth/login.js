@@ -1,6 +1,7 @@
 import { loginViaAppsScript } from "../../../lib/sheets";
 import { generateToken, setSessionCookie } from "../../../lib/auth";
 import { createSession, registerFailedLogin, clearFailedLogin, getFailedLoginCount } from "../../../lib/redis";
+import { withErrorHandling } from "../../../lib/apiHandler";
 
 const SESSION_TTL = Number(process.env.SESSION_TTL_SECONDS || 28800);
 
@@ -12,7 +13,7 @@ const SESSION_TTL = Number(process.env.SESSION_TTL_SECONDS || 28800);
  * the rest of this codebase (Document_Access.userEmail, etc.) — it holds
  * the username value, not necessarily a real email address.
  */
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
   const { username, password } = req.body;
@@ -49,3 +50,5 @@ export default async function handler(req, res) {
     role: result.role,
   });
 }
+
+export default withErrorHandling(handler);

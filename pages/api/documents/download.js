@@ -2,6 +2,7 @@ import { requireDownloadAccess } from "../../../lib/auth";
 import { findRows, logAudit } from "../../../lib/sheets";
 import { downloadFileBuffer } from "../../../lib/googleDrive";
 import { addControlledWatermark } from "../../../lib/watermark";
+import { withErrorHandling } from "../../../lib/apiHandler";
 
 /**
  * Unlike stream.js (which serves pixels for the in-browser canvas viewer),
@@ -10,7 +11,7 @@ import { addControlledWatermark } from "../../../lib/watermark";
  * Admin/Downloader roles — Viewer accounts get 403 even with a valid
  * session.
  */
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).end();
 
   const session = await requireDownloadAccess(req, res);
@@ -62,3 +63,5 @@ export default async function handler(req, res) {
   res.setHeader("X-Content-Type-Options", "nosniff");
   return res.status(200).send(Buffer.from(watermarkedBuffer));
 }
+
+export default withErrorHandling(handler);

@@ -1,7 +1,8 @@
 import { requireAdmin } from "../../../lib/auth";
 import { deleteRows, logAudit } from "../../../lib/sheets";
+import { withErrorHandling } from "../../../lib/apiHandler";
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
   const session = await requireAdmin(req, res);
@@ -23,3 +24,5 @@ export default async function handler(req, res) {
 
   return res.status(200).json({ success: true });
 }
+
+export default withErrorHandling(handler);

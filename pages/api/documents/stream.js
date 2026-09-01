@@ -1,6 +1,7 @@
 import { getViewToken } from "../../../lib/redis";
 import { findRows } from "../../../lib/sheets";
 import { downloadFileBuffer } from "../../../lib/googleDrive";
+import { withErrorHandling } from "../../../lib/apiHandler";
 
 /**
  * Serves the raw PDF bytes ONLY to a request carrying a valid, unexpired
@@ -8,7 +9,7 @@ import { downloadFileBuffer } from "../../../lib/googleDrive";
  * it fetches this endpoint via JS and renders pages into <canvas> with
  * pdf.js, so there's no direct "open/save" browser PDF view of the file.
  */
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).end();
 
   const { token } = req.query;
@@ -33,3 +34,5 @@ export default async function handler(req, res) {
   res.setHeader("X-Content-Type-Options", "nosniff");
   return res.status(200).send(buffer);
 }
+
+export default withErrorHandling(handler);
