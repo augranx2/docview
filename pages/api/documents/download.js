@@ -1,69 +1,54 @@
-import fs from "fs";
-import path from "path";
-import { PDFDocument } from "pdf-lib";
-import { requireSession } from "../../../lib/auth";
+import { requireDownloadAccess } from "../../../lib/auth";
+import { findRows, logAudit } from "../../../lib/sheets";
 import { downloadFileBuffer } from "../../../lib/googleDrive";
-import { getDocumentById } from "../../../lib/sheets"; // atau helper database dokumenmu
 
+/**
+ * Unlike stream.js (which serves pixels for the in-browser canvas viewer),
+ * this endpoint hands back the actual PDF file with Content-Disposition:
+ * attachment, so it's a real, saveable download. Only reachable by
+ * Admin/Downloader roles — Viewer accounts get 403 even with a valid
+ * session.
+ */
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).end();
 
-  const session = await requireSession(req, res);
-  if (!session) return res.status(401).json({ error: "Belum login" });
+  const session = await requireDownloadAccess(req, res);
+  if (!session) return;
 
-  const userRole = String(session.role || session.HakAkses || "").toLowerCase();
-  const allowedRoles = ["admin", "downloader"];
+  const { documentId } = req.query;
+  if (!documentId) return res.status(400).json({ error: "documentId wajib diisi" });
 
-  if (!allowedRoles.includes(userRole)) {
-    return res.status(403).json({ error: "Akses ditolak: Anda tidak memiliki hak akses unduh" });
+  const docs = await findRows("Documents", (d) => d.documentId === documentId);
+  const doc = docs[0];
+  if (!doc || doc.status !== "active") {
+    return res.status(404).json({ error: "Dokumen tidak ditemukan" });
   }
 
-  const docId = req.query.documentId || req.query.fileId || req.query.id;
-  if (!docId) return res.status(400).json({ error: "ID Dokumen tidak ditemukan" });
-
-  try {
-    let driveFileId = docId;
-
-    // Cek apakah yang dikirim UUID/DB ID (bukan langsung Drive ID)
-    // Jika ada helper getDocumentById, ambil Drive File ID aslinya
-    if (typeof getDocumentById === "function") {
-      const doc = await getDocumentById(docId);
-      if (doc && (doc.driveFileId || doc.fileId)) {
-        driveFileId = doc.driveFileId || doc.fileId;
-      }
+  // Admins can download anything active; Downloader accounts still need an
+  // explicit Document_Access grant, same rule as viewing.
+  if (session.role !== "Admin") {
+    const access = await findRows(
+      "Document_Access",
+      (a) => a.documentId === documentId && a.userEmail === session.email
+    );
+    if (access.length === 0) {
+      await logAudit({ userEmail: session.email, documentId, action: "ACCESS_DENIED" });
+      return res.status(403).json({ error: "Anda tidak memiliki akses ke dokumen ini" });
     }
-
-    // Ambil Buffer dari Google Drive pakai ID Drive yang benar
-    const pdfBuffer = await downloadFileBuffer(driveFileId);
-    const pdfDoc = await PDFDocument.load(pdfBuffer);
-
-    // Tempel Watermark CONTROLLED
-    const watermarkPath = path.join(process.cwd(), "public", "watermark-controlled.png");
-    if (fs.existsSync(watermarkPath)) {
-      const watermarkBytes = fs.readFileSync(watermarkPath);
-      const watermarkImage = await pdfDoc.embedPng(watermarkBytes);
-      const { width: imgWidth, height: imgHeight } = watermarkImage.scale(0.35);
-
-      const pages = pdfDoc.getPages();
-      for (const page of pages) {
-        const { width, height } = page.getSize();
-        page.drawImage(watermarkImage, {
-          x: width - imgWidth - 25,
-          y: height - imgHeight - 25,
-          width: imgWidth,
-          height: imgHeight,
-          opacity: 0.85,
-        });
-      }
-    }
-
-    const modifiedPdfBytes = await pdfDoc.save();
-
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="CONTROLLED_${docId}.pdf"`);
-    return res.send(Buffer.from(modifiedPdfBytes));
-
-  } catch (err) {
-    return res.status(500).json({ error: "Gagal memproses file: " + err.message });
   }
+
+  const buffer = await downloadFileBuffer(doc.driveFileId);
+
+  const safeName = (doc.namaDokumen || "dokumen").replace(/[^a-zA-Z0-9 ._-]/g, "_");
+
+  await logAudit({ userEmail: session.email, documentId, action: "DOWNLOAD" });
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="${safeName}.pdf"; filename*=UTF-8''${encodeURIComponent(safeName)}.pdf`
+  );
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  return res.status(200).send(buffer);
 }
