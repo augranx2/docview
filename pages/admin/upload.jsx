@@ -7,6 +7,8 @@ export default function UploadPage() {
   const [kategori, setKategori] = useState("");
   const [allowedUsers, setAllowedUsers] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [stepLabel, setStepLabel] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -15,6 +17,38 @@ export default function UploadPage() {
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
+  }
+
+  // Uploads the file directly to the Google Drive resumable session URL
+  // using XMLHttpRequest (not fetch) because only XHR exposes real upload
+  // progress events — fetch has no equivalent.
+  function uploadToDriveWithProgress(url, file, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", url);
+      xhr.setRequestHeader("Content-Type", file.type);
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          onProgress(Math.round((event.loaded / event.total) * 100));
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            resolve(JSON.parse(xhr.responseText));
+          } catch {
+            reject(new Error("Respons Google Drive tidak valid"));
+          }
+        } else {
+          reject(new Error("Upload ke Google Drive gagal"));
+        }
+      };
+      xhr.onerror = () => reject(new Error("Upload ke Google Drive gagal (jaringan terputus)"));
+
+      xhr.send(file);
+    });
   }
 
   async function handleSubmit(e) {
@@ -33,12 +67,14 @@ export default function UploadPage() {
     }
 
     setUploading(true);
+    setProgress(0);
     setMessage("");
     setError("");
 
     try {
       // 1. Minta sesi upload resumable ke Google Drive (dibuat di server,
       //    supaya kredensial Drive tidak pernah sampai ke browser).
+      setStepLabel("Menyiapkan sesi upload...");
       const initRes = await fetch("/api/documents/init-upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -54,18 +90,15 @@ export default function UploadPage() {
 
       // 2. Upload file LANGSUNG dari browser ke Google Drive (tidak lewat
       //    server Vercel), supaya tidak kena limit ukuran body function.
-      const uploadRes = await fetch(initData.resumableSessionUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": file.type,
-          "Content-Length": String(file.size),
-        },
-        body: file,
-      });
-      if (!uploadRes.ok) throw new Error("Upload ke Google Drive gagal");
-      const driveFile = await uploadRes.json();
+      setStepLabel("Mengunggah ke Google Drive...");
+      const driveFile = await uploadToDriveWithProgress(
+        initData.resumableSessionUrl,
+        file,
+        setProgress
+      );
 
       // 3. Selesaikan proses: set permission private, catat akses share.
+      setStepLabel("Menyelesaikan...");
       const accessUserEmails = allowedUsers
         .split(",")
         .map((s) => s.trim())
@@ -95,6 +128,8 @@ export default function UploadPage() {
       setError(err.message);
     } finally {
       setUploading(false);
+      setProgress(0);
+      setStepLabel("");
     }
   }
 
@@ -220,13 +255,36 @@ export default function UploadPage() {
               </div>
             )}
 
+            {/* PROGRESS UPLOAD */}
+            {uploading && (
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                  <span style={{ fontSize: 12, color: "#475569", fontWeight: 600 }}>{stepLabel}</span>
+                  {progress > 0 && (
+                    <span style={{ fontSize: 12, color: "#8a1f2f", fontWeight: 700 }}>{progress}%</span>
+                  )}
+                </div>
+                <div style={{ height: 8, borderRadius: 999, background: "#f1f5f9", overflow: "hidden" }}>
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${progress}%`,
+                      background: "#8a1f2f",
+                      borderRadius: 999,
+                      transition: "width 0.2s ease",
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
             {/* TOMBOL SUBMIT */}
             <button
               type="submit"
               disabled={uploading}
               style={{ padding: "12px", borderRadius: 12, background: uploading ? "#cbd5e1" : "#8a1f2f", color: "white", fontSize: 13, fontWeight: 700, border: "none", cursor: uploading ? "not-allowed" : "pointer", boxShadow: "0 2px 6px rgba(0,0,0,0.1)" }}
             >
-              {uploading ? "Mengunggah Dokumen..." : "Upload Sekarang"}
+              {uploading ? (stepLabel || "Mengunggah Dokumen...") : "Upload Sekarang"}
             </button>
 
           </form>
