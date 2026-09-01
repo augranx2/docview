@@ -1,6 +1,12 @@
 import { requireSession } from "../../../lib/auth";
-import { getAllRows, updateRowByKey } from "../../../lib/sheets";
+import { changePasswordViaAppsScript } from "../../../lib/sheets";
 
+/**
+ * Old password is verified inside Code.gs (same SHA-256+salt check used for
+ * login) before anything is written — this route never reads or compares
+ * hashes itself, and never touches the Users sheet directly (that tab is
+ * intentionally blocked from the generic getRows/updateRowByKey actions).
+ */
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
@@ -15,20 +21,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Password baru minimal 6 karakter" });
   }
 
-  try {
-    const users = await getAllRows("Users");
-    const userRow = users.find((u) => String(u.username || "").toLowerCase() === String(session.email).toLowerCase());
-    
-    if (!userRow) {
-      return res.status(404).json({ error: "User tidak ditemukan" });
-    }
-
-    await updateRowByKey("Users", "Username", userRow.Username, {
-      PasswordBaru: newPassword,
-    });
-
-    return res.status(200).json({ success: true });
-  } catch (err) {
-    return res.status(500).json({ error: "Gagal memperbarui password: " + err.message });
+  const result = await changePasswordViaAppsScript(session.email, oldPassword, newPassword);
+  if (result.error) {
+    return res.status(400).json({ error: result.error });
   }
+
+  return res.status(200).json({ success: true });
 }

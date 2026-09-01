@@ -52,7 +52,7 @@ lewat HTTPS ke action `login`, dan Apps Script yang membalas cocok/tidak.
 
 **Audit_Log**
 `timestamp | userEmail | documentId | action | detail`
-- `action`: `LOGIN`, `LOGIN_FAILED`, `LOGOUT`, `UPLOAD`, `VIEW`, `DOWNLOAD`, `ACCESS_DENIED`, `ACCESS_GRANTED`, `ACCESS_REVOKED`, `DOCUMENT_DELETED`
+- `action`: `LOGIN`, `LOGIN_FAILED`, `LOGOUT`, `UPLOAD`, `VIEW`, `DOWNLOAD`, `ACCESS_DENIED`, `ACCESS_GRANTED`, `ACCESS_REVOKED`, `DOCUMENT_DELETED`, `PASSWORD_CHANGED`, `PASSWORD_CHANGE_FAILED`
 - Baris `LOGIN`/`LOGIN_FAILED` ditulis langsung oleh Apps Script (di dalam action `login`)
 
 ## Alur

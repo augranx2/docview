@@ -58,6 +58,9 @@ function doPost(e) {
       case "login":
         return jsonOut_(login_(body.username, body.password));
 
+      case "changePassword":
+        return jsonOut_(changePassword_(body.username, body.oldPassword, body.newPassword));
+
       case "getRows":
         assertGenericTab_(body.tab);
         return jsonOut_({ rows: getAllRows_(body.tab) });
@@ -207,6 +210,46 @@ function login_(username, password) {
 
   writeAuditLog_(user.username, "LOGIN", "");
   return { ok: true, nama: user.nama, role: user.role, username: user.username };
+}
+
+/**
+ * Verifies the caller's OLD password before writing a new hash+salt
+ * directly to their row. Unlike the PasswordBaru convenience column (which
+ * only takes effect on someone's next successful login), this updates
+ * PasswordHash/Salt immediately so the new password works right away.
+ */
+function changePassword_(username, oldPassword, newPassword) {
+  if (!username || !oldPassword || !newPassword) {
+    return { error: "Username, password lama, dan password baru wajib diisi." };
+  }
+  if (String(newPassword).length < 6) {
+    return { error: "Password baru minimal 6 karakter." };
+  }
+
+  const user = findUserByUsername_(username);
+  if (!user || !user.passwordHash) {
+    return { error: "User tidak ditemukan." };
+  }
+  if (hashPassword_(oldPassword, user.salt) !== user.passwordHash) {
+    writeAuditLog_(username, "PASSWORD_CHANGE_FAILED", "Password lama salah");
+    return { error: "Password lama salah." };
+  }
+
+  const sheet = getUsersSheet_();
+  const lastRow = sheet.getLastRow();
+  const values = sheet.getRange(2, 1, lastRow - 1, 7).getValues();
+  const rowIndex = values.findIndex(
+    (row) => String(row[2] || "").trim().toLowerCase() === String(username).trim().toLowerCase()
+  );
+  if (rowIndex === -1) return { error: "User tidak ditemukan." };
+
+  const newSalt = generateSalt_();
+  const newHash = hashPassword_(String(newPassword), newSalt);
+  // F = PasswordHash, G = Salt, E = PasswordBaru (cleared just in case)
+  sheet.getRange(rowIndex + 2, 5, 1, 3).setValues([["", newHash, newSalt]]);
+
+  writeAuditLog_(user.username, "PASSWORD_CHANGED", "");
+  return { ok: true };
 }
 
 // ---------------------------------------------------------------------------
