@@ -1,6 +1,7 @@
 import { requireDownloadAccess } from "../../../lib/auth";
 import { findRows, logAudit } from "../../../lib/sheets";
 import { downloadFileBuffer } from "../../../lib/googleDrive";
+import { addControlledWatermark } from "../../../lib/watermark";
 
 /**
  * Unlike stream.js (which serves pixels for the in-browser canvas viewer),
@@ -39,6 +40,15 @@ export default async function handler(req, res) {
 
   const buffer = await downloadFileBuffer(doc.driveFileId);
 
+  const origin = req.headers.origin || `https://${req.headers.host}`;
+  let watermarkedBuffer;
+  try {
+    watermarkedBuffer = await addControlledWatermark(buffer, origin);
+  } catch (err) {
+    console.error("Watermark failed, sending original file instead:", err);
+    watermarkedBuffer = buffer; // fail safe: still let the download through
+  }
+
   const safeName = (doc.namaDokumen || "dokumen").replace(/[^a-zA-Z0-9 ._-]/g, "_");
 
   await logAudit({ userEmail: session.email, documentId, action: "DOWNLOAD" });
@@ -50,5 +60,5 @@ export default async function handler(req, res) {
     `attachment; filename="${safeName}.pdf"; filename*=UTF-8''${encodeURIComponent(safeName)}.pdf`
   );
   res.setHeader("X-Content-Type-Options", "nosniff");
-  return res.status(200).send(buffer);
+  return res.status(200).send(Buffer.from(watermarkedBuffer));
 }

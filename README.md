@@ -73,6 +73,15 @@ lewat HTTPS ke action `login`, dan Apps Script yang membalas cocok/tidak.
    frontend render tiap halaman PDF ke `<canvas>` pakai pdf.js + watermark
    username/timestamp
 
+## Watermark file download
+
+Saat Admin/Downloader men-download file asli (bukan lewat viewer canvas), cap
+`public/watermark-controlled.png` otomatis ditempel ke setiap halaman PDF
+(semi-transparan, di tengah halaman) sebelum dikirim ke browser — file asli
+di Google Drive **tidak diubah**, watermark cuma ditempel pada salinan yang
+dikirim saat itu. Ini terpisah dari watermark teks dinamis (nama+waktu) yang
+muncul di viewer canvas.
+
 ## Batasan penting (baca sebelum deploy)
 
 **Tidak ada cara mencegah screenshot/foto layar 100%** — begitu konten dirender di
