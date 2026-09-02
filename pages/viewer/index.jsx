@@ -7,6 +7,7 @@ export default function DocumentListPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(null); // null = semua kategori
   const [user, setUser] = useState({ role: null, nama: "", username: "" });
   const [loggingOut, setLoggingOut] = useState(false);
   
@@ -98,7 +99,16 @@ export default function DocumentListPage() {
   const canDownload = user.role === "Admin" || user.role === "Downloader";
   const isAdmin = user.role === "Admin";
 
+  const UNCATEGORIZED = "Tanpa Kategori";
+  const categoryCounts = docs.reduce((acc, doc) => {
+    const key = doc.kategori || UNCATEGORIZED;
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  const categoryList = Object.keys(categoryCounts).sort((a, b) => a.localeCompare(b));
+
   const filtered = docs.filter((doc) => {
+    if (selectedCategory && (doc.kategori || UNCATEGORIZED) !== selectedCategory) return false;
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return (
@@ -149,7 +159,7 @@ export default function DocumentListPage() {
       </header>
 
       {/* KONTEN UTAMA */}
-      <div style={{ maxWidth: 880, margin: "0 auto", padding: "32px 20px" }}>
+      <div style={{ maxWidth: 1120, margin: "0 auto", padding: "32px 20px" }}>
         
         {/* KOP HEADER BERGRADASI */}
         <div style={{ overflow: "hidden", borderRadius: 20, border: "1px solid #e2e8f0", boxShadow: "0 4px 12px rgba(15,23,42,0.05)", marginBottom: 24 }}>
@@ -189,6 +199,83 @@ export default function DocumentListPage() {
             </div>
           </div>
         </div>
+
+        {/* LAYOUT SIDEBAR + KONTEN */}
+        <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
+
+          {/* SIDEBAR KATEGORI */}
+          {!loading && docs.length > 0 && (
+            <div
+              style={{
+                width: 220,
+                flexShrink: 0,
+                background: "white",
+                border: "1px solid #e2e8f0",
+                borderRadius: 16,
+                padding: 10,
+                position: "sticky",
+                top: 84,
+              }}
+            >
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.04em", padding: "8px 10px 6px" }}>
+                Kategori
+              </div>
+              <button
+                onClick={() => setSelectedCategory(null)}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "9px 10px",
+                  borderRadius: 10,
+                  border: "none",
+                  background: selectedCategory === null ? "#8a1f2f" : "transparent",
+                  color: selectedCategory === null ? "white" : "#334155",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  textAlign: "left",
+                  marginBottom: 2,
+                }}
+              >
+                <span>📋 Semua Dokumen</span>
+                <span style={{ fontSize: 11, opacity: 0.85 }}>{docs.length}</span>
+              </button>
+
+              {categoryList.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "9px 10px",
+                    borderRadius: 10,
+                    border: "none",
+                    background: selectedCategory === cat ? "#8a1f2f" : "transparent",
+                    color: selectedCategory === cat ? "white" : "#334155",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    textAlign: "left",
+                    marginBottom: 2,
+                  }}
+                >
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {cat === UNCATEGORIZED ? "🗂 " : "📁 "}
+                    {cat}
+                  </span>
+                  <span style={{ fontSize: 11, opacity: 0.85, flexShrink: 0, marginLeft: 6 }}>{categoryCounts[cat]}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* AREA KONTEN DOKUMEN */}
+          <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* PENCARIAN */}
         {!loading && docs.length > 0 && (
@@ -264,6 +351,11 @@ export default function DocumentListPage() {
             )}
           </div>
         )}
+
+          </div>
+          {/* /AREA KONTEN DOKUMEN */}
+        </div>
+        {/* /LAYOUT SIDEBAR + KONTEN */}
       </div>
 
       {/* MODAL PROFIL */}

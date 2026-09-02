@@ -17,6 +17,9 @@ export default function AdminDashboard() {
   const [selectedDocs, setSelectedDocs] = useState([]); // documentIds picked for bulk delete
   const [sortNewestFirst, setSortNewestFirst] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState(null); // null = semua kategori
+  const [editingCategoryDoc, setEditingCategoryDoc] = useState(null); // documentId being edited
+  const [categoryDraft, setCategoryDraft] = useState("");
+  const [savingCategory, setSavingCategory] = useState(false);
 
   const [busyDoc, setBusyDoc] = useState(null);
   const [bulkBusy, setBulkBusy] = useState(false);
@@ -159,6 +162,31 @@ export default function AdminDashboard() {
       alert(err.message);
     } finally {
       setBusyDoc(null);
+    }
+  }
+
+  // ---- EDIT KATEGORI ----
+  function startEditCategory(doc) {
+    setEditingCategoryDoc(doc.documentId);
+    setCategoryDraft(doc.kategori || "");
+  }
+
+  async function handleSaveCategory(documentId) {
+    setSavingCategory(true);
+    try {
+      const res = await fetch("/api/admin/update-document", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId, kategori: categoryDraft }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menyimpan kategori");
+      setEditingCategoryDoc(null);
+      await loadAll();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSavingCategory(false);
     }
   }
 
@@ -472,11 +500,55 @@ export default function AdminDashboard() {
                         />
                         <div style={{ minWidth: 0 }}>
                           <div style={{ fontWeight: 700, fontSize: 14, color: "#1e293b", wordBreak: "break-word" }}>{doc.namaDokumen}</div>
-                          {doc.kategori && (
-                            <span style={{ display: "inline-block", fontSize: 11, fontWeight: 600, color: "#8a1f2f", background: "#fdf2f2", borderRadius: 6, padding: "2px 8px", marginTop: 6, border: "1px solid #f9dade" }}>
-                              {doc.kategori}
-                            </span>
+
+                          {editingCategoryDoc === doc.documentId ? (
+                            <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 6 }}>
+                              <input
+                                type="text"
+                                autoFocus
+                                value={categoryDraft}
+                                onChange={(e) => setCategoryDraft(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleSaveCategory(doc.documentId);
+                                  if (e.key === "Escape") setEditingCategoryDoc(null);
+                                }}
+                                placeholder="Nama kategori..."
+                                style={{ fontSize: 11, padding: "3px 8px", border: "1px solid #cbd5e1", borderRadius: 6, outline: "none", width: 140 }}
+                              />
+                              <button
+                                disabled={savingCategory}
+                                onClick={() => handleSaveCategory(doc.documentId)}
+                                style={{ fontSize: 11, fontWeight: 700, color: "white", background: "#8a1f2f", border: "none", borderRadius: 6, padding: "3px 8px", cursor: "pointer" }}
+                              >
+                                Simpan
+                              </button>
+                              <button
+                                disabled={savingCategory}
+                                onClick={() => setEditingCategoryDoc(null)}
+                                style={{ fontSize: 11, fontWeight: 600, color: "#334155", background: "white", border: "1px solid #cbd5e1", borderRadius: 6, padding: "3px 8px", cursor: "pointer" }}
+                              >
+                                Batal
+                              </button>
+                            </div>
+                          ) : (
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
+                              {doc.kategori ? (
+                                <span style={{ display: "inline-block", fontSize: 11, fontWeight: 600, color: "#8a1f2f", background: "#fdf2f2", borderRadius: 6, padding: "2px 8px", border: "1px solid #f9dade" }}>
+                                  {doc.kategori}
+                                </span>
+                              ) : (
+                                <span style={{ fontSize: 11, color: "#94a3b8", fontStyle: "italic" }}>Tanpa kategori</span>
+                              )}
+                              <button
+                                onClick={() => startEditCategory(doc)}
+                                title="Edit kategori"
+                                style={{ border: "none", background: "none", color: "#94a3b8", fontSize: 11, cursor: "pointer", padding: "2px 4px" }}
+                              >
+                                ✏️
+                              </button>
+                            </div>
                           )}
+
                           <div style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>
                             {new Date(doc.uploadedAt).toLocaleString("id-ID")} · {doc.uploadedBy} · {doc.sharedTo.length} user
                           </div>
