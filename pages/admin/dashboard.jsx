@@ -7,9 +7,18 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [openPickerDoc, setOpenPickerDoc] = useState(null); // documentId whose picker panel is open
-  const [selectedUsers, setSelectedUsers] = useState({}); // { [documentId]: string[] }
+
+  const [openPickerDoc, setOpenPickerDoc] = useState(null); // documentId whose "add access" panel is open
+  const [selectedUsers, setSelectedUsers] = useState({}); // { [documentId]: string[] } — users picked to GRANT
+
+  const [expandedDoc, setExpandedDoc] = useState(null); // documentId whose "Kelola Akses" section is expanded
+  const [selectedRevoke, setSelectedRevoke] = useState({}); // { [documentId]: string[] } — users picked to REVOKE
+
+  const [selectedDocs, setSelectedDocs] = useState([]); // documentIds picked for bulk delete
+  const [sortNewestFirst, setSortNewestFirst] = useState(true);
+
   const [busyDoc, setBusyDoc] = useState(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [query, setQuery] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
   const router = useRouter();
@@ -48,6 +57,7 @@ export default function AdminDashboard() {
     }
   }
 
+  // ---- GRANT (tambah akses) ----
   function toggleUserSelected(documentId, username) {
     setSelectedUsers((prev) => {
       const current = prev[documentId] || [];
@@ -99,6 +109,7 @@ export default function AdminDashboard() {
     }
   }
 
+  // ---- REVOKE (akhiri akses) — single + multi-select batch ----
   async function handleRevoke(documentId, username) {
     if (!confirm(`Akhiri akses ${username} ke dokumen ini?`)) return;
     setBusyDoc(documentId);
@@ -118,6 +129,39 @@ export default function AdminDashboard() {
     }
   }
 
+  function toggleRevokeSelected(documentId, username) {
+    setSelectedRevoke((prev) => {
+      const current = prev[documentId] || [];
+      const next = current.includes(username)
+        ? current.filter((u) => u !== username)
+        : [...current, username];
+      return { ...prev, [documentId]: next };
+    });
+  }
+
+  async function handleRevokeSelected(documentId) {
+    const usernames = selectedRevoke[documentId] || [];
+    if (usernames.length === 0) return;
+    if (!confirm(`Akhiri akses ${usernames.length} user sekaligus dari dokumen ini?`)) return;
+    setBusyDoc(documentId);
+    try {
+      const res = await fetch("/api/admin/revoke-access-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId, usernames }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal mengakhiri akses");
+      setSelectedRevoke((prev) => ({ ...prev, [documentId]: [] }));
+      await loadAll();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setBusyDoc(null);
+    }
+  }
+
+  // ---- DELETE — single + bulk ----
   async function handleDelete(documentId, namaDokumen) {
     if (!confirm(`Hapus permanen "${namaDokumen}"? File akan dihapus dari Google Drive juga.`)) return;
     setBusyDoc(documentId);
@@ -137,19 +181,73 @@ export default function AdminDashboard() {
     }
   }
 
-  const filteredDocuments = documents.filter((doc) => {
-    const q = query.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      doc.namaDokumen.toLowerCase().includes(q) ||
-      (doc.kategori || "").toLowerCase().includes(q) ||
-      doc.sharedTo.some((u) => u.toLowerCase().includes(q))
+  function toggleDocSelected(documentId) {
+    setSelectedDocs((prev) =>
+      prev.includes(documentId) ? prev.filter((id) => id !== documentId) : [...prev, documentId]
     );
-  });
+  }
+
+  async function handleBulkDelete() {
+    if (selectedDocs.length === 0) return;
+    if (!confirm(`Hapus permanen ${selectedDocs.length} dokumen terpilih? File akan dihapus dari Google Drive juga.`)) return;
+    setBulkBusy(true);
+    try {
+      const res = await fetch("/api/admin/delete-documents-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentIds: selectedDocs }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menghapus dokumen");
+      setSelectedDocs([]);
+      if (data.skipped && data.skipped.length > 0) {
+        alert(
+          `${data.deleted} dokumen dihapus. ${data.skipped.length} dilewati (masih dibagikan ke user, akhiri dulu share-nya): ${data.skipped
+            .map((s) => s.namaDokumen || s.documentId)
+            .join(", ")}`
+        );
+      }
+      await loadAll();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  // ---- Filter + sort ----
+  const filteredDocuments = documents
+    .filter((doc) => {
+      const q = query.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        doc.namaDokumen.toLowerCase().includes(q) ||
+        (doc.kategori || "").toLowerCase().includes(q) ||
+        doc.sharedTo.some((u) => u.toLowerCase().includes(q))
+      );
+    })
+    .sort((a, b) => {
+      const diff = new Date(a.uploadedAt) - new Date(b.uploadedAt);
+      return sortNewestFirst ? -diff : diff;
+    });
+
+  const selectableDocIds = filteredDocuments
+    .filter((d) => d.sharedTo.length === 0)
+    .map((d) => d.documentId);
+  const allSelectableChecked =
+    selectableDocIds.length > 0 && selectableDocIds.every((id) => selectedDocs.includes(id));
+
+  function toggleSelectAll() {
+    if (allSelectableChecked) {
+      setSelectedDocs((prev) => prev.filter((id) => !selectableDocIds.includes(id)));
+    } else {
+      setSelectedDocs((prev) => [...new Set([...prev, ...selectableDocIds])]);
+    }
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", color: "#0f172a", paddingBottom: 60 }}>
-      
+
       {/* HEADER BAR ADMIN */}
       <header style={{ height: 64, borderBottom: "1px solid #e2e8f0", background: "rgba(255,255,255,0.9)", backdropFilter: "blur(8px)", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 30 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -179,7 +277,7 @@ export default function AdminDashboard() {
 
       {/* KONTEN UTAMA ADMIN */}
       <div style={{ maxWidth: 880, margin: "0 auto", padding: "32px 20px" }}>
-        
+
         {/* KOP HEADER BERGRADASI ADMIN */}
         <div style={{ overflow: "hidden", borderRadius: 20, border: "1px solid #e2e8f0", boxShadow: "0 4px 12px rgba(15,23,42,0.05)", marginBottom: 24 }}>
           <div style={{ background: "linear-gradient(135deg, #000000 0%, #1a0307 50%, #6b1826 100%)", padding: "28px 24px", color: "white" }}>
@@ -205,17 +303,51 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* KOTAK PENCARIAN */}
+        {/* KOTAK PENCARIAN + SORT */}
         {!loading && documents.length > 0 && (
-          <div style={{ position: "relative", marginBottom: 20 }}>
-            <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}>🔍</span>
-            <input
-              type="text"
-              style={{ width: "100%", padding: "11px 14px 11px 38px", border: "1px solid #cbd5e1", borderRadius: 12, fontSize: 13, background: "white", color: "#0f172a", outline: "none", boxShadow: "0 1px 2px rgba(15,23,42,0.04)" }}
-              placeholder="Cari nama dokumen, kategori, atau username..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <div style={{ position: "relative", flex: 1 }}>
+              <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}>🔍</span>
+              <input
+                type="text"
+                style={{ width: "100%", padding: "11px 14px 11px 38px", border: "1px solid #cbd5e1", borderRadius: 12, fontSize: 13, background: "white", color: "#0f172a", outline: "none", boxShadow: "0 1px 2px rgba(15,23,42,0.04)" }}
+                placeholder="Cari nama dokumen, kategori, atau username..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setSortNewestFirst((s) => !s)}
+              title="Urutkan berdasarkan tanggal upload"
+              style={{ padding: "0 16px", borderRadius: 12, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+            >
+              {sortNewestFirst ? "↓ Terbaru" : "↑ Terlama"}
+            </button>
+          </div>
+        )}
+
+        {/* TOOLBAR BULK ACTION */}
+        {!loading && filteredDocuments.length > 0 && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, padding: "8px 4px" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#64748b", cursor: selectableDocIds.length > 0 ? "pointer" : "default" }}>
+              <input
+                type="checkbox"
+                checked={allSelectableChecked}
+                disabled={selectableDocIds.length === 0}
+                onChange={toggleSelectAll}
+              />
+              {selectedDocs.length > 0 ? `${selectedDocs.length} dokumen dipilih` : "Pilih semua"}
+            </label>
+            {selectedDocs.length > 0 && (
+              <button
+                onClick={handleBulkDelete}
+                disabled={bulkBusy}
+                style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #dc2626", background: bulkBusy ? "#fca5a5" : "#dc2626", color: "white", fontSize: 12, fontWeight: 700, cursor: bulkBusy ? "not-allowed" : "pointer" }}
+              >
+                {bulkBusy ? "Menghapus..." : `Hapus ${selectedDocs.length} Dokumen Terpilih`}
+              </button>
+            )}
           </div>
         )}
 
@@ -224,7 +356,7 @@ export default function AdminDashboard() {
 
         {/* DAFTAR KARTU DOKUMEN ADMIN */}
         {!loading && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {filteredDocuments.length === 0 ? (
               <div style={{ textAlign: "center", color: "#64748b", padding: "48px 20px", fontSize: 13, background: "white", borderRadius: 20, border: "1px dashed #cbd5e1" }}>
                 {documents.length === 0 ? "Belum ada dokumen yang diupload." : "Tidak ada dokumen yang cocok dengan pencarian."}
@@ -233,144 +365,191 @@ export default function AdminDashboard() {
               filteredDocuments.map((doc) => {
                 const availableUsers = users.filter((u) => !doc.sharedTo.includes(u.username));
                 const isBusy = busyDoc === doc.documentId;
+                const isExpanded = expandedDoc === doc.documentId;
+                const canDelete = doc.sharedTo.length === 0;
 
                 return (
-                  <div key={doc.documentId} style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: 16, boxShadow: "0 1px 3px rgba(15,23,42,0.04)", padding: 20, opacity: isBusy ? 0.6 : 1 }}>
+                  <div key={doc.documentId} style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: 16, boxShadow: "0 1px 3px rgba(15,23,42,0.04)", padding: 16, opacity: isBusy ? 0.6 : 1 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: 15, color: "#1e293b" }}>{doc.namaDokumen}</div>
-                        {doc.kategori && (
-                          <span style={{ display: "inline-block", fontSize: 11, fontWeight: 600, color: "#8a1f2f", background: "#fdf2f2", borderRadius: 6, padding: "2px 8px", marginTop: 6, border: "1px solid #f9dade" }}>
-                            {doc.kategori}
-                          </span>
-                        )}
-                        <div style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>
-                          Diupload {new Date(doc.uploadedAt).toLocaleString("id-ID")} oleh <b>{doc.uploadedBy}</b>
+                      <div style={{ display: "flex", gap: 10, alignItems: "flex-start", minWidth: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedDocs.includes(doc.documentId)}
+                          disabled={!canDelete}
+                          title={canDelete ? "Pilih untuk hapus massal" : "Masih dibagikan — tidak bisa dihapus"}
+                          onChange={() => toggleDocSelected(doc.documentId)}
+                          style={{ marginTop: 4, flexShrink: 0 }}
+                        />
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontWeight: 700, fontSize: 14, color: "#1e293b", wordBreak: "break-word" }}>{doc.namaDokumen}</div>
+                          {doc.kategori && (
+                            <span style={{ display: "inline-block", fontSize: 11, fontWeight: 600, color: "#8a1f2f", background: "#fdf2f2", borderRadius: 6, padding: "2px 8px", marginTop: 6, border: "1px solid #f9dade" }}>
+                              {doc.kategori}
+                            </span>
+                          )}
+                          <div style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>
+                            {new Date(doc.uploadedAt).toLocaleString("id-ID")} · {doc.uploadedBy} · {doc.sharedTo.length} user
+                          </div>
                         </div>
                       </div>
 
-                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
+                      <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
                         <Link
                           href={`/viewer/${doc.documentId}`}
-                          style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, textDecoration: "none" }}
+                          style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 11, fontWeight: 600, textDecoration: "none" }}
                         >
                           Lihat
                         </Link>
                         <a
                           href={`/api/documents/download?documentId=${doc.documentId}`}
-                          style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, textDecoration: "none" }}
+                          style={{ padding: "6px 9px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 11, fontWeight: 600, textDecoration: "none" }}
                           title="Download file asli"
                         >
                           ⬇
                         </a>
                         <button
-                          disabled={isBusy || doc.sharedTo.length > 0}
+                          onClick={() => setExpandedDoc(isExpanded ? null : doc.documentId)}
+                          style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: isExpanded ? "#fdf2f2" : "white", color: "#8a1f2f", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                        >
+                          Kelola Akses {isExpanded ? "▲" : "▼"}
+                        </button>
+                        <button
+                          disabled={isBusy || !canDelete}
                           onClick={() => handleDelete(doc.documentId, doc.namaDokumen)}
-                          title={doc.sharedTo.length > 0 ? "Akhiri semua share dulu sebelum menghapus" : "Hapus dokumen permanen"}
-                          style={{ background: "transparent", border: "none", color: doc.sharedTo.length > 0 ? "#94a3b8" : "#dc2626", fontSize: 13, fontWeight: 600, cursor: doc.sharedTo.length > 0 ? "not-allowed" : "pointer", padding: "6px 4px" }}
+                          title={canDelete ? "Hapus dokumen permanen" : "Akhiri semua share dulu sebelum menghapus"}
+                          style={{ background: "transparent", border: "none", color: canDelete ? "#dc2626" : "#cbd5e1", fontSize: 12, fontWeight: 600, cursor: canDelete ? "pointer" : "not-allowed", padding: "6px 4px" }}
                         >
                           Hapus
                         </button>
                       </div>
                     </div>
 
-                    <hr style={{ border: "none", borderTop: "1px solid #f1f5f9", margin: "16px 0" }} />
+                    {isExpanded && (
+                      <>
+                        <hr style={{ border: "none", borderTop: "1px solid #f1f5f9", margin: "14px 0" }} />
 
-                    {/* DAFTAR USER YANG DIBAGIKAN */}
-                    <div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 8 }}>
-                        Dibagikan ke ({doc.sharedTo.length} user)
-                      </div>
-                      {doc.sharedTo.length === 0 && (
-                        <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 10, fontStyle: "italic" }}>
-                          Belum dibagikan ke siapa pun.
-                        </div>
-                      )}
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                        {doc.sharedTo.map((username) => (
-                          <span key={username} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fdf2f2", color: "#8a1f2f", border: "1px solid #f9dade", borderRadius: 999, padding: "3px 8px 3px 12px", fontSize: 12, fontWeight: 500 }}>
-                            {username}
-                            <button
-                              disabled={isBusy}
-                              onClick={() => handleRevoke(doc.documentId, username)}
-                              title="Akhiri akses"
-                              style={{ border: "none", background: "#f9dade", color: "#8a1f2f", width: 16, height: 16, borderRadius: "50%", fontSize: 11, lineHeight: 1, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0 }}
-                            >
-                              ×
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* TAMBAH AKSES USER — multi-select */}
-                    {availableUsers.length > 0 && (
-                      <div style={{ marginTop: 14 }}>
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <button
-                            type="button"
-                            disabled={isBusy}
-                            onClick={() =>
-                              setOpenPickerDoc((prev) => (prev === doc.documentId ? null : doc.documentId))
-                            }
-                            style={{ flex: 1, padding: "8px 12px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 13, background: "white", color: "#334155", textAlign: "left", cursor: "pointer" }}
-                          >
-                            {(selectedUsers[doc.documentId] || []).length > 0
-                              ? `${(selectedUsers[doc.documentId] || []).length} user dipilih`
-                              : "Pilih user untuk ditambahkan akses..."}
-                            <span style={{ float: "right" }}>{openPickerDoc === doc.documentId ? "▲" : "▼"}</span>
-                          </button>
-                          <button
-                            disabled={isBusy}
-                            onClick={() => handleGrantAll(doc.documentId)}
-                            title={`Bagikan ke ${availableUsers.length} user aktif lainnya sekaligus`}
-                            style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
-                          >
-                            Bagikan ke Semua
-                          </button>
-                        </div>
-
-                        {openPickerDoc === doc.documentId && (
-                          <div style={{ marginTop: 8, border: "1px solid #e2e8f0", borderRadius: 8, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.06)" }}>
-                            <div style={{ maxHeight: 220, overflowY: "auto", padding: 6 }}>
-                              {availableUsers.map((u) => {
-                                const checked = (selectedUsers[doc.documentId] || []).includes(u.username);
-                                return (
-                                  <label
-                                    key={u.username}
-                                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 8px", borderRadius: 6, fontSize: 13, cursor: "pointer", background: checked ? "#fef2f2" : "transparent" }}
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={checked}
-                                      onChange={() => toggleUserSelected(doc.documentId, u.username)}
-                                    />
-                                    <span>
-                                      {u.nama} ({u.username}) — {u.role}
-                                    </span>
-                                  </label>
-                                );
-                              })}
+                        {/* DAFTAR USER YANG DIBAGIKAN — dengan multi-select revoke */}
+                        <div>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: "#334155" }}>
+                              Dibagikan ke ({doc.sharedTo.length} user)
                             </div>
-                            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: 8, borderTop: "1px solid #f1f5f9" }}>
+                            {(selectedRevoke[doc.documentId] || []).length > 0 && (
+                              <button
+                                disabled={isBusy}
+                                onClick={() => handleRevokeSelected(doc.documentId)}
+                                style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #dc2626", background: "white", color: "#dc2626", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                              >
+                                Akhiri {(selectedRevoke[doc.documentId] || []).length} Terpilih
+                              </button>
+                            )}
+                          </div>
+                          {doc.sharedTo.length === 0 && (
+                            <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 10, fontStyle: "italic" }}>
+                              Belum dibagikan ke siapa pun.
+                            </div>
+                          )}
+                          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                            {doc.sharedTo.map((username) => {
+                              const checked = (selectedRevoke[doc.documentId] || []).includes(username);
+                              return (
+                                <label
+                                  key={username}
+                                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 8px", borderRadius: 6, fontSize: 12, background: checked ? "#fef2f2" : "#fafafa", cursor: "pointer" }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() => toggleRevokeSelected(doc.documentId, username)}
+                                  />
+                                  <span style={{ flex: 1 }}>{username}</span>
+                                  <button
+                                    disabled={isBusy}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      handleRevoke(doc.documentId, username);
+                                    }}
+                                    title="Akhiri akses user ini saja"
+                                    style={{ border: "none", background: "none", color: "#dc2626", fontSize: 12, cursor: "pointer", fontWeight: 700 }}
+                                  >
+                                    ×
+                                  </button>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* TAMBAH AKSES USER — multi-select */}
+                        {availableUsers.length > 0 && (
+                          <div style={{ marginTop: 14 }}>
+                            <div style={{ display: "flex", gap: 8 }}>
                               <button
                                 type="button"
-                                onClick={() => setOpenPickerDoc(null)}
-                                style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                                disabled={isBusy}
+                                onClick={() =>
+                                  setOpenPickerDoc((prev) => (prev === doc.documentId ? null : doc.documentId))
+                                }
+                                style={{ flex: 1, padding: "8px 12px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 13, background: "white", color: "#334155", textAlign: "left", cursor: "pointer" }}
                               >
-                                Batal
+                                {(selectedUsers[doc.documentId] || []).length > 0
+                                  ? `${(selectedUsers[doc.documentId] || []).length} user dipilih`
+                                  : "Pilih user untuk ditambahkan akses..."}
+                                <span style={{ float: "right" }}>{openPickerDoc === doc.documentId ? "▲" : "▼"}</span>
                               </button>
                               <button
-                                disabled={isBusy || (selectedUsers[doc.documentId] || []).length === 0}
-                                onClick={() => handleGrantSelected(doc.documentId)}
-                                style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #8a1f2f", background: "#8a1f2f", color: "white", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                                disabled={isBusy}
+                                onClick={() => handleGrantAll(doc.documentId)}
+                                title={`Bagikan ke ${availableUsers.length} user aktif lainnya sekaligus`}
+                                style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
                               >
-                                Tambah ({(selectedUsers[doc.documentId] || []).length})
+                                Bagikan ke Semua
                               </button>
                             </div>
+
+                            {openPickerDoc === doc.documentId && (
+                              <div style={{ marginTop: 8, border: "1px solid #e2e8f0", borderRadius: 8, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.06)" }}>
+                                <div style={{ maxHeight: 220, overflowY: "auto", padding: 6 }}>
+                                  {availableUsers.map((u) => {
+                                    const checked = (selectedUsers[doc.documentId] || []).includes(u.username);
+                                    return (
+                                      <label
+                                        key={u.username}
+                                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 8px", borderRadius: 6, fontSize: 13, cursor: "pointer", background: checked ? "#fef2f2" : "transparent" }}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={checked}
+                                          onChange={() => toggleUserSelected(doc.documentId, u.username)}
+                                        />
+                                        <span>
+                                          {u.nama} ({u.username}) — {u.role}
+                                        </span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: 8, borderTop: "1px solid #f1f5f9" }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => setOpenPickerDoc(null)}
+                                    style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                                  >
+                                    Batal
+                                  </button>
+                                  <button
+                                    disabled={isBusy || (selectedUsers[doc.documentId] || []).length === 0}
+                                    onClick={() => handleGrantSelected(doc.documentId)}
+                                    style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #8a1f2f", background: "#8a1f2f", color: "white", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                                  >
+                                    Tambah ({(selectedUsers[doc.documentId] || []).length})
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
-                      </div>
+                      </>
                     )}
                   </div>
                 );

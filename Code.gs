@@ -81,6 +81,10 @@ function doPost(e) {
         assertGenericTab_(body.tab);
         return jsonOut_(deleteRows_(body.tab, body.match));
 
+      case "deleteRowsBatch":
+        assertGenericTab_(body.tab);
+        return jsonOut_(deleteRowsBatch_(body.tab, body.matches));
+
       case "getUsersSafe":
         return jsonOut_({ users: getUsersSafe_() });
 
@@ -346,6 +350,40 @@ function deleteRows_(tab, match) {
     const isMatch = matchKeys.every((k) => String(obj[k]) === String(match[k]));
     if (isMatch) {
       sheet.deleteRow(i + 2); // +1 header, +1 for 1-index
+      deleted++;
+    }
+  }
+  return { success: true, deleted };
+}
+
+/**
+ * Deletes every row that matches ANY of the given match objects (each
+ * match object itself is an AND of its fields, like deleteRows_ — the
+ * array of them is an OR). Used for bulk actions: delete many documents
+ * at once ([{documentId: A}, {documentId: B}, ...]), or revoke many
+ * users' access to one document at once
+ * ([{documentId: X, userEmail: u1}, {documentId: X, userEmail: u2}, ...]).
+ */
+function deleteRowsBatch_(tab, matches) {
+  if (!Array.isArray(matches) || matches.length === 0) {
+    throw new Error("deleteRowsBatch requires at least one match object");
+  }
+  const sheet = getSheet_(tab);
+  const cols = GENERIC_SCHEMAS[tab];
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { success: true, deleted: 0 };
+
+  const values = sheet.getRange(2, 1, lastRow - 1, cols.length).getValues();
+  let deleted = 0;
+  for (let i = values.length - 1; i >= 0; i--) {
+    const obj = rowToObject_(tab, values[i]);
+    const matchesAny = matches.some((match) => {
+      const keys = Object.keys(match || {});
+      return keys.length > 0 && keys.every((k) => String(obj[k]) === String(match[k]));
+    });
+    if (matchesAny) {
+      sheet.deleteRow(i + 2);
       deleted++;
     }
   }
