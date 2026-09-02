@@ -7,7 +7,8 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [pickedUser, setPickedUser] = useState({});
+  const [openPickerDoc, setOpenPickerDoc] = useState(null); // documentId whose picker panel is open
+  const [selectedUsers, setSelectedUsers] = useState({}); // { [documentId]: string[] }
   const [busyDoc, setBusyDoc] = useState(null);
   const [query, setQuery] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
@@ -47,18 +48,30 @@ export default function AdminDashboard() {
     }
   }
 
-  async function handleGrant(documentId) {
-    const username = pickedUser[documentId];
-    if (!username) return;
+  function toggleUserSelected(documentId, username) {
+    setSelectedUsers((prev) => {
+      const current = prev[documentId] || [];
+      const next = current.includes(username)
+        ? current.filter((u) => u !== username)
+        : [...current, username];
+      return { ...prev, [documentId]: next };
+    });
+  }
+
+  async function handleGrantSelected(documentId) {
+    const usernames = selectedUsers[documentId] || [];
+    if (usernames.length === 0) return;
     setBusyDoc(documentId);
     try {
-      const res = await fetch("/api/admin/grant-access", {
+      const res = await fetch("/api/admin/grant-access-batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId, username }),
+        body: JSON.stringify({ documentId, usernames }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal menambah akses");
+      setSelectedUsers((prev) => ({ ...prev, [documentId]: [] }));
+      setOpenPickerDoc(null);
       await loadAll();
     } catch (err) {
       alert(err.message);
@@ -290,37 +303,73 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
-                    {/* TAMBAH AKSES USER */}
+                    {/* TAMBAH AKSES USER — multi-select */}
                     {availableUsers.length > 0 && (
-                      <div style={{ marginTop: 14, display: "flex", gap: 8 }}>
-                        <select
-                          disabled={isBusy}
-                          value={pickedUser[doc.documentId] || ""}
-                          onChange={(e) => setPickedUser((prev) => ({ ...prev, [doc.documentId]: e.target.value }))}
-                          style={{ flex: 1, padding: "8px 12px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 13, background: "white", outline: "none" }}
-                        >
-                          <option value="">Pilih user untuk ditambahkan akses...</option>
-                          {availableUsers.map((u) => (
-                            <option key={u.username} value={u.username}>
-                              {u.nama} ({u.username}) — {u.role}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          disabled={isBusy || !pickedUser[doc.documentId]}
-                          onClick={() => handleGrant(doc.documentId)}
-                          style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #8a1f2f", background: "#8a1f2f", color: "white", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-                        >
-                          Tambah
-                        </button>
-                        <button
-                          disabled={isBusy}
-                          onClick={() => handleGrantAll(doc.documentId)}
-                          title={`Bagikan ke ${availableUsers.length} user aktif lainnya sekaligus`}
-                          style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
-                        >
-                          Bagikan ke Semua
-                        </button>
+                      <div style={{ marginTop: 14 }}>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() =>
+                              setOpenPickerDoc((prev) => (prev === doc.documentId ? null : doc.documentId))
+                            }
+                            style={{ flex: 1, padding: "8px 12px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 13, background: "white", color: "#334155", textAlign: "left", cursor: "pointer" }}
+                          >
+                            {(selectedUsers[doc.documentId] || []).length > 0
+                              ? `${(selectedUsers[doc.documentId] || []).length} user dipilih`
+                              : "Pilih user untuk ditambahkan akses..."}
+                            <span style={{ float: "right" }}>{openPickerDoc === doc.documentId ? "▲" : "▼"}</span>
+                          </button>
+                          <button
+                            disabled={isBusy}
+                            onClick={() => handleGrantAll(doc.documentId)}
+                            title={`Bagikan ke ${availableUsers.length} user aktif lainnya sekaligus`}
+                            style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+                          >
+                            Bagikan ke Semua
+                          </button>
+                        </div>
+
+                        {openPickerDoc === doc.documentId && (
+                          <div style={{ marginTop: 8, border: "1px solid #e2e8f0", borderRadius: 8, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.06)" }}>
+                            <div style={{ maxHeight: 220, overflowY: "auto", padding: 6 }}>
+                              {availableUsers.map((u) => {
+                                const checked = (selectedUsers[doc.documentId] || []).includes(u.username);
+                                return (
+                                  <label
+                                    key={u.username}
+                                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 8px", borderRadius: 6, fontSize: 13, cursor: "pointer", background: checked ? "#fef2f2" : "transparent" }}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={() => toggleUserSelected(doc.documentId, u.username)}
+                                    />
+                                    <span>
+                                      {u.nama} ({u.username}) — {u.role}
+                                    </span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: 8, borderTop: "1px solid #f1f5f9" }}>
+                              <button
+                                type="button"
+                                onClick={() => setOpenPickerDoc(null)}
+                                style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                              >
+                                Batal
+                              </button>
+                              <button
+                                disabled={isBusy || (selectedUsers[doc.documentId] || []).length === 0}
+                                onClick={() => handleGrantSelected(doc.documentId)}
+                                style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #8a1f2f", background: "#8a1f2f", color: "white", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                              >
+                                Tambah ({(selectedUsers[doc.documentId] || []).length})
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
