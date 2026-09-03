@@ -15,7 +15,7 @@ export default function AdminDashboard() {
   const [selectedRevoke, setSelectedRevoke] = useState({}); // { [documentId]: string[] } — users picked to REVOKE
 
   const [selectedDocs, setSelectedDocs] = useState([]); // documentIds picked for bulk delete
-  const [sortNewestFirst, setSortNewestFirst] = useState(true);
+  const [sortBy, setSortBy] = useState("newest"); // newest | oldest | name-asc | name-desc
   const [selectedCategory, setSelectedCategory] = useState(null); // null = semua kategori
   const [editingCategoryDoc, setEditingCategoryDoc] = useState(null); // documentId being edited
   const [categoryDraft, setCategoryDraft] = useState("");
@@ -268,8 +268,17 @@ export default function AdminDashboard() {
       );
     })
     .sort((a, b) => {
-      const diff = new Date(a.uploadedAt) - new Date(b.uploadedAt);
-      return sortNewestFirst ? -diff : diff;
+      switch (sortBy) {
+        case "oldest":
+          return new Date(a.uploadedAt) - new Date(b.uploadedAt);
+        case "name-asc":
+          return a.namaDokumen.localeCompare(b.namaDokumen);
+        case "name-desc":
+          return b.namaDokumen.localeCompare(a.namaDokumen);
+        case "newest":
+        default:
+          return new Date(b.uploadedAt) - new Date(a.uploadedAt);
+      }
     });
 
   const selectableDocIds = filteredDocuments
@@ -434,14 +443,17 @@ export default function AdminDashboard() {
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
-            <button
-              type="button"
-              onClick={() => setSortNewestFirst((s) => !s)}
-              title="Urutkan berdasarkan tanggal upload"
-              style={{ padding: "0 16px", borderRadius: 12, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              title="Urutkan dokumen"
+              style={{ padding: "0 14px", borderRadius: 12, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
             >
-              {sortNewestFirst ? "↓ Terbaru" : "↑ Terlama"}
-            </button>
+              <option value="newest">↓ Terbaru Diupload</option>
+              <option value="oldest">↑ Terlama Diupload</option>
+              <option value="name-asc">A → Z Nama Dokumen</option>
+              <option value="name-desc">Z → A Nama Dokumen</option>
+            </select>
           </div>
         )}
 

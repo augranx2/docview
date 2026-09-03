@@ -8,6 +8,7 @@ export default function DocumentListPage() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(null); // null = semua kategori
+  const [sortBy, setSortBy] = useState("newest"); // newest | oldest | name-asc | name-desc
   const [user, setUser] = useState({ role: null, nama: "", username: "" });
   const [loggingOut, setLoggingOut] = useState(false);
   
@@ -107,15 +108,29 @@ export default function DocumentListPage() {
   }, {});
   const categoryList = Object.keys(categoryCounts).sort((a, b) => a.localeCompare(b));
 
-  const filtered = docs.filter((doc) => {
-    if (selectedCategory && (doc.kategori || UNCATEGORIZED) !== selectedCategory) return false;
-    const q = query.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      doc.namaDokumen.toLowerCase().includes(q) ||
-      (doc.kategori || "").toLowerCase().includes(q)
-    );
-  });
+  const filtered = docs
+    .filter((doc) => {
+      if (selectedCategory && (doc.kategori || UNCATEGORIZED) !== selectedCategory) return false;
+      const q = query.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        doc.namaDokumen.toLowerCase().includes(q) ||
+        (doc.kategori || "").toLowerCase().includes(q)
+      );
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "oldest":
+          return new Date(a.uploadedAt) - new Date(b.uploadedAt);
+        case "name-asc":
+          return a.namaDokumen.localeCompare(b.namaDokumen);
+        case "name-desc":
+          return b.namaDokumen.localeCompare(a.namaDokumen);
+        case "newest":
+        default:
+          return new Date(b.uploadedAt) - new Date(a.uploadedAt);
+      }
+    });
 
   const avatarLetter = (user.nama || user.username || "U").charAt(0).toUpperCase();
 
@@ -277,17 +292,30 @@ export default function DocumentListPage() {
           {/* AREA KONTEN DOKUMEN */}
           <div style={{ flex: 1, minWidth: 0 }}>
 
-        {/* PENCARIAN */}
+        {/* PENCARIAN + SORT */}
         {!loading && docs.length > 0 && (
-          <div style={{ position: "relative", marginBottom: 20 }}>
-            <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}>🔍</span>
-            <input
-              type="text"
-              style={{ width: "100%", padding: "11px 14px 11px 38px", border: "1px solid #cbd5e1", borderRadius: 12, fontSize: 13, background: "white", color: "#0f172a", outline: "none", boxShadow: "0 1px 2px rgba(15,23,42,0.04)" }}
-              placeholder="Cari nama dokumen atau kategori..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
+          <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+            <div style={{ position: "relative", flex: 1 }}>
+              <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}>🔍</span>
+              <input
+                type="text"
+                style={{ width: "100%", padding: "11px 14px 11px 38px", border: "1px solid #cbd5e1", borderRadius: 12, fontSize: 13, background: "white", color: "#0f172a", outline: "none", boxShadow: "0 1px 2px rgba(15,23,42,0.04)" }}
+                placeholder="Cari nama dokumen atau kategori..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              title="Urutkan dokumen"
+              style={{ padding: "0 14px", borderRadius: 12, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+            >
+              <option value="newest">↓ Terbaru Diupload</option>
+              <option value="oldest">↑ Terlama Diupload</option>
+              <option value="name-asc">A → Z Nama Dokumen</option>
+              <option value="name-desc">Z → A Nama Dokumen</option>
+            </select>
           </div>
         )}
 
