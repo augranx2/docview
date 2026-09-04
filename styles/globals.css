@@ -32,7 +32,13 @@ html,
 body {
   padding: 0;
   margin: 0;
-  background: var(--gray-50);
+  /* Biru sangat muda dengan sapuan lebih pekat di bagian atas halaman, supaya
+     kop header bergradasi terasa menyatu dengan halaman alih-alih ditempel.
+     background-attachment: fixed menjaga sapuan tetap di atas layar saat
+     halaman panjang di-scroll. */
+  background: linear-gradient(180deg, #e6eefb 0%, #eef3fb 180px, #f4f7fc 380px) no-repeat;
+  background-attachment: fixed;
+  background-color: #f4f7fc;
   color: var(--gray-900);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
     sans-serif;
