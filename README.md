@@ -32,7 +32,7 @@ lewat HTTPS ke action `login`, dan Apps Script yang membalas cocok/tidak.
 
 **Users**
 `Nama | Role | Username | Status | PasswordBaru | PasswordHash | Salt`
-- `Role`: `Admin` atau `Viewer`
+- `Role`: `Admin` atau `Viewer` (hanya dua role ini — role `Downloader` sudah dihapus)
 - `Status`: `Aktif` atau `Nonaktif`
 - Cara tambah user baru: isi `Nama`, `Role`, `Username`, `Status` = `Aktif`,
   lalu ketik password polos di `PasswordBaru`. Begitu ada yang login (siapa saja),
@@ -45,15 +45,44 @@ lewat HTTPS ke action `login`, dan Apps Script yang membalas cocok/tidak.
 - `status`: `pending` (baru dibuat, belum selesai upload) atau `active`
 
 **Document_Access**
-`documentId | userEmail | grantedBy | grantedAt`
+`documentId | userEmail | grantedBy | grantedAt | canDownload`
 - Satu baris = satu izin akses user ke satu dokumen
 - Kolom `userEmail` diisi **Username** (bukan alamat email asli), supaya konsisten
   dengan login berbasis Username
+- Kolom `canDownload` — izin men-download file asli untuk user itu **pada dokumen
+  itu saja**. **Cukup buat header kolomnya, jangan diisi manual**: app yang mengisi
+  `TRUE` saat izin diberikan, dan mengosongkannya kembali saat dicabut. Sel kosong
+  = lihat saja.
 
 **Audit_Log**
 `timestamp | userEmail | documentId | action | detail`
-- `action`: `LOGIN`, `LOGIN_FAILED`, `LOGOUT`, `UPLOAD`, `VIEW`, `DOWNLOAD`, `ACCESS_DENIED`, `ACCESS_GRANTED`, `ACCESS_REVOKED`, `DOCUMENT_DELETED`, `DOCUMENT_UPDATED`, `PASSWORD_CHANGED`, `PASSWORD_CHANGE_FAILED`
+- `action`: `LOGIN`, `LOGIN_FAILED`, `LOGOUT`, `UPLOAD`, `VIEW`, `DOWNLOAD`, `ACCESS_DENIED`, `ACCESS_GRANTED`, `ACCESS_REVOKED`, `DOWNLOAD_PERMISSION_CHANGED`, `DOCUMENT_DELETED`, `DOCUMENT_UPDATED`, `PASSWORD_CHANGED`, `PASSWORD_CHANGE_FAILED`
 - Baris `LOGIN`/`LOGIN_FAILED` ditulis langsung oleh Apps Script (di dalam action `login`)
+
+## Role & izin download
+
+Hanya ada dua role: **Admin** dan **Viewer**.
+
+- **Admin** — upload, kelola akses, lihat & download semua dokumen.
+- **Viewer** — secara default **hanya bisa melihat** dokumen yang dibagikan ke dia.
+
+Izin download **bukan lagi milik role**, tapi melekat pada pasangan
+*(dokumen, user)*: saat Admin membagikan sebuah dokumen ke seorang Viewer, Admin
+bisa mencentang "izinkan download" untuk dokumen itu. Jadi satu Viewer bisa
+boleh-download di dokumen A tapi hanya lihat di dokumen B.
+
+Cara mengaturnya:
+- **Saat upload** — centang "Izinkan user di atas men-download file asli" pada
+  file yang bersangkutan.
+- **Saat menambah akses di dashboard** — centang "Sekaligus beri izin download
+  file asli" sebelum menekan Tambah / Bagikan ke Semua.
+- **Kapan saja setelahnya** — buka "Kelola Akses" pada dokumen, klik label
+  `👁 Lihat saja` / `⬇ Boleh download` di sebelah nama user untuk membalikkannya.
+  Bisa juga massal: centang beberapa user lalu tekan "Izinkan Download" atau
+  "Lihat Saja". Mencabut izin download **tidak** mencabut akses lihat.
+
+Setiap perubahan izin tercatat di `Audit_Log` sebagai `DOWNLOAD_PERMISSION_CHANGED`,
+dan percobaan download tanpa izin tercatat sebagai `ACCESS_DENIED`.
 
 ## Alur
 
@@ -75,12 +104,18 @@ lewat HTTPS ke action `login`, dan Apps Script yang membalas cocok/tidak.
 
 ## Watermark file download
 
-Saat Admin/Downloader men-download file asli (bukan lewat viewer canvas), cap
-`public/watermark-controlled.png` otomatis ditempel ke setiap halaman PDF
-(semi-transparan, di tengah halaman) sebelum dikirim ke browser — file asli
-di Google Drive **tidak diubah**, watermark cuma ditempel pada salinan yang
-dikirim saat itu. Ini terpisah dari watermark teks dinamis (nama+waktu) yang
-muncul di viewer canvas.
+Saat Admin atau Viewer yang diberi izin download men-download file asli (bukan
+lewat viewer canvas), setiap halaman PDF dicap otomatis di **pojok kanan bawah**
+sebelum dikirim ke browser:
+
+- cap gambar `public/watermark-controlled.png` (semi-transparan), dan
+- dua baris teks tepat di atasnya: `Diunduh oleh: <Nama> (<username>)` dan
+  tanggal-jam unduh dalam WIB.
+
+File asli di Google Drive **tidak diubah** — cap hanya ditempel pada salinan yang
+dikirim saat itu, jadi dua orang yang men-download dokumen yang sama mendapat dua
+salinan dengan cap berbeda dan file yang bocor bisa ditelusuri ke pengunduhnya.
+Ini terpisah dari watermark teks miring berulang (nama+waktu) di viewer canvas.
 
 ## Batasan penting (baca sebelum deploy)
 

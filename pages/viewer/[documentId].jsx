@@ -8,7 +8,7 @@ export default function ViewerPage() {
   const containerRef = useRef(null);
   const [status, setStatus] = useState("loading"); // loading | ready | error
   const [errorMsg, setErrorMsg] = useState("");
-  const [role, setRole] = useState(null);
+  const [canDownload, setCanDownload] = useState(false);
 
   useEffect(() => {
     if (!documentId) return;
@@ -25,10 +25,9 @@ export default function ViewerPage() {
       // error in pdf.js.
       pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
-      // 0. Get current user email/role for the watermark and permission check.
+      // 0. Get current user email for the watermark.
       const meRes = await fetch("/api/auth/me");
       const me = meRes.ok ? await meRes.json() : { email: "", role: "" };
-      if (!cancelled) setRole(me.role || null);
 
       // 1. Ask the backend for permission + a short-lived view token.
       const tokenRes = await fetch("/api/documents/request-view", {
@@ -37,6 +36,9 @@ export default function ViewerPage() {
         body: JSON.stringify({ documentId }),
       });
       const tokenData = await tokenRes.json();
+      // The same call tells us whether this user may download THIS document
+      // (Admin always, a Viewer only if the Admin ticked the download box).
+      if (!cancelled) setCanDownload(!!tokenData.canDownload);
       if (!tokenRes.ok) {
         setStatus("error");
         setErrorMsg(tokenData.error || "Tidak bisa membuka dokumen");
@@ -151,7 +153,7 @@ export default function ViewerPage() {
         <Link href="/viewer" className="back-link">
           ← Kembali ke Dokumen Saya
         </Link>
-        {(role === "Admin" || role === "Downloader") && documentId && (
+        {canDownload && documentId && (
           <a href={`/api/documents/download?documentId=${documentId}`} className="btn btn-outline btn-sm">
             ⬇ Download File Asli
           </a>

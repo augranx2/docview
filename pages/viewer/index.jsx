@@ -97,7 +97,8 @@ export default function DocumentListPage() {
     }
   }
 
-  const canDownload = user.role === "Admin" || user.role === "Downloader";
+  // Download is no longer decided by role — each document carries its own
+  // canDownload flag for this user, set by the Admin when sharing it.
   const isAdmin = user.role === "Admin";
 
   const UNCATEGORIZED = "Tanpa Kategori";
@@ -188,7 +189,9 @@ export default function DocumentListPage() {
                   </span>
                   <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: "-0.02em" }}>Dokumen Saya</h1>
                   <p style={{ fontSize: 12, color: "#fbcfe8", margin: "4px 0 0" }}>
-                    {isAdmin ? "Akses penuh Administrator & daftar dokumen terkendali" : user.role === "Downloader" ? "Akses dokumen dengan izin unduh file asli" : "Akses khusus lihat dokumen (Read-Only)"}
+                    {isAdmin
+                      ? "Akses penuh Administrator & daftar dokumen terkendali"
+                      : "Dokumen yang dibagikan ke Anda — sebagian mungkin diberi izin unduh oleh Administrator"}
                   </p>
                 </div>
               </div>
@@ -364,7 +367,7 @@ export default function DocumentListPage() {
                       Lihat
                     </Link>
 
-                    {canDownload && (
+                    {doc.canDownload ? (
                       <a
                         href={`/api/documents/download?documentId=${doc.documentId}`}
                         style={{ padding: "8px 12px", borderRadius: 10, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, textDecoration: "none" }}
@@ -372,6 +375,13 @@ export default function DocumentListPage() {
                       >
                         ⬇ Download
                       </a>
+                    ) : (
+                      <span
+                        style={{ padding: "8px 12px", borderRadius: 10, border: "1px dashed #e2e8f0", color: "#94a3b8", fontSize: 11, fontWeight: 600 }}
+                        title="Dokumen ini dibagikan untuk dilihat saja"
+                      >
+                        👁 Lihat saja
+                      </span>
                     )}
                   </div>
                 </div>

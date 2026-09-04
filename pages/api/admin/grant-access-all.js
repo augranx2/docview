@@ -8,7 +8,7 @@ async function handler(req, res) {
   const session = await requireAdmin(req, res);
   if (!session) return;
 
-  const { documentId } = req.body;
+  const { documentId, canDownload } = req.body;
   if (!documentId) return res.status(400).json({ error: "documentId wajib diisi" });
 
   const [allUsers, existingAccess] = await Promise.all([
@@ -31,6 +31,7 @@ async function handler(req, res) {
     userEmail: u.username,
     grantedBy: session.email,
     grantedAt: now,
+    canDownload: canDownload ? "TRUE" : "",
   }));
 
   const added = await appendRows("Document_Access", rows);
@@ -39,7 +40,7 @@ async function handler(req, res) {
     userEmail: session.email,
     documentId,
     action: "ACCESS_GRANTED",
-    detail: `to all (${added} user)`,
+    detail: `to all (${added} user)${canDownload ? " (izin download)" : ""}`,
   });
 
   return res.status(200).json({ success: true, added });

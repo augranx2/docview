@@ -49,6 +49,7 @@ export default function UploadPage() {
         file: f,
         kategori: "",
         allowedUsers: "",
+        allowDownload: false,
         status: "pending", // pending | uploading | done | error
         progress: 0,
         errorMsg: "",
@@ -142,6 +143,7 @@ export default function UploadPage() {
         documentId: initData.documentId,
         driveFileId: driveFile.id,
         accessUserEmails,
+        allowDownload: entry.allowDownload,
       }),
     });
     const completeData = await completeRes.json();
@@ -340,6 +342,16 @@ export default function UploadPage() {
                     style={{ padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 12, outline: "none" }}
                   />
                 </div>
+
+                <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 11, color: "#475569", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={entry.allowDownload}
+                    disabled={uploading}
+                    onChange={(e) => updateFile(entry.id, { allowDownload: e.target.checked })}
+                  />
+                  Izinkan user di atas <strong>men-download file asli</strong> (default: lihat saja)
+                </label>
 
                 {entry.status === "uploading" && (
                   <div style={{ marginTop: 8 }}>

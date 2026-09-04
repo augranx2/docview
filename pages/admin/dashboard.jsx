@@ -10,6 +10,7 @@ export default function AdminDashboard() {
 
   const [openPickerDoc, setOpenPickerDoc] = useState(null); // documentId whose "add access" panel is open
   const [selectedUsers, setSelectedUsers] = useState({}); // { [documentId]: string[] } — users picked to GRANT
+  const [grantWithDownload, setGrantWithDownload] = useState({}); // { [documentId]: bool } — give download permission on grant
 
   const [expandedDoc, setExpandedDoc] = useState(null); // documentId whose "Kelola Akses" section is expanded
   const [selectedRevoke, setSelectedRevoke] = useState({}); // { [documentId]: string[] } — users picked to REVOKE
@@ -80,7 +81,11 @@ export default function AdminDashboard() {
       const res = await fetch("/api/admin/grant-access-batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId, usernames }),
+        body: JSON.stringify({
+          documentId,
+          usernames,
+          canDownload: !!grantWithDownload[documentId],
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal menambah akses");
@@ -95,13 +100,19 @@ export default function AdminDashboard() {
   }
 
   async function handleGrantAll(documentId) {
-    if (!confirm("Bagikan dokumen ini ke SEMUA user aktif?")) return;
+    const withDownload = !!grantWithDownload[documentId];
+    if (
+      !confirm(
+        `Bagikan dokumen ini ke SEMUA user aktif${withDownload ? " DENGAN izin download" : " (lihat saja)"}?`
+      )
+    )
+      return;
     setBusyDoc(documentId);
     try {
       const res = await fetch("/api/admin/grant-access-all", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId }),
+        body: JSON.stringify({ documentId, canDownload: withDownload }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal membagikan ke semua user");
@@ -157,6 +168,25 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal mengakhiri akses");
       setSelectedRevoke((prev) => ({ ...prev, [documentId]: [] }));
+      await loadAll();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setBusyDoc(null);
+    }
+  }
+
+  // ---- IZIN DOWNLOAD PER USER PER DOKUMEN ----
+  async function handleSetDownload(documentId, usernames, canDownload) {
+    setBusyDoc(documentId);
+    try {
+      const res = await fetch("/api/admin/set-download-permission", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId, usernames, canDownload }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal mengubah izin download");
       await loadAll();
     } catch (err) {
       alert(err.message);
@@ -264,7 +294,7 @@ export default function AdminDashboard() {
       return (
         doc.namaDokumen.toLowerCase().includes(q) ||
         (doc.kategori || "").toLowerCase().includes(q) ||
-        doc.sharedTo.some((u) => u.toLowerCase().includes(q))
+        doc.sharedTo.some((s) => s.username.toLowerCase().includes(q))
       );
     })
     .sort((a, b) => {
@@ -493,7 +523,9 @@ export default function AdminDashboard() {
               </div>
             ) : (
               filteredDocuments.map((doc) => {
-                const availableUsers = users.filter((u) => !doc.sharedTo.includes(u.username));
+                const sharedUsernames = doc.sharedTo.map((s) => s.username);
+                const availableUsers = users.filter((u) => !sharedUsernames.includes(u.username));
+                const downloadCount = doc.sharedTo.filter((s) => s.canDownload).length;
                 const isBusy = busyDoc === doc.documentId;
                 const isExpanded = expandedDoc === doc.documentId;
                 const canDelete = doc.sharedTo.length === 0;
@@ -563,6 +595,7 @@ export default function AdminDashboard() {
 
                           <div style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>
                             {new Date(doc.uploadedAt).toLocaleString("id-ID")} · {doc.uploadedBy} · {doc.sharedTo.length} user
+                            {downloadCount > 0 && ` · ${downloadCount} boleh download`}
                           </div>
                         </div>
                       </div>
@@ -609,22 +642,48 @@ export default function AdminDashboard() {
                               Dibagikan ke ({doc.sharedTo.length} user)
                             </div>
                             {(selectedRevoke[doc.documentId] || []).length > 0 && (
-                              <button
-                                disabled={isBusy}
-                                onClick={() => handleRevokeSelected(doc.documentId)}
-                                style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #dc2626", background: "white", color: "#dc2626", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
-                              >
-                                Akhiri {(selectedRevoke[doc.documentId] || []).length} Terpilih
-                              </button>
+                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                <button
+                                  disabled={isBusy}
+                                  onClick={() =>
+                                    handleSetDownload(doc.documentId, selectedRevoke[doc.documentId], true)
+                                  }
+                                  title="Beri izin download file asli untuk user terpilih"
+                                  style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #16a34a", background: "white", color: "#16a34a", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                                >
+                                  ⬇ Izinkan Download
+                                </button>
+                                <button
+                                  disabled={isBusy}
+                                  onClick={() =>
+                                    handleSetDownload(doc.documentId, selectedRevoke[doc.documentId], false)
+                                  }
+                                  title="Cabut izin download — user tetap bisa melihat dokumen"
+                                  style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                                >
+                                  👁 Lihat Saja
+                                </button>
+                                <button
+                                  disabled={isBusy}
+                                  onClick={() => handleRevokeSelected(doc.documentId)}
+                                  style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #dc2626", background: "white", color: "#dc2626", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                                >
+                                  Akhiri {(selectedRevoke[doc.documentId] || []).length} Terpilih
+                                </button>
+                              </div>
                             )}
                           </div>
-                          {doc.sharedTo.length === 0 && (
+                          {doc.sharedTo.length === 0 ? (
                             <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 10, fontStyle: "italic" }}>
                               Belum dibagikan ke siapa pun.
                             </div>
+                          ) : (
+                            <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 8 }}>
+                              Klik label di sebelah nama untuk mengatur izin download user tersebut pada dokumen ini.
+                            </div>
                           )}
                           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                            {doc.sharedTo.map((username) => {
+                            {doc.sharedTo.map(({ username, canDownload }) => {
                               const checked = (selectedRevoke[doc.documentId] || []).includes(username);
                               return (
                                 <label
@@ -637,6 +696,34 @@ export default function AdminDashboard() {
                                     onChange={() => toggleRevokeSelected(doc.documentId, username)}
                                   />
                                   <span style={{ flex: 1 }}>{username}</span>
+
+                                  {/* SAKELAR IZIN DOWNLOAD — per user, per dokumen */}
+                                  <button
+                                    disabled={isBusy}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      handleSetDownload(doc.documentId, [username], !canDownload);
+                                    }}
+                                    title={
+                                      canDownload
+                                        ? "Izin download AKTIF — klik untuk mencabut (jadi lihat saja)"
+                                        : "Lihat saja — klik untuk mengizinkan download file asli"
+                                    }
+                                    style={{
+                                      border: canDownload ? "1px solid #16a34a" : "1px solid #cbd5e1",
+                                      background: canDownload ? "#f0fdf4" : "white",
+                                      color: canDownload ? "#16a34a" : "#94a3b8",
+                                      fontSize: 10,
+                                      fontWeight: 700,
+                                      borderRadius: 6,
+                                      padding: "2px 8px",
+                                      cursor: "pointer",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    {canDownload ? "⬇ Boleh download" : "👁 Lihat saja"}
+                                  </button>
+
                                   <button
                                     disabled={isBusy}
                                     onClick={(e) => {
@@ -680,6 +767,24 @@ export default function AdminDashboard() {
                                 Bagikan ke Semua
                               </button>
                             </div>
+
+                            {/* PILIHAN IZIN DOWNLOAD SAAT MEMBAGIKAN */}
+                            <label
+                              style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 12, color: "#334155", cursor: "pointer" }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={!!grantWithDownload[doc.documentId]}
+                                onChange={(e) =>
+                                  setGrantWithDownload((prev) => ({
+                                    ...prev,
+                                    [doc.documentId]: e.target.checked,
+                                  }))
+                                }
+                              />
+                              Sekaligus beri izin <strong>download file asli</strong> untuk user yang dibagikan
+                              <span style={{ color: "#94a3b8" }}>(bisa diubah kapan saja setelahnya)</span>
+                            </label>
 
                             {openPickerDoc === doc.documentId && (
                               <div style={{ marginTop: 8, border: "1px solid #e2e8f0", borderRadius: 8, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.06)" }}>

@@ -1,6 +1,6 @@
 import { requireAdmin } from "../../../lib/auth";
 import { ensureFileIsPrivate } from "../../../lib/googleDrive";
-import { updateRowByKey, appendRow, logAudit } from "../../../lib/sheets";
+import { updateRowByKey, appendRows, logAudit } from "../../../lib/sheets";
 import { withErrorHandling } from "../../../lib/apiHandler";
 
 async function handler(req, res) {
@@ -9,7 +9,7 @@ async function handler(req, res) {
   const session = await requireAdmin(req, res);
   if (!session) return;
 
-  const { documentId, driveFileId, accessUserEmails } = req.body;
+  const { documentId, driveFileId, accessUserEmails, allowDownload } = req.body;
 
   if (!documentId || !driveFileId) {
     return res.status(400).json({ error: "documentId dan driveFileId wajib diisi" });
@@ -28,20 +28,23 @@ async function handler(req, res) {
   });
 
   const emails = Array.isArray(accessUserEmails) ? accessUserEmails : [];
-  for (const email of emails) {
-    await appendRow("Document_Access", {
+  const now = new Date().toISOString();
+  await appendRows(
+    "Document_Access",
+    emails.map((email) => ({
       documentId,
       userEmail: email,
       grantedBy: session.email,
-      grantedAt: new Date().toISOString(),
-    });
-  }
+      grantedAt: now,
+      canDownload: allowDownload ? "TRUE" : "",
+    }))
+  );
 
   await logAudit({
     userEmail: session.email,
     documentId,
     action: "UPLOAD",
-    detail: `Shared to ${emails.length} user(s)`,
+    detail: `Shared to ${emails.length} user(s)${allowDownload ? " (izin download)" : ""}`,
   });
 
   return res.status(200).json({ success: true });

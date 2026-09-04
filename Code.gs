@@ -21,12 +21,16 @@
  *
  * TAB YANG DIBUTUHKAN:
  *   Users            : Nama | Role | Username | Status | PasswordBaru | PasswordHash | Salt
- *                       (Role: Admin / Downloader / Viewer — Status: Aktif / Nonaktif)
+ *                       (Role: Admin / Viewer — Status: Aktif / Nonaktif)
  *   Documents        : documentId | namaDokumen | kategori | driveFileId |
  *                       uploadedBy | uploadedAt | status
- *   Document_Access  : documentId | userEmail | grantedBy | grantedAt
+ *   Document_Access  : documentId | userEmail | grantedBy | grantedAt | canDownload
  *                       (kolom "userEmail" diisi Username, bukan email asli,
- *                       supaya konsisten dengan login berbasis Username)
+ *                       supaya konsisten dengan login berbasis Username.
+ *                       Kolom "canDownload" diisi TRUE hanya jika user itu
+ *                       boleh men-download file asli PADA dokumen itu; kosong
+ *                       berarti lihat saja. Header kolomnya WAJIB ada, tapi
+ *                       isinya tidak perlu diisi manual — app yang mengisi.)
  *   Audit_Log        : timestamp | userEmail | documentId | action | detail
  */
 
@@ -42,7 +46,7 @@ const GENERIC_SCHEMAS = {
     "documentId", "namaDokumen", "kategori", "driveFileId",
     "uploadedBy", "uploadedAt", "status",
   ],
-  Document_Access: ["documentId", "userEmail", "grantedBy", "grantedAt"],
+  Document_Access: ["documentId", "userEmail", "grantedBy", "grantedAt", "canDownload"],
   Audit_Log: ["timestamp", "userEmail", "documentId", "action", "detail"],
 };
 
@@ -76,6 +80,10 @@ function doPost(e) {
       case "updateRowByKey":
         assertGenericTab_(body.tab);
         return jsonOut_(updateRowByKey_(body.tab, body.keyCol, body.keyValue, body.patch));
+
+      case "updateRowsByMatch":
+        assertGenericTab_(body.tab);
+        return jsonOut_(updateRowsByMatch_(body.tab, body.match, body.patch));
 
       case "deleteRows":
         assertGenericTab_(body.tab);
@@ -210,7 +218,7 @@ function login_(username, password) {
     writeAuditLog_(username, "LOGIN_FAILED", "Password salah");
     return { error: "Username atau password salah." };
   }
-  const VALID_ROLES = ["Admin", "Downloader", "Viewer"];
+  const VALID_ROLES = ["Admin", "Viewer"];
   if (VALID_ROLES.indexOf(user.role) === -1) {
     writeAuditLog_(username, "LOGIN_FAILED", "Role tidak valid");
     return { error: "Role akun ini belum diatur dengan benar. Hubungi Administrator." };
@@ -326,6 +334,36 @@ function updateRowByKey_(tab, keyCol, keyValue, patch) {
   const sheetRowNumber = rowIndex + 2;
   sheet.getRange(sheetRowNumber, 1, 1, cols.length).setValues([objectToRow_(tab, merged)]);
   return { success: true };
+}
+
+/**
+ * Updates every row where ALL columns in `match` equal the given values,
+ * merging `patch` into it. Unlike updateRowByKey_ this can target a row by a
+ * COMBINATION of columns — needed for Document_Access, whose identity is
+ * (documentId + userEmail) rather than any single key column.
+ */
+function updateRowsByMatch_(tab, match, patch) {
+  const sheet = getSheet_(tab);
+  const cols = GENERIC_SCHEMAS[tab];
+  const matchKeys = Object.keys(match || {});
+  if (matchKeys.length === 0) throw new Error("updateRowsByMatch requires at least one match field");
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { success: true, updated: 0 };
+
+  const range = sheet.getRange(2, 1, lastRow - 1, cols.length);
+  const values = range.getValues();
+  let updated = 0;
+  for (let i = 0; i < values.length; i++) {
+    const obj = rowToObject_(tab, values[i]);
+    const isMatch = matchKeys.every((k) => String(obj[k]) === String(match[k]));
+    if (isMatch) {
+      values[i] = objectToRow_(tab, Object.assign(obj, patch));
+      updated++;
+    }
+  }
+  if (updated > 0) range.setValues(values);
+  return { success: true, updated };
 }
 
 /**

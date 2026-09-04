@@ -8,7 +8,7 @@ async function handler(req, res) {
   const session = await requireAdmin(req, res);
   if (!session) return;
 
-  const { documentId, username } = req.body;
+  const { documentId, username, canDownload } = req.body;
   if (!documentId || !username) {
     return res.status(400).json({ error: "documentId dan username wajib diisi" });
   }
@@ -26,13 +26,14 @@ async function handler(req, res) {
     userEmail: username,
     grantedBy: session.email,
     grantedAt: new Date().toISOString(),
+    canDownload: canDownload ? "TRUE" : "",
   });
 
   await logAudit({
     userEmail: session.email,
     documentId,
     action: "ACCESS_GRANTED",
-    detail: `to ${username}`,
+    detail: `to ${username}${canDownload ? " (izin download)" : ""}`,
   });
 
   return res.status(200).json({ success: true });

@@ -8,7 +8,7 @@ async function handler(req, res) {
   const session = await requireAdmin(req, res);
   if (!session) return;
 
-  const { documentId, usernames } = req.body;
+  const { documentId, usernames, canDownload } = req.body;
   if (!documentId || !Array.isArray(usernames) || usernames.length === 0) {
     return res.status(400).json({ error: "documentId dan usernames (minimal 1) wajib diisi" });
   }
@@ -30,6 +30,7 @@ async function handler(req, res) {
     userEmail: username,
     grantedBy: session.email,
     grantedAt: now,
+    canDownload: canDownload ? "TRUE" : "",
   }));
 
   const added = await appendRows("Document_Access", rows);
@@ -38,7 +39,7 @@ async function handler(req, res) {
     userEmail: session.email,
     documentId,
     action: "ACCESS_GRANTED",
-    detail: `to ${targets.join(", ")}`,
+    detail: `to ${targets.join(", ")}${canDownload ? " (izin download)" : ""}`,
   });
 
   return res.status(200).json({ success: true, added });
