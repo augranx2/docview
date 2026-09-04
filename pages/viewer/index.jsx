@@ -155,12 +155,12 @@ export default function DocumentListPage() {
             style={{ display: "flex", alignItems: "center", gap: 8, background: "#f1f5f9", padding: "6px 14px", borderRadius: 12, fontSize: 12, fontWeight: 600, color: "#334155", cursor: "pointer", border: "1px solid #cbd5e1" }}
             title="Klik untuk melihat Detail Profil"
           >
-            <div style={{ width: 26, height: 26, borderRadius: 8, background: "#8a1f2f", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: "bold" }}>
+            <div style={{ width: 26, height: 26, borderRadius: 8, background: "#1e4d8f", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: "bold" }}>
               {avatarLetter}
             </div>
             <div style={{ textAlign: "left", lineHeight: 1.2 }}>
               <div style={{ fontWeight: 700, fontSize: 12 }}>{user.nama || user.username || "User"}</div>
-              <div style={{ fontSize: 9, color: "#8a1f2f", textTransform: "uppercase", fontWeight: 700 }}>{user.role || "User"}</div>
+              <div style={{ fontSize: 9, color: "#1e4d8f", textTransform: "uppercase", fontWeight: 700 }}>{user.role || "User"}</div>
             </div>
           </div>
 
@@ -179,16 +179,16 @@ export default function DocumentListPage() {
         
         {/* KOP HEADER BERGRADASI */}
         <div style={{ overflow: "hidden", borderRadius: 20, border: "1px solid #e2e8f0", boxShadow: "0 4px 12px rgba(15,23,42,0.05)", marginBottom: 24 }}>
-          <div style={{ background: "linear-gradient(135deg, #000000 0%, #1a0307 50%, #6b1826 100%)", padding: "28px 24px", color: "white", position: "relative" }}>
+          <div style={{ background: "linear-gradient(135deg, #000000 0%, #020b17 50%, #15427d 100%)", padding: "28px 24px", color: "white", position: "relative" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                 <img src="/logo-rama.png" alt="Logo" style={{ height: 44, width: 44, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
                 <div>
-                  <span style={{ display: "inline-block", background: "rgba(244, 63, 94, 0.2)", border: "1px solid rgba(244, 63, 94, 0.4)", borderRadius: 999, padding: "2px 10px", fontSize: 10, fontWeight: 600, color: "#fecdd3", marginBottom: 6 }}>
+                  <span style={{ display: "inline-block", background: "rgba(59, 130, 246, 0.2)", border: "1px solid rgba(59, 130, 246, 0.4)", borderRadius: 999, padding: "2px 10px", fontSize: 10, fontWeight: 600, color: "#bfdbfe", marginBottom: 6 }}>
                     ✓ Dokumen Resmi Kantor
                   </span>
                   <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: "-0.02em" }}>Dokumen Saya</h1>
-                  <p style={{ fontSize: 12, color: "#fbcfe8", margin: "4px 0 0" }}>
+                  <p style={{ fontSize: 12, color: "#bfdbfe", margin: "4px 0 0" }}>
                     {isAdmin
                       ? "Akses penuh Administrator & daftar dokumen terkendali"
                       : "Dokumen yang dibagikan ke Anda — sebagian mungkin diberi izin unduh oleh Administrator"}
@@ -207,7 +207,7 @@ export default function DocumentListPage() {
                     </button>
                     <Link
                       href="/admin/dashboard"
-                      style={{ padding: "9px 16px", borderRadius: 12, background: "white", color: "#8a1f2f", fontSize: 12, fontWeight: 700, textDecoration: "none", boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }}
+                      style={{ padding: "9px 16px", borderRadius: 12, background: "white", color: "#1e4d8f", fontSize: 12, fontWeight: 700, textDecoration: "none", boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }}
                     >
                       ⚙️ Dashboard Admin
                     </Link>
@@ -248,7 +248,7 @@ export default function DocumentListPage() {
                   padding: "9px 10px",
                   borderRadius: 10,
                   border: "none",
-                  background: selectedCategory === null ? "#8a1f2f" : "transparent",
+                  background: selectedCategory === null ? "#1e4d8f" : "transparent",
                   color: selectedCategory === null ? "white" : "#334155",
                   fontSize: 13,
                   fontWeight: 600,
@@ -273,7 +273,7 @@ export default function DocumentListPage() {
                     padding: "9px 10px",
                     borderRadius: 10,
                     border: "none",
-                    background: selectedCategory === cat ? "#8a1f2f" : "transparent",
+                    background: selectedCategory === cat ? "#1e4d8f" : "transparent",
                     color: selectedCategory === cat ? "white" : "#334155",
                     fontSize: 13,
                     fontWeight: 600,
@@ -339,7 +339,7 @@ export default function DocumentListPage() {
                   style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "16px 20px", background: "white", border: "1px solid #e2e8f0", borderRadius: 16, boxShadow: "0 1px 3px rgba(15,23,42,0.04)" }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 12, background: "#fdf2f2", color: "#8a1f2f", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: "#eff6ff", color: "#1e4d8f", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
                       📄
                     </div>
                     <div style={{ minWidth: 0 }}>
@@ -401,7 +401,7 @@ export default function DocumentListPage() {
         <div style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(15,23,42,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, backdropFilter: "blur(2px)" }}>
           <div style={{ width: "100%", maxWidth: 380, background: "white", borderRadius: 24, padding: 24, boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid #f1f5f9", paddingBottom: 16, marginBottom: 16 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: "#8a1f2f", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: "bold" }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: "#1e4d8f", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: "bold" }}>
                 {avatarLetter}
               </div>
               <div>
@@ -421,7 +421,7 @@ export default function DocumentListPage() {
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8fafc", paddingBottom: 6 }}>
                 <span style={{ color: "#64748b" }}>Hak Akses (Role)</span>
-                <span style={{ fontWeight: 700, color: "#8a1f2f", background: "#fdf2f2", padding: "2px 8px", borderRadius: 6, fontSize: 11 }}>
+                <span style={{ fontWeight: 700, color: "#1e4d8f", background: "#eff6ff", padding: "2px 8px", borderRadius: 6, fontSize: 11 }}>
                   {user.role || "—"}
                 </span>
               </div>
@@ -491,7 +491,7 @@ export default function DocumentListPage() {
                 <button
                   type="submit"
                   disabled={changingPass}
-                  style={{ flex: 1, padding: "9px", borderRadius: 8, background: "#8a1f2f", color: "white", fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer" }}
+                  style={{ flex: 1, padding: "9px", borderRadius: 8, background: "#1e4d8f", color: "white", fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer" }}
                 >
                   {changingPass ? "Menyimpan..." : "Simpan Password"}
                 </button>
@@ -530,7 +530,7 @@ export default function DocumentListPage() {
                       <div>
                         <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 2 }}>
                           <span style={{ fontWeight: 700, color: "#1e293b" }}>{log.userEmail || "Sistem"}</span>
-                          <span style={{ fontSize: 10, background: "#fdf2f2", color: "#8a1f2f", border: "1px solid #f9dade", padding: "1px 6px", borderRadius: 4, fontWeight: 700 }}>
+                          <span style={{ fontSize: 10, background: "#eff6ff", color: "#1e4d8f", border: "1px solid #bfdbfe", padding: "1px 6px", borderRadius: 4, fontWeight: 700 }}>
                             {log.action}
                           </span>
                         </div>

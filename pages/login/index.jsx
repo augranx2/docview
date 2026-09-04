@@ -37,7 +37,7 @@ export default function LoginPage() {
         
         {/* BRAND HEADER DENGAN LOGO RAMA */}
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 64, height: 64, borderRadius: 18, background: "linear-gradient(135deg, #000000 0%, #1a0307 50%, #6b1826 100%)", boxShadow: "0 4px 12px rgba(106,24,38,0.2)", marginBottom: 14, padding: 12 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 64, height: 64, borderRadius: 18, background: "linear-gradient(135deg, #000000 0%, #020b17 50%, #15427d 100%)", boxShadow: "0 4px 12px rgba(30,77,143,0.2)", marginBottom: 14, padding: 12 }}>
             <img src="/logo-rama.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", filter: "brightness(0) invert(1)" }} />
           </div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: "#1e293b", margin: "0 0 4px", letterSpacing: "-0.02em" }}>Sistem Dokumen Terkendali</h1>
@@ -76,7 +76,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              style={{ width: "100%", padding: "11px 16px", borderRadius: 12, background: "#8a1f2f", color: "white", fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", boxShadow: "0 2px 6px rgba(138,31,47,0.3)", transition: "background 0.15s" }}
+              style={{ width: "100%", padding: "11px 16px", borderRadius: 12, background: "#1e4d8f", color: "white", fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", boxShadow: "0 2px 6px rgba(30,77,143,0.3)", transition: "background 0.15s" }}
             >
               {loading ? "Memproses..." : "Masuk Sistem"}
             </button>

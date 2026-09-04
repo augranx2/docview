@@ -360,22 +360,22 @@ export default function AdminDashboard() {
 
         {/* KOP HEADER BERGRADASI ADMIN */}
         <div style={{ overflow: "hidden", borderRadius: 20, border: "1px solid #e2e8f0", boxShadow: "0 4px 12px rgba(15,23,42,0.05)", marginBottom: 24 }}>
-          <div style={{ background: "linear-gradient(135deg, #000000 0%, #1a0307 50%, #6b1826 100%)", padding: "28px 24px", color: "white" }}>
+          <div style={{ background: "linear-gradient(135deg, #000000 0%, #020b17 50%, #15427d 100%)", padding: "28px 24px", color: "white" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                 <img src="/logo-rama.png" alt="Logo" style={{ height: 44, width: 44, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
                 <div>
-                  <span style={{ display: "inline-block", background: "rgba(244, 63, 94, 0.2)", border: "1px solid rgba(244, 63, 94, 0.4)", borderRadius: 999, padding: "2px 10px", fontSize: 10, fontWeight: 600, color: "#fecdd3", marginBottom: 6 }}>
+                  <span style={{ display: "inline-block", background: "rgba(59, 130, 246, 0.2)", border: "1px solid rgba(59, 130, 246, 0.4)", borderRadius: 999, padding: "2px 10px", fontSize: 10, fontWeight: 600, color: "#bfdbfe", marginBottom: 6 }}>
                     ⚙️ Panel Administrator
                   </span>
                   <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: "-0.02em" }}>Dashboard Kelola Dokumen</h1>
-                  <p style={{ fontSize: 12, color: "#fbcfe8", margin: "4px 0 0" }}>Unggah dokumen baru, atur hak akses user, dan pantau arsip terkendali</p>
+                  <p style={{ fontSize: 12, color: "#bfdbfe", margin: "4px 0 0" }}>Unggah dokumen baru, atur hak akses user, dan pantau arsip terkendali</p>
                 </div>
               </div>
 
               <Link
                 href="/admin/upload"
-                style={{ padding: "10px 18px", borderRadius: 12, background: "white", color: "#8a1f2f", fontSize: 12, fontWeight: 700, textDecoration: "none", boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }}
+                style={{ padding: "10px 18px", borderRadius: 12, background: "white", color: "#1e4d8f", fontSize: 12, fontWeight: 700, textDecoration: "none", boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }}
               >
                 + Upload Dokumen Baru
               </Link>
@@ -413,7 +413,7 @@ export default function AdminDashboard() {
                   padding: "9px 10px",
                   borderRadius: 10,
                   border: "none",
-                  background: selectedCategory === null ? "#8a1f2f" : "transparent",
+                  background: selectedCategory === null ? "#1e4d8f" : "transparent",
                   color: selectedCategory === null ? "white" : "#334155",
                   fontSize: 13,
                   fontWeight: 600,
@@ -438,7 +438,7 @@ export default function AdminDashboard() {
                     padding: "9px 10px",
                     borderRadius: 10,
                     border: "none",
-                    background: selectedCategory === cat ? "#8a1f2f" : "transparent",
+                    background: selectedCategory === cat ? "#1e4d8f" : "transparent",
                     color: selectedCategory === cat ? "white" : "#334155",
                     fontSize: 13,
                     fontWeight: 600,
@@ -562,7 +562,7 @@ export default function AdminDashboard() {
                               <button
                                 disabled={savingCategory}
                                 onClick={() => handleSaveCategory(doc.documentId)}
-                                style={{ fontSize: 11, fontWeight: 700, color: "white", background: "#8a1f2f", border: "none", borderRadius: 6, padding: "3px 8px", cursor: "pointer" }}
+                                style={{ fontSize: 11, fontWeight: 700, color: "white", background: "#1e4d8f", border: "none", borderRadius: 6, padding: "3px 8px", cursor: "pointer" }}
                               >
                                 Simpan
                               </button>
@@ -577,7 +577,7 @@ export default function AdminDashboard() {
                           ) : (
                             <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
                               {doc.kategori ? (
-                                <span style={{ display: "inline-block", fontSize: 11, fontWeight: 600, color: "#8a1f2f", background: "#fdf2f2", borderRadius: 6, padding: "2px 8px", border: "1px solid #f9dade" }}>
+                                <span style={{ display: "inline-block", fontSize: 11, fontWeight: 600, color: "#1e4d8f", background: "#eff6ff", borderRadius: 6, padding: "2px 8px", border: "1px solid #bfdbfe" }}>
                                   {doc.kategori}
                                 </span>
                               ) : (
@@ -616,7 +616,7 @@ export default function AdminDashboard() {
                         </a>
                         <button
                           onClick={() => setExpandedDoc(isExpanded ? null : doc.documentId)}
-                          style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: isExpanded ? "#fdf2f2" : "white", color: "#8a1f2f", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                          style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: isExpanded ? "#eff6ff" : "white", color: "#1e4d8f", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
                         >
                           Kelola Akses {isExpanded ? "▲" : "▼"}
                         </button>
@@ -688,7 +688,7 @@ export default function AdminDashboard() {
                               return (
                                 <label
                                   key={username}
-                                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 8px", borderRadius: 6, fontSize: 12, background: checked ? "#fef2f2" : "#fafafa", cursor: "pointer" }}
+                                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 8px", borderRadius: 6, fontSize: 12, background: checked ? "#eff6ff" : "#fafafa", cursor: "pointer" }}
                                 >
                                   <input
                                     type="checkbox"
@@ -794,7 +794,7 @@ export default function AdminDashboard() {
                                     return (
                                       <label
                                         key={u.username}
-                                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 8px", borderRadius: 6, fontSize: 13, cursor: "pointer", background: checked ? "#fef2f2" : "transparent" }}
+                                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 8px", borderRadius: 6, fontSize: 13, cursor: "pointer", background: checked ? "#eff6ff" : "transparent" }}
                                       >
                                         <input
                                           type="checkbox"
@@ -819,7 +819,7 @@ export default function AdminDashboard() {
                                   <button
                                     disabled={isBusy || (selectedUsers[doc.documentId] || []).length === 0}
                                     onClick={() => handleGrantSelected(doc.documentId)}
-                                    style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #8a1f2f", background: "#8a1f2f", color: "white", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                                    style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #1e4d8f", background: "#1e4d8f", color: "white", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
                                   >
                                     Tambah ({(selectedUsers[doc.documentId] || []).length})
                                   </button>

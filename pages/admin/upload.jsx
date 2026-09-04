@@ -226,17 +226,17 @@ export default function UploadPage() {
 
         {/* KOP HEADER BERGRADASI */}
         <div style={{ overflow: "hidden", borderRadius: 20, border: "1px solid #e2e8f0", boxShadow: "0 4px 12px rgba(15,23,42,0.05)", marginBottom: 24 }}>
-          <div style={{ background: "linear-gradient(135deg, #000000 0%, #1a0307 50%, #6b1826 100%)", padding: "28px 24px", color: "white" }}>
+          <div style={{ background: "linear-gradient(135deg, #000000 0%, #020b17 50%, #15427d 100%)", padding: "28px 24px", color: "white" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
               <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
                 📤
               </div>
               <div>
-                <span style={{ display: "inline-block", background: "rgba(244, 63, 94, 0.2)", border: "1px solid rgba(244, 63, 94, 0.4)", borderRadius: 999, padding: "2px 10px", fontSize: 10, fontWeight: 600, color: "#fecdd3", marginBottom: 6 }}>
+                <span style={{ display: "inline-block", background: "rgba(59, 130, 246, 0.2)", border: "1px solid rgba(59, 130, 246, 0.4)", borderRadius: 999, padding: "2px 10px", fontSize: 10, fontWeight: 600, color: "#bfdbfe", marginBottom: 6 }}>
                   Administrator Only
                 </span>
                 <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: "-0.02em" }}>Upload Dokumen Baru</h1>
-                <p style={{ fontSize: 12, color: "#fbcfe8", margin: "4px 0 0" }}>
+                <p style={{ fontSize: 12, color: "#bfdbfe", margin: "4px 0 0" }}>
                   Bisa pilih beberapa file sekaligus — tiap file bisa diatur kategori & akses berbagi masing-masing
                 </p>
               </div>
@@ -285,7 +285,7 @@ export default function UploadPage() {
                       style={{
                         height: "100%",
                         width: `${Math.min(100, (totalBytes / MAX_TOTAL_BYTES) * 100)}%`,
-                        background: totalBytes > MAX_TOTAL_BYTES * 0.9 ? "#dc2626" : "#8a1f2f",
+                        background: totalBytes > MAX_TOTAL_BYTES * 0.9 ? "#dc2626" : "#1e4d8f",
                         borderRadius: 999,
                       }}
                     />
@@ -356,7 +356,7 @@ export default function UploadPage() {
                 {entry.status === "uploading" && (
                   <div style={{ marginTop: 8 }}>
                     <div style={{ height: 5, borderRadius: 999, background: "#f1f5f9", overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${entry.progress}%`, background: "#8a1f2f", borderRadius: 999, transition: "width 0.2s ease" }} />
+                      <div style={{ height: "100%", width: `${entry.progress}%`, background: "#1e4d8f", borderRadius: 999, transition: "width 0.2s ease" }} />
                     </div>
                   </div>
                 )}
@@ -399,7 +399,7 @@ export default function UploadPage() {
             <button
               type="submit"
               disabled={uploading || files.length === 0}
-              style={{ padding: "12px", borderRadius: 12, background: uploading || files.length === 0 ? "#cbd5e1" : "#8a1f2f", color: "white", fontSize: 13, fontWeight: 700, border: "none", cursor: uploading || files.length === 0 ? "not-allowed" : "pointer", boxShadow: "0 2px 6px rgba(0,0,0,0.1)" }}
+              style={{ padding: "12px", borderRadius: 12, background: uploading || files.length === 0 ? "#cbd5e1" : "#1e4d8f", color: "white", fontSize: 13, fontWeight: 700, border: "none", cursor: uploading || files.length === 0 ? "not-allowed" : "pointer", boxShadow: "0 2px 6px rgba(0,0,0,0.1)" }}
             >
               {uploading
                 ? "Mengunggah..."
