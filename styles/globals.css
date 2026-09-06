@@ -366,3 +366,126 @@ a {
     transform: rotate(360deg);
   }
 }
+
+/* ==========================================================================
+   RESPONSIVE + KATEGORI
+   Halaman-halaman ini ditulis dengan inline style, yang tidak bisa memuat
+   media query maupun :hover. Kelas-kelas di bawah dipasang berdampingan
+   dengan inline style tersebut: pada layar lebar CSS ini nyaris tidak
+   melakukan apa-apa, dan baru mengambil alih di layar sempit.
+   ========================================================================== */
+
+/* --- Sidebar kategori: nama panjang terpotong, tapi tetap bisa dibaca --- */
+.cat-item {
+  transition: background 0.12s;
+}
+.cat-item:hover {
+  background: #eff6ff !important;
+}
+.cat-item .cat-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Kategori yang sedang dipilih ditampilkan penuh (membungkus ke baris baru),
+   sehingga sekali diklik nama lengkapnya langsung terbaca tanpa tooltip. */
+.cat-item--active .cat-label {
+  overflow: visible;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.35;
+}
+.cat-item--active {
+  align-items: flex-start !important;
+}
+
+@media (max-width: 820px) {
+  /* --- Header bar: tinggi tetap 64px membuat nama perusahaan terpotong --- */
+  .app-header {
+    height: auto !important;
+    min-height: 56px;
+    padding: 10px 14px !important;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .app-header .header-brand p:first-child {
+    font-size: 11px !important;
+    line-height: 1.25;
+  }
+
+  /* --- Isi halaman --- */
+  .app-shell {
+    padding: 18px 14px !important;
+  }
+  .hero-band {
+    padding: 20px 16px !important;
+  }
+  .hero-band h1 {
+    font-size: 20px !important;
+  }
+
+  /* --- Sidebar kategori jadi panel horizontal di atas daftar dokumen --- */
+  .split-layout {
+    flex-direction: column;
+  }
+  .cat-sidebar {
+    width: 100% !important;
+    position: static !important;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+  .content-col {
+    width: 100%;
+  }
+
+  /* --- Baris pencarian + urutan ditumpuk --- */
+  .search-row {
+    flex-direction: column;
+  }
+  .search-row select {
+    width: 100%;
+    padding: 11px 14px !important;
+  }
+
+  /* --- Kartu dokumen: penyebab utama teks menumpuk vertikal.
+         Judul dan tombol dijadikan dua baris terpisah, bukan dua kolom. --- */
+  .doc-card,
+  .doc-row-top {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  .doc-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .doc-actions > * {
+    flex: 1 1 auto;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* Judul dokumen boleh membungkus, jangan dipaksa satu baris di layar sempit */
+  .doc-title {
+    white-space: normal !important;
+    overflow: visible !important;
+    word-break: break-word;
+  }
+
+  /* --- Halaman upload: dua kolom input jadi satu kolom --- */
+  .file-fields {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 820px) {
+  /* Halaman baca PDF memakai class .page/.topbar dari stylesheet ini */
+  .page {
+    padding: 18px 14px 48px !important;
+  }
+  .topbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}

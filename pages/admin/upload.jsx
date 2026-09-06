@@ -196,8 +196,8 @@ export default function UploadPage() {
     <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #e6eefb 0%, #eef3fb 180px, #f4f7fc 380px)", backgroundAttachment: "fixed", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", color: "#0f172a", paddingBottom: 60 }}>
 
       {/* HEADER BAR */}
-      <header style={{ height: 64, borderBottom: "1px solid #e2e8f0", background: "rgba(255,255,255,0.72)", backdropFilter: "blur(10px)", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 30 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <header className="app-header" style={{ height: 64, borderBottom: "1px solid #e2e8f0", background: "rgba(255,255,255,0.72)", backdropFilter: "blur(10px)", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 30 }}>
+        <div className="header-brand" style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
           <img src="/logo-rama.png" alt="Logo" style={{ height: 32, width: 32, objectFit: "contain" }} />
           <div>
             <p style={{ fontSize: 12, fontWeight: 700, color: "#1e293b", margin: 0 }}>PT. Rama Emerald Multi Sukses</p>
@@ -222,11 +222,11 @@ export default function UploadPage() {
       </header>
 
       {/* KONTEN UTAMA */}
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 20px" }}>
+      <div className="app-shell" style={{ maxWidth: 720, margin: "0 auto", padding: "32px 20px" }}>
 
         {/* KOP HEADER BERGRADASI */}
         <div style={{ overflow: "hidden", borderRadius: 20, border: "1px solid #e2e8f0", boxShadow: "0 4px 12px rgba(15,23,42,0.05)", marginBottom: 24 }}>
-          <div style={{ background: "linear-gradient(135deg, #000000 0%, #020b17 50%, #15427d 100%)", padding: "28px 24px", color: "white" }}>
+          <div className="hero-band" style={{ background: "linear-gradient(135deg, #000000 0%, #020b17 50%, #15427d 100%)", padding: "28px 24px", color: "white" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
               <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
                 📤
@@ -324,7 +324,7 @@ export default function UploadPage() {
                   )}
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
+                <div className="file-fields" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
                   <input
                     type="text"
                     placeholder="Kategori (opsional)"
@@ -343,14 +343,17 @@ export default function UploadPage() {
                   />
                 </div>
 
-                <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 11, color: "#475569", cursor: "pointer" }}>
+                <label style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 8, fontSize: 11, lineHeight: 1.45, color: "#475569", cursor: "pointer" }}>
                   <input
                     type="checkbox"
                     checked={entry.allowDownload}
                     disabled={uploading}
                     onChange={(e) => updateFile(entry.id, { allowDownload: e.target.checked })}
                   />
-                  Izinkan user di atas <strong>men-download file asli</strong> (default: lihat saja)
+                  <span>
+                    Izinkan user di atas <strong>men-download file asli</strong>{" "}
+                    <span style={{ color: "#94a3b8" }}>(default: lihat saja)</span>
+                  </span>
                 </label>
 
                 {entry.status === "uploading" && (

@@ -329,8 +329,8 @@ export default function AdminDashboard() {
     <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #e6eefb 0%, #eef3fb 180px, #f4f7fc 380px)", backgroundAttachment: "fixed", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", color: "#0f172a", paddingBottom: 60 }}>
 
       {/* HEADER BAR ADMIN */}
-      <header style={{ height: 64, borderBottom: "1px solid #e2e8f0", background: "rgba(255,255,255,0.72)", backdropFilter: "blur(10px)", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 30 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <header className="app-header" style={{ height: 64, borderBottom: "1px solid #e2e8f0", background: "rgba(255,255,255,0.72)", backdropFilter: "blur(10px)", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 30 }}>
+        <div className="header-brand" style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
           <img src="/logo-rama.png" alt="Logo" style={{ height: 32, width: 32, objectFit: "contain" }} />
           <div>
             <p style={{ fontSize: 12, fontWeight: 700, color: "#1e293b", margin: 0 }}>PT. Rama Emerald Multi Sukses</p>
@@ -356,11 +356,11 @@ export default function AdminDashboard() {
       </header>
 
       {/* KONTEN UTAMA ADMIN */}
-      <div style={{ maxWidth: 1120, margin: "0 auto", padding: "32px 20px" }}>
+      <div className="app-shell" style={{ maxWidth: 1120, margin: "0 auto", padding: "32px 20px" }}>
 
         {/* KOP HEADER BERGRADASI ADMIN */}
         <div style={{ overflow: "hidden", borderRadius: 20, border: "1px solid #e2e8f0", boxShadow: "0 4px 12px rgba(15,23,42,0.05)", marginBottom: 24 }}>
-          <div style={{ background: "linear-gradient(135deg, #000000 0%, #020b17 50%, #15427d 100%)", padding: "28px 24px", color: "white" }}>
+          <div className="hero-band" style={{ background: "linear-gradient(135deg, #000000 0%, #020b17 50%, #15427d 100%)", padding: "28px 24px", color: "white" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                 <img src="/logo-rama.png" alt="Logo" style={{ height: 44, width: 44, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
@@ -384,11 +384,12 @@ export default function AdminDashboard() {
         </div>
 
         {/* LAYOUT SIDEBAR + KONTEN */}
-        <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
+        <div className="split-layout" style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
 
           {/* SIDEBAR KATEGORI */}
           {!loading && documents.length > 0 && (
             <div
+              className="cat-sidebar"
               style={{
                 width: 220,
                 flexShrink: 0,
@@ -427,9 +428,13 @@ export default function AdminDashboard() {
               </button>
 
               {categoryList.map((cat) => (
+                // title = tooltip bawaan browser saat kursor diarahkan, supaya nama
+                // kategori yang terpotong tetap terbaca tanpa perlu diklik.
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
+                  title={cat === UNCATEGORIZED ? cat : `${cat} (${categoryCounts[cat]} dokumen)`}
+                  className={`cat-item${selectedCategory === cat ? " cat-item--active" : ""}`}
                   style={{
                     width: "100%",
                     display: "flex",
@@ -447,7 +452,7 @@ export default function AdminDashboard() {
                     marginBottom: 2,
                   }}
                 >
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span className="cat-label">
                     {cat === UNCATEGORIZED ? "🗂 " : "📁 "}
                     {cat}
                   </span>
@@ -458,11 +463,11 @@ export default function AdminDashboard() {
           )}
 
           {/* AREA KONTEN DOKUMEN */}
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="content-col" style={{ flex: 1, minWidth: 0 }}>
 
         {/* KOTAK PENCARIAN + SORT */}
         {!loading && documents.length > 0 && (
-          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          <div className="search-row" style={{ display: "flex", gap: 8, marginBottom: 12 }}>
             <div style={{ position: "relative", flex: 1 }}>
               <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}>🔍</span>
               <input
@@ -532,7 +537,7 @@ export default function AdminDashboard() {
 
                 return (
                   <div key={doc.documentId} style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: 16, boxShadow: "0 1px 3px rgba(15,23,42,0.04)", padding: 16, opacity: isBusy ? 0.6 : 1 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
+                    <div className="doc-row-top" style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
                       <div style={{ display: "flex", gap: 10, alignItems: "flex-start", minWidth: 0 }}>
                         <input
                           type="checkbox"
@@ -600,7 +605,7 @@ export default function AdminDashboard() {
                         </div>
                       </div>
 
-                      <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
+                      <div className="doc-actions" style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
                         <Link
                           href={`/viewer/${doc.documentId}`}
                           style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 11, fontWeight: 600, textDecoration: "none" }}
@@ -770,7 +775,7 @@ export default function AdminDashboard() {
 
                             {/* PILIHAN IZIN DOWNLOAD SAAT MEMBAGIKAN */}
                             <label
-                              style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 12, color: "#334155", cursor: "pointer" }}
+                              style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 8, fontSize: 12, lineHeight: 1.45, color: "#334155", cursor: "pointer" }}
                             >
                               <input
                                 type="checkbox"
@@ -782,8 +787,11 @@ export default function AdminDashboard() {
                                   }))
                                 }
                               />
-                              Sekaligus beri izin <strong>download file asli</strong> untuk user yang dibagikan
-                              <span style={{ color: "#94a3b8" }}>(bisa diubah kapan saja setelahnya)</span>
+                              <span>
+                                Sekaligus beri izin <strong>download file asli</strong> untuk user yang
+                                dibagikan{" "}
+                                <span style={{ color: "#94a3b8" }}>(bisa diubah kapan saja setelahnya)</span>
+                              </span>
                             </label>
 
                             {openPickerDoc === doc.documentId && (

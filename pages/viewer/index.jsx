@@ -139,8 +139,8 @@ export default function DocumentListPage() {
     <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #e6eefb 0%, #eef3fb 180px, #f4f7fc 380px)", backgroundAttachment: "fixed", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", color: "#0f172a", paddingBottom: 60 }}>
       
       {/* HEADER BAR */}
-      <header style={{ height: 64, borderBottom: "1px solid #e2e8f0", background: "rgba(255,255,255,0.72)", backdropFilter: "blur(10px)", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 30 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <header className="app-header" style={{ height: 64, borderBottom: "1px solid #e2e8f0", background: "rgba(255,255,255,0.72)", backdropFilter: "blur(10px)", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 30 }}>
+        <div className="header-brand" style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
           <img src="/logo-rama.png" alt="Logo" style={{ height: 32, width: 32, objectFit: "contain" }} />
           <div>
             <p style={{ fontSize: 12, fontWeight: 700, color: "#1e293b", margin: 0 }}>PT. Rama Emerald Multi Sukses</p>
@@ -175,11 +175,11 @@ export default function DocumentListPage() {
       </header>
 
       {/* KONTEN UTAMA */}
-      <div style={{ maxWidth: 1120, margin: "0 auto", padding: "32px 20px" }}>
+      <div className="app-shell" style={{ maxWidth: 1120, margin: "0 auto", padding: "32px 20px" }}>
         
         {/* KOP HEADER BERGRADASI */}
         <div style={{ overflow: "hidden", borderRadius: 20, border: "1px solid #e2e8f0", boxShadow: "0 4px 12px rgba(15,23,42,0.05)", marginBottom: 24 }}>
-          <div style={{ background: "linear-gradient(135deg, #000000 0%, #020b17 50%, #15427d 100%)", padding: "28px 24px", color: "white", position: "relative" }}>
+          <div className="hero-band" style={{ background: "linear-gradient(135deg, #000000 0%, #020b17 50%, #15427d 100%)", padding: "28px 24px", color: "white", position: "relative" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                 <img src="/logo-rama.png" alt="Logo" style={{ height: 44, width: 44, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
@@ -219,11 +219,12 @@ export default function DocumentListPage() {
         </div>
 
         {/* LAYOUT SIDEBAR + KONTEN */}
-        <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
+        <div className="split-layout" style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
 
           {/* SIDEBAR KATEGORI */}
           {!loading && docs.length > 0 && (
             <div
+              className="cat-sidebar"
               style={{
                 width: 220,
                 flexShrink: 0,
@@ -262,9 +263,13 @@ export default function DocumentListPage() {
               </button>
 
               {categoryList.map((cat) => (
+                // title = tooltip bawaan browser saat kursor diarahkan, supaya nama
+                // kategori yang terpotong tetap terbaca tanpa perlu diklik.
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
+                  title={cat === UNCATEGORIZED ? cat : `${cat} (${categoryCounts[cat]} dokumen)`}
+                  className={`cat-item${selectedCategory === cat ? " cat-item--active" : ""}`}
                   style={{
                     width: "100%",
                     display: "flex",
@@ -282,7 +287,7 @@ export default function DocumentListPage() {
                     marginBottom: 2,
                   }}
                 >
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span className="cat-label">
                     {cat === UNCATEGORIZED ? "🗂 " : "📁 "}
                     {cat}
                   </span>
@@ -293,11 +298,11 @@ export default function DocumentListPage() {
           )}
 
           {/* AREA KONTEN DOKUMEN */}
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="content-col" style={{ flex: 1, minWidth: 0 }}>
 
         {/* PENCARIAN + SORT */}
         {!loading && docs.length > 0 && (
-          <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+          <div className="search-row" style={{ display: "flex", gap: 8, marginBottom: 20 }}>
             <div style={{ position: "relative", flex: 1 }}>
               <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}>🔍</span>
               <input
@@ -336,6 +341,7 @@ export default function DocumentListPage() {
               filtered.map((doc) => (
                 <div
                   key={doc.documentId}
+                  className="doc-card"
                   style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "16px 20px", background: "white", border: "1px solid #e2e8f0", borderRadius: 16, boxShadow: "0 1px 3px rgba(15,23,42,0.04)" }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
@@ -343,7 +349,7 @@ export default function DocumentListPage() {
                       📄
                     </div>
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ fontWeight: 700, fontSize: 14, color: "#1e293b", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      <p className="doc-title" style={{ fontWeight: 700, fontSize: 14, color: "#1e293b", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {doc.namaDokumen}
                       </p>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
@@ -359,7 +365,7 @@ export default function DocumentListPage() {
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                  <div className="doc-actions" style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                     <Link
                       href={`/viewer/${doc.documentId}`}
                       style={{ padding: "8px 16px", borderRadius: 10, background: "#0f172a", color: "white", fontSize: 12, fontWeight: 600, textDecoration: "none" }}
