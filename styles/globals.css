@@ -418,6 +418,21 @@ a {
     font-size: 11px !important;
     line-height: 1.25;
   }
+  /* Brand dan tombol masing-masing mengambil satu baris penuh, dan tombol
+     dibagi rata selebar layar supaya tidak menumpuk di kiri. */
+  .app-header {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+  .app-header .header-brand,
+  .app-header .header-actions {
+    width: 100%;
+  }
+  .app-header .header-actions > * {
+    flex: 1 1 0;
+    justify-content: center;
+    text-align: center;
+  }
 
   /* --- Isi halaman --- */
   .app-shell {

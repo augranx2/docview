@@ -338,7 +338,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="header-actions" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <Link
             href="/viewer"
             style={{ padding: "7px 14px", borderRadius: 10, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, textDecoration: "none" }}
@@ -450,9 +450,18 @@ export default function AdminDashboard() {
                     cursor: "pointer",
                     textAlign: "left",
                     marginBottom: 2,
+                    // Kategori aktif ditampilkan penuh; sisanya dipotong "...".
+                    alignItems: selectedCategory === cat ? "flex-start" : "center",
                   }}
                 >
-                  <span className="cat-label">
+                  <span
+                    className="cat-label"
+                    style={
+                      selectedCategory === cat
+                        ? { whiteSpace: "normal", overflow: "visible", wordBreak: "break-word", lineHeight: 1.35 }
+                        : { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }
+                    }
+                  >
                     {cat === UNCATEGORIZED ? "🗂 " : "📁 "}
                     {cat}
                   </span>

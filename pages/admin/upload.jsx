@@ -205,7 +205,7 @@ export default function UploadPage() {
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="header-actions" style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <Link
             href="/admin/dashboard"
             style={{ padding: "7px 14px", borderRadius: 10, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, textDecoration: "none" }}

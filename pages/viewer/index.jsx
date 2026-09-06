@@ -24,6 +24,7 @@ export default function DocumentListPage() {
   const [changingPass, setChangingPass] = useState(false);
 
   const [auditLogs, setAuditLogs] = useState([]);
+  const [auditTotal, setAuditTotal] = useState(0);
   const [loadingAudit, setLoadingAudit] = useState(false);
 
   const router = useRouter();
@@ -89,9 +90,13 @@ export default function DocumentListPage() {
     try {
       const res = await fetch("/api/admin/audit-log");
       const data = await res.json();
-      if (res.ok) setAuditLogs(data.logs || []);
+      if (res.ok) {
+        setAuditLogs(data.logs || []);
+        setAuditTotal(data.total || (data.logs || []).length);
+      }
     } catch {
       setAuditLogs([]);
+      setAuditTotal(0);
     } finally {
       setLoadingAudit(false);
     }
@@ -148,7 +153,7 @@ export default function DocumentListPage() {
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="header-actions" style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {/* KOTAK PROFIL YANG BISA DIKLIK */}
           <div
             onClick={() => setShowProfileModal(true)}
@@ -285,9 +290,18 @@ export default function DocumentListPage() {
                     cursor: "pointer",
                     textAlign: "left",
                     marginBottom: 2,
+                    // Kategori aktif ditampilkan penuh; sisanya dipotong "...".
+                    alignItems: selectedCategory === cat ? "flex-start" : "center",
                   }}
                 >
-                  <span className="cat-label">
+                  <span
+                    className="cat-label"
+                    style={
+                      selectedCategory === cat
+                        ? { whiteSpace: "normal", overflow: "visible", wordBreak: "break-word", lineHeight: 1.35 }
+                        : { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }
+                    }
+                  >
                     {cat === UNCATEGORIZED ? "🗂 " : "📁 "}
                     {cat}
                   </span>
@@ -512,16 +526,30 @@ export default function DocumentListPage() {
         <div style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(15,23,42,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, backdropFilter: "blur(2px)" }}>
           <div style={{ width: "100%", maxWidth: 700, background: "white", borderRadius: 24, padding: 24, boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0", maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: 12, marginBottom: 16 }}>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <h3 style={{ fontSize: 16, fontWeight: 800, color: "#1e293b", margin: 0 }}>Audit Trail (Rekam Jejak Aktivitas)</h3>
-                <p style={{ fontSize: 11, color: "#64748b", margin: 0 }}>Catatan aktivitas login, view, dan manajemen dokumen</p>
+                <p style={{ fontSize: 11, color: "#64748b", margin: 0 }}>
+                  Catatan aktivitas login, view, dan manajemen dokumen
+                  {auditTotal > auditLogs.length && ` — menampilkan ${auditLogs.length} terbaru dari ${auditTotal}`}
+                </p>
               </div>
-              <button
-                onClick={() => setShowAuditModal(false)}
-                style={{ border: "none", background: "#f1f5f9", width: 30, height: 30, borderRadius: "50%", fontSize: 14, cursor: "pointer", fontWeight: "bold" }}
-              >
-                ✕
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                {/* Unduhan mengambil SELURUH log dari server, bukan hanya yang
+                    ditampilkan di layar. */}
+                <a
+                  href="/api/admin/audit-log?format=csv"
+                  style={{ padding: "7px 12px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 11, fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap" }}
+                  title="Unduh seluruh audit log sebagai file CSV"
+                >
+                  ⬇ Unduh CSV
+                </a>
+                <button
+                  onClick={() => setShowAuditModal(false)}
+                  style={{ border: "none", background: "#f1f5f9", width: 30, height: 30, borderRadius: "50%", fontSize: 14, cursor: "pointer", fontWeight: "bold" }}
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             <div style={{ flex: 1, overflowY: "auto", fontSize: 12 }}>
