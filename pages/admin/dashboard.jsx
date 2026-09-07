@@ -1,3 +1,4 @@
+import Head from "next/head";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -326,7 +327,11 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #e6eefb 0%, #eef3fb 180px, #f4f7fc 380px)", backgroundAttachment: "fixed", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", color: "#0f172a", paddingBottom: 60 }}>
+    <>
+      <Head>
+        <title>Dashboard Admin — SIDOK</title>
+      </Head>
+      <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #e6eefb 0%, #eef3fb 180px, #f4f7fc 380px)", backgroundAttachment: "fixed", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", color: "#0f172a", paddingBottom: 60 }}>
 
       {/* HEADER BAR ADMIN */}
       <header className="app-header" style={{ height: 64, borderBottom: "1px solid #e2e8f0", background: "rgba(255,255,255,0.72)", backdropFilter: "blur(10px)", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 30 }}>
@@ -334,7 +339,7 @@ export default function AdminDashboard() {
           <img src="/logo-rama.png" alt="Logo" style={{ height: 32, width: 32, objectFit: "contain" }} />
           <div>
             <p style={{ fontSize: 12, fontWeight: 700, color: "#1e293b", margin: 0 }}>PT. Rama Emerald Multi Sukses</p>
-            <p style={{ fontSize: 10, color: "#64748b", margin: 0 }}>Panel Kontrol Administrator</p>
+            <p style={{ fontSize: 10, color: "#64748b", margin: 0 }}>SIDOK · Panel Kontrol Administrator</p>
           </div>
         </div>
 
@@ -861,5 +866,6 @@ export default function AdminDashboard() {
 
       </div>
     </div>
+    </>
   );
 }

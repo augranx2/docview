@@ -1,3 +1,4 @@
+import Head from "next/head";
 import { useState } from "react";
 import { useRouter } from "next/router";
 
@@ -33,7 +34,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-bg">
+    <>
+      <Head>
+        <title>Masuk — SIDOK</title>
+      </Head>
+      <div className="login-bg">
       {/* Lapisan dekoratif: dua bola cahaya biru + pola titik halus.
           Murni CSS, tidak ada file gambar tambahan yang perlu di-load. */}
       <div className="glow glow-a" />
@@ -46,7 +51,8 @@ export default function LoginPage() {
           <div className="brand-logo">
             <img src="/logo-rama.png" alt="Logo" />
           </div>
-          <h1>Sistem Dokumen Terkendali</h1>
+          <h1>SIDOK</h1>
+          <p className="brand-sub">Sistem Dokumen Terkendali</p>
           <p>PT. Rama Emerald Multi Sukses</p>
         </div>
 
@@ -195,8 +201,17 @@ export default function LoginPage() {
           margin: 0 0 4px;
           letter-spacing: -0.02em;
         }
-        .brand p {
+        .brand h1 {
+          letter-spacing: 0.08em;
+        }
+        .brand .brand-sub {
           font-size: 13px;
+          font-weight: 700;
+          color: #dbeafe;
+          margin: 0 0 2px;
+        }
+        .brand p {
+          font-size: 12px;
           color: #bfdbfe;
           margin: 0;
         }
@@ -350,5 +365,6 @@ export default function LoginPage() {
         }
       `}</style>
     </div>
+    </>
   );
 }

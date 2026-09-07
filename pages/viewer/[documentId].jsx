@@ -1,3 +1,4 @@
+import Head from "next/head";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -148,7 +149,11 @@ export default function ViewerPage() {
   }, []);
 
   return (
-    <div className="page" style={{ maxWidth: 900 }}>
+    <>
+      <Head>
+        <title>Baca Dokumen — SIDOK</title>
+      </Head>
+      <div className="page" style={{ maxWidth: 900 }}>
       <div className="topbar" style={{ marginBottom: 16 }}>
         <Link href="/viewer" className="back-link">
           ← Kembali ke Dokumen Saya
@@ -168,5 +173,6 @@ export default function ViewerPage() {
       {status === "error" && <p className="error-text">{errorMsg}</p>}
       <div ref={containerRef} />
     </div>
+    </>
   );
 }

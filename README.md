@@ -1,8 +1,12 @@
-# Office Document Viewer
+# SIDOK — Sistem Dokumen Terkendali
 
-Web app internal untuk upload PDF resmi kantor ke Google Drive, dan membagikannya
-ke user tertentu yang harus login dan hanya bisa **melihat** (bukan download/print) —
-lihat catatan penting di bagian "Batasan" di bawah.
+Web app internal PT. Rama Emerald Multi Sukses untuk upload PDF resmi kantor ke
+Google Drive dan membagikannya ke user tertentu yang harus login. Secara default
+user hanya bisa **melihat** dokumen; izin **download** diberikan Admin per
+dokumen per user — lihat "Role & izin download" dan catatan penting di bagian
+"Batasan" di bawah.
+
+Nama pendek aplikasi: **SIDOK**. Nama lengkap: **Sistem Dokumen Terkendali**.
 
 ## Setup
 
