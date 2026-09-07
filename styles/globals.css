@@ -405,6 +405,14 @@ a {
   word-break: break-word;
   line-height: 1.35;
 }
+/* Di monitor lebar, sidebar kategori ikut melebar supaya nama kategori yang
+   panjang tidak perlu dipotong sejak awal. */
+@media (min-width: 1500px) {
+  .cat-sidebar {
+    width: 300px !important;
+  }
+}
+
 @media (max-width: 820px) {
   /* --- Header bar: tinggi tetap 64px membuat nama perusahaan terpotong --- */
   .app-header {
