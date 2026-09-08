@@ -206,7 +206,7 @@ export default function AdminDashboard() {
 
   // Daftar kategori untuk dropdown, dihitung dari dokumen yang sudah dimuat —
   // tidak perlu panggilan API terpisah karena semuanya sudah ada di memori.
-  const categoryOptions = [...new Set(docs.map((d) => (d.kategori || "").trim()).filter(Boolean))].sort(
+  const categoryOptions = [...new Set(documents.map((d) => (d.kategori || "").trim()).filter(Boolean))].sort(
     (a, b) => a.localeCompare(b, "id")
   );
 
