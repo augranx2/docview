@@ -60,7 +60,7 @@ lewat HTTPS ke action `login`, dan Apps Script yang membalas cocok/tidak.
 
 **Audit_Log**
 `timestamp | userEmail | documentId | action | detail`
-- `action`: `LOGIN`, `LOGIN_FAILED`, `LOGOUT`, `UPLOAD`, `VIEW`, `DOWNLOAD`, `ACCESS_DENIED`, `ACCESS_GRANTED`, `ACCESS_REVOKED`, `DOWNLOAD_PERMISSION_CHANGED`, `AUDIT_LOG_EXPORTED`, `DOCUMENT_DELETED`, `DOCUMENT_UPDATED`, `PASSWORD_CHANGED`, `PASSWORD_CHANGE_FAILED`
+- `action`: `LOGIN`, `LOGIN_FAILED`, `LOGOUT`, `UPLOAD`, `VIEW`, `DOWNLOAD`, `ACCESS_DENIED`, `ACCESS_GRANTED`, `ACCESS_REVOKED`, `DOWNLOAD_PERMISSION_CHANGED`, `AUDIT_LOG_EXPORTED`, `DRIVE_MIGRATION`, `DOCUMENT_DELETED`, `DOCUMENT_UPDATED`, `PASSWORD_CHANGED`, `PASSWORD_CHANGE_FAILED`
 - Baris `LOGIN`/`LOGIN_FAILED` ditulis langsung oleh Apps Script (di dalam action `login`)
 
 ## Struktur file di Google Drive
@@ -81,8 +81,14 @@ Aplikasi selalu mengakses file lewat `driveFileId`, tidak pernah lewat nama atau
 lokasi folder — jadi rename atau pemindahan manual di Drive tidak merusak apa pun.
 
 **File lama** (yang bernama UUID acak dan menumpuk di folder induk) dirapikan
-dengan `MigrateDrive.gs`: skrip Apps Script sekali jalan, bisa dilanjutkan kalau
-kena batas waktu 6 menit. Petunjuk lengkap ada di bagian atas file tersebut.
+lewat panel **"Rapikan file di Google Drive"** di dashboard admin, tepat di bawah
+kop header. Tombol *Pratinjau* menampilkan rencananya tanpa mengubah apa pun;
+tombol *Jalankan* mengeksekusi.
+
+Prosesnya berjalan bertahap dari browser (beberapa file per panggilan) karena
+fungsi serverless punya batas waktu eksekusi yang pendek. Karena itu **jangan
+tutup tab** selama progres berjalan. Aman dijalankan berulang: file yang nama
+dan foldernya sudah benar akan dilewati.
 
 ## Role & izin download
 

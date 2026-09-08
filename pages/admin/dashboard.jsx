@@ -21,6 +21,7 @@ export default function AdminDashboard() {
   const [selectedCategory, setSelectedCategory] = useState(null); // null = semua kategori
   const [editingCategoryDoc, setEditingCategoryDoc] = useState(null); // documentId being edited
   const [categoryIsNew, setCategoryIsNew] = useState(false); // sedang mengetik kategori baru
+  const [migrasi, setMigrasi] = useState(null); // { running, dryRun, index, total, processed, skipped, failed, log }
   const [categoryDraft, setCategoryDraft] = useState("");
   const [savingCategory, setSavingCategory] = useState(false);
 
@@ -175,6 +176,50 @@ export default function AdminDashboard() {
       alert(err.message);
     } finally {
       setBusyDoc(null);
+    }
+  }
+
+  // ---- RAPIKAN FILE LAMA DI GOOGLE DRIVE ----
+  // Dijalankan bertahap dari browser: tiap panggilan hanya memproses beberapa
+  // file lalu mengembalikan posisi terakhir. Satu permintaan panjang akan
+  // diputus server sebelum ratusan file selesai diproses.
+  async function jalankanMigrasi(dryRun) {
+    if (!dryRun && !confirm("Rapikan nama dan folder SEMUA file lama di Google Drive?\n\nIsi file tidak diubah dan aplikasi tetap berjalan normal selama proses.")) {
+      return;
+    }
+
+    let index = 0;
+    let akumulasi = { processed: 0, skipped: 0, failed: 0, log: [] };
+    setMigrasi({ running: true, dryRun, index: 0, total: 0, ...akumulasi });
+
+    try {
+      while (true) {
+        const res = await fetch("/api/admin/migrate-drive", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ startIndex: index, batchSize: 5, dryRun }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Migrasi gagal");
+
+        akumulasi = {
+          processed: akumulasi.processed + data.processed,
+          skipped: akumulasi.skipped + data.skipped,
+          failed: akumulasi.failed + data.failed,
+          log: [...akumulasi.log, ...data.log].slice(-40),
+        };
+        index = data.nextIndex;
+        setMigrasi({ running: !data.done, dryRun, index, total: data.total, ...akumulasi });
+
+        if (data.done) break;
+      }
+      if (!dryRun) await loadAll();
+    } catch (err) {
+      setMigrasi((prev) => ({
+        ...(prev || {}),
+        running: false,
+        log: [...((prev && prev.log) || []), `BERHENTI: ${err.message}`],
+      }));
     }
   }
 
@@ -399,6 +444,58 @@ export default function AdminDashboard() {
                 + Upload Dokumen Baru
               </Link>
             </div>
+          </div>
+
+          {/* PANEL RAPIKAN DRIVE */}
+          <div style={{ background: "#f8fafc", borderTop: "1px solid #e2e8f0", padding: "14px 24px" }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <span style={{ fontSize: 11, color: "#64748b", flex: 1, minWidth: 200 }}>
+                <strong style={{ color: "#334155" }}>Rapikan file di Google Drive</strong> — ubah nama
+                file lama yang masih berupa kode acak, dan pindahkan ke folder sesuai kategorinya.
+              </span>
+              <button
+                disabled={migrasi?.running}
+                onClick={() => jalankanMigrasi(true)}
+                style={{ padding: "7px 12px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                title="Hanya menampilkan rencana, tidak mengubah apa pun"
+              >
+                Pratinjau
+              </button>
+              <button
+                disabled={migrasi?.running}
+                onClick={() => jalankanMigrasi(false)}
+                style={{ padding: "7px 12px", borderRadius: 8, border: "none", background: "#1e4d8f", color: "white", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+              >
+                {migrasi?.running ? "Sedang berjalan..." : "Jalankan"}
+              </button>
+            </div>
+
+            {migrasi && (
+              <div style={{ marginTop: 10 }}>
+                <div style={{ height: 6, background: "#e2e8f0", borderRadius: 999, overflow: "hidden" }}>
+                  <div
+                    style={{
+                      height: "100%",
+                      width: migrasi.total ? `${Math.round((migrasi.index / migrasi.total) * 100)}%` : "0%",
+                      background: migrasi.failed > 0 ? "#f59e0b" : "#1e4d8f",
+                      transition: "width 0.2s",
+                    }}
+                  />
+                </div>
+                <div style={{ fontSize: 11, color: "#475569", marginTop: 6 }}>
+                  {migrasi.dryRun && <strong>[PRATINJAU] </strong>}
+                  {migrasi.index}/{migrasi.total} diperiksa · {migrasi.processed}{" "}
+                  {migrasi.dryRun ? "akan diubah" : "dirapikan"} · {migrasi.skipped} sudah benar
+                  {migrasi.failed > 0 && ` · ${migrasi.failed} gagal`}
+                  {!migrasi.running && migrasi.total > 0 && " — selesai"}
+                </div>
+                {migrasi.log.length > 0 && (
+                  <pre style={{ marginTop: 8, maxHeight: 160, overflowY: "auto", background: "white", border: "1px solid #e2e8f0", borderRadius: 8, padding: 10, fontSize: 10, lineHeight: 1.5, color: "#475569", whiteSpace: "pre-wrap" }}>
+                    {migrasi.log.join("\n")}
+                  </pre>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
