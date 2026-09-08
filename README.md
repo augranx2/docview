@@ -63,6 +63,27 @@ lewat HTTPS ke action `login`, dan Apps Script yang membalas cocok/tidak.
 - `action`: `LOGIN`, `LOGIN_FAILED`, `LOGOUT`, `UPLOAD`, `VIEW`, `DOWNLOAD`, `ACCESS_DENIED`, `ACCESS_GRANTED`, `ACCESS_REVOKED`, `DOWNLOAD_PERMISSION_CHANGED`, `AUDIT_LOG_EXPORTED`, `DOCUMENT_DELETED`, `DOCUMENT_UPDATED`, `PASSWORD_CHANGED`, `PASSWORD_CHANGE_FAILED`
 - Baris `LOGIN`/`LOGIN_FAILED` ditulis langsung oleh Apps Script (di dalam action `login`)
 
+## Struktur file di Google Drive
+
+Nama file di Drive mengikuti nama dokumen di aplikasi, ditambah 6 karakter dari
+`documentId` sebagai pembeda (Drive membolehkan nama kembar dalam satu folder):
+
+```
+POS.PR.090.R0 Protap Management Access - 3f8a2c.pdf
+```
+
+File disimpan dalam subfolder sesuai kategorinya di dalam folder induk
+(`GDRIVE_ROOT_FOLDER_ID`). Folder dibuat otomatis saat sebuah kategori pertama
+kali dipakai. Kategori **wajib** diisi saat upload, dan mengubah kategori lewat
+dashboard ikut memindahkan filenya ke folder baru.
+
+Aplikasi selalu mengakses file lewat `driveFileId`, tidak pernah lewat nama atau
+lokasi folder — jadi rename atau pemindahan manual di Drive tidak merusak apa pun.
+
+**File lama** (yang bernama UUID acak dan menumpuk di folder induk) dirapikan
+dengan `MigrateDrive.gs`: skrip Apps Script sekali jalan, bisa dilanjutkan kalau
+kena batas waktu 6 menit. Petunjuk lengkap ada di bagian atas file tersebut.
+
 ## Role & izin download
 
 Hanya ada dua role: **Admin** dan **Viewer**.

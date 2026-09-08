@@ -1,6 +1,10 @@
 import { v4 as uuidv4 } from "uuid";
 import { requireAdmin } from "../../../lib/auth";
-import { createResumableUploadSession } from "../../../lib/googleDrive";
+import {
+  createResumableUploadSession,
+  findOrCreateCategoryFolder,
+  buildDriveFileName,
+} from "../../../lib/googleDrive";
 import { appendRow } from "../../../lib/sheets";
 import { withErrorHandling } from "../../../lib/apiHandler";
 
@@ -17,6 +21,11 @@ async function handler(req, res) {
   if (!fileName || !mimeType || !fileSize) {
     return res.status(400).json({ error: "fileName, mimeType, fileSize wajib diisi" });
   }
+  // Kategori wajib: menentukan folder tujuan di Drive, jadi tidak bisa kosong.
+  const kategoriBersih = String(kategori || "").trim();
+  if (!kategoriBersih) {
+    return res.status(400).json({ error: "Kategori wajib dipilih" });
+  }
   if (mimeType !== "application/pdf") {
     return res.status(400).json({ error: "Hanya file PDF yang diperbolehkan" });
   }
@@ -25,17 +34,20 @@ async function handler(req, res) {
   }
 
   const documentId = uuidv4();
-  const driveFileName = `${documentId}.pdf`;
+  // Nama di Drive kini mengikuti nama dokumen di aplikasi, bukan UUID mentah.
+  const driveFileName = buildDriveFileName(fileName, documentId);
 
   const origin = req.headers.origin || `https://${req.headers.host}`;
 
   let resumableSessionUrl;
   try {
+    const parentFolderId = await findOrCreateCategoryFolder(kategoriBersih);
     resumableSessionUrl = await createResumableUploadSession({
       fileName: driveFileName,
       mimeType,
       fileSize,
       origin,
+      parentFolderId,
     });
   } catch (err) {
     console.error(err);
@@ -46,7 +58,7 @@ async function handler(req, res) {
     await appendRow("Documents", {
       documentId,
       namaDokumen: fileName,
-      kategori: kategori || "",
+      kategori: kategoriBersih,
       driveFileId: "",
       uploadedBy: session.email,
       uploadedAt: new Date().toISOString(),

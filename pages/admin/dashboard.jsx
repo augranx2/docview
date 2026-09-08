@@ -20,6 +20,7 @@ export default function AdminDashboard() {
   const [sortBy, setSortBy] = useState("newest"); // newest | oldest | name-asc | name-desc
   const [selectedCategory, setSelectedCategory] = useState(null); // null = semua kategori
   const [editingCategoryDoc, setEditingCategoryDoc] = useState(null); // documentId being edited
+  const [categoryIsNew, setCategoryIsNew] = useState(false); // sedang mengetik kategori baru
   const [categoryDraft, setCategoryDraft] = useState("");
   const [savingCategory, setSavingCategory] = useState(false);
 
@@ -200,9 +201,20 @@ export default function AdminDashboard() {
   function startEditCategory(doc) {
     setEditingCategoryDoc(doc.documentId);
     setCategoryDraft(doc.kategori || "");
+    setCategoryIsNew(false);
   }
 
+  // Daftar kategori untuk dropdown, dihitung dari dokumen yang sudah dimuat —
+  // tidak perlu panggilan API terpisah karena semuanya sudah ada di memori.
+  const categoryOptions = [...new Set(docs.map((d) => (d.kategori || "").trim()).filter(Boolean))].sort(
+    (a, b) => a.localeCompare(b, "id")
+  );
+
   async function handleSaveCategory(documentId) {
+    if (!categoryDraft.trim()) {
+      alert("Kategori wajib diisi — kategori menentukan folder file di Google Drive.");
+      return;
+    }
     setSavingCategory(true);
     try {
       const res = await fetch("/api/admin/update-document", {
@@ -212,7 +224,9 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal menyimpan kategori");
+      if (data.warning) alert(data.warning);
       setEditingCategoryDoc(null);
+      setCategoryIsNew(false);
       await loadAll();
     } catch (err) {
       alert(err.message);
@@ -565,19 +579,44 @@ export default function AdminDashboard() {
                           <div style={{ fontWeight: 700, fontSize: 14, color: "#1e293b", wordBreak: "break-word" }}>{doc.namaDokumen}</div>
 
                           {editingCategoryDoc === doc.documentId ? (
-                            <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 6 }}>
-                              <input
-                                type="text"
+                            <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 6, flexWrap: "wrap" }}>
+                              <select
                                 autoFocus
-                                value={categoryDraft}
-                                onChange={(e) => setCategoryDraft(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") handleSaveCategory(doc.documentId);
-                                  if (e.key === "Escape") setEditingCategoryDoc(null);
+                                value={categoryIsNew ? "__new__" : categoryDraft}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  if (v === "__new__") {
+                                    setCategoryIsNew(true);
+                                    setCategoryDraft("");
+                                  } else {
+                                    setCategoryIsNew(false);
+                                    setCategoryDraft(v);
+                                  }
                                 }}
-                                placeholder="Nama kategori..."
-                                style={{ fontSize: 11, padding: "3px 8px", border: "1px solid #cbd5e1", borderRadius: 6, outline: "none", width: 140 }}
-                              />
+                                style={{ fontSize: 11, padding: "3px 8px", border: "1px solid #cbd5e1", borderRadius: 6, outline: "none", maxWidth: 260, background: "white" }}
+                              >
+                                <option value="">— Pilih kategori —</option>
+                                {categoryOptions.map((c) => (
+                                  <option key={c} value={c}>
+                                    {c}
+                                  </option>
+                                ))}
+                                <option value="__new__">+ Buat kategori baru…</option>
+                              </select>
+                              {categoryIsNew && (
+                                <input
+                                  type="text"
+                                  autoFocus
+                                  value={categoryDraft}
+                                  onChange={(e) => setCategoryDraft(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleSaveCategory(doc.documentId);
+                                    if (e.key === "Escape") setEditingCategoryDoc(null);
+                                  }}
+                                  placeholder="Nama kategori baru..."
+                                  style={{ fontSize: 11, padding: "3px 8px", border: "1px solid #cbd5e1", borderRadius: 6, outline: "none", width: 160 }}
+                                />
+                              )}
                               <button
                                 disabled={savingCategory}
                                 onClick={() => handleSaveCategory(doc.documentId)}
@@ -587,7 +626,10 @@ export default function AdminDashboard() {
                               </button>
                               <button
                                 disabled={savingCategory}
-                                onClick={() => setEditingCategoryDoc(null)}
+                                onClick={() => {
+                                  setEditingCategoryDoc(null);
+                                  setCategoryIsNew(false);
+                                }}
                                 style={{ fontSize: 11, fontWeight: 600, color: "#334155", background: "white", border: "1px solid #cbd5e1", borderRadius: 6, padding: "3px 8px", cursor: "pointer" }}
                               >
                                 Batal

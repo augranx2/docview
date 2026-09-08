@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 
@@ -15,8 +15,18 @@ export default function UploadPage() {
   const [overallLabel, setOverallLabel] = useState("");
   const [error, setError] = useState("");
   const [doneSummary, setDoneSummary] = useState(null); // { success, failed }
+  const [categories, setCategories] = useState([]);
 
   const router = useRouter();
+
+  // Daftar kategori diambil dari dokumen yang sudah ada, supaya admin memilih
+  // ulang kategori lama alih-alih mengetiknya sedikit berbeda tiap kali.
+  useEffect(() => {
+    fetch("/api/admin/categories")
+      .then((r) => (r.ok ? r.json() : { categories: [] }))
+      .then((d) => setCategories(d.categories || []))
+      .catch(() => setCategories([]));
+  }, []);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -49,6 +59,7 @@ export default function UploadPage() {
         id: `${f.name}-${f.size}-${Date.now()}-${Math.random()}`,
         file: f,
         kategori: "",
+        kategoriBaru: false,
         allowedUsers: "",
         allowDownload: false,
         status: "pending", // pending | uploading | done | error
@@ -155,6 +166,17 @@ export default function UploadPage() {
     e.preventDefault();
     if (files.length === 0) {
       setError("Pilih minimal 1 file PDF terlebih dahulu");
+      return;
+    }
+    // Kategori menentukan folder tujuan di Drive, jadi divalidasi di sini juga
+    // supaya admin tidak menunggu upload berjalan hanya untuk ditolak server.
+    const tanpaKategori = files.filter((f) => !f.kategori.trim());
+    if (tanpaKategori.length > 0) {
+      setError(
+        `Kategori wajib dipilih untuk semua file. Belum diisi: ${tanpaKategori
+          .map((f) => f.file.name)
+          .join(", ")}`
+      );
       return;
     }
 
@@ -330,14 +352,37 @@ export default function UploadPage() {
                 </div>
 
                 <div className="file-fields" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
-                  <input
-                    type="text"
-                    placeholder="Kategori (opsional)"
-                    value={entry.kategori}
-                    disabled={uploading}
-                    onChange={(e) => updateFile(entry.id, { kategori: e.target.value })}
-                    style={{ padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 12, outline: "none" }}
-                  />
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <select
+                      value={entry.kategoriBaru ? "__new__" : entry.kategori}
+                      disabled={uploading}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v === "__new__") updateFile(entry.id, { kategoriBaru: true, kategori: "" });
+                        else updateFile(entry.id, { kategoriBaru: false, kategori: v });
+                      }}
+                      style={{ padding: "8px 10px", borderRadius: 8, fontSize: 12, outline: "none", background: "white", border: entry.kategori.trim() ? "1px solid #cbd5e1" : "1px solid #fca5a5" }}
+                    >
+                      <option value="">— Pilih kategori (wajib) —</option>
+                      {categories.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                      <option value="__new__">+ Buat kategori baru…</option>
+                    </select>
+                    {entry.kategoriBaru && (
+                      <input
+                        type="text"
+                        placeholder="Nama kategori baru…"
+                        value={entry.kategori}
+                        disabled={uploading}
+                        autoFocus
+                        onChange={(e) => updateFile(entry.id, { kategori: e.target.value })}
+                        style={{ padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 12, outline: "none" }}
+                      />
+                    )}
+                  </div>
                   <input
                     type="text"
                     placeholder="Bagikan ke (username, koma)"
