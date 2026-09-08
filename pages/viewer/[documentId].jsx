@@ -10,6 +10,13 @@ export default function ViewerPage() {
   const [status, setStatus] = useState("loading"); // loading | ready | error
   const [errorMsg, setErrorMsg] = useState("");
   const [canDownload, setCanDownload] = useState(false);
+  const [numPages, setNumPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageInput, setPageInput] = useState("");
+  const [copied, setCopied] = useState(false);
+  // Kanvas tiap halaman disimpan di ref, bukan state: dipakai untuk scroll dan
+  // untuk mendeteksi halaman yang sedang terlihat, keduanya tidak perlu render ulang.
+  const pageCanvasesRef = useRef([]);
 
   useEffect(() => {
     if (!documentId) return;
@@ -66,6 +73,9 @@ export default function ViewerPage() {
 
       const watermarkText = `${me.email || ""}  ${new Date().toLocaleString("id-ID")}`;
 
+      if (!cancelled) setNumPages(pdf.numPages);
+      pageCanvasesRef.current = [];
+
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
         const page = await pdf.getPage(pageNum);
 
@@ -107,6 +117,12 @@ export default function ViewerPage() {
         }
         ctx.restore();
 
+        canvas.dataset.pageNumber = String(pageNum);
+        // scrollMarginTop menjaga agar halaman tidak tertutup toolbar yang
+        // menempel di atas saat di-scroll ke sana.
+        canvas.style.scrollMarginTop = "72px";
+        pageCanvasesRef.current.push(canvas);
+
         container.appendChild(canvas);
       }
 
@@ -125,6 +141,68 @@ export default function ViewerPage() {
       cancelled = true;
     };
   }, [documentId]);
+
+  // Melompat ke halaman tertentu. Semua halaman sudah dirender bertumpuk,
+  // jadi "pindah halaman" berarti menggulir ke kanvas yang bersangkutan.
+  function gotoPage(n) {
+    const target = Math.min(Math.max(1, Math.round(Number(n))), numPages || 1);
+    const canvas = pageCanvasesRef.current[target - 1];
+    if (!canvas) return;
+    canvas.scrollIntoView({ behavior: "smooth", block: "start" });
+    setCurrentPage(target);
+  }
+
+  function submitPageInput(e) {
+    e.preventDefault();
+    const n = Number(pageInput);
+    if (!pageInput.trim() || Number.isNaN(n)) return;
+    gotoPage(n);
+    setPageInput("");
+  }
+
+  // Menyalin tautan yang langsung membuka di halaman ini — dipakai saat
+  // mengarahkan penerima dokumen ke halaman tertentu.
+  async function copyPageLink() {
+    const url = `${window.location.origin}${window.location.pathname}?hal=${currentPage}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      window.prompt("Salin tautan ini:", url);
+    }
+  }
+
+  // Setelah semua halaman selesai dirender, langsung lompat ke ?hal=N bila ada.
+  useEffect(() => {
+    if (status !== "ready" || !numPages) return;
+    const target = Number(router.query.hal);
+    if (target >= 1 && target <= numPages) {
+      // Sedikit jeda supaya tata letak sudah final sebelum digulir.
+      const t = setTimeout(() => gotoPage(target), 150);
+      return () => clearTimeout(t);
+    }
+  }, [status, numPages, router.query.hal]);
+
+  // Melacak halaman yang sedang dilihat, supaya kotak nomor halaman ikut
+  // bergerak saat pengguna menggulir secara manual.
+  useEffect(() => {
+    if (status !== "ready") return;
+    function onScroll() {
+      const canvases = pageCanvasesRef.current;
+      if (canvases.length === 0) return;
+      const acuan = window.innerHeight * 0.35;
+      let terlihat = 1;
+      for (let i = 0; i < canvases.length; i++) {
+        if (canvases[i].getBoundingClientRect().top <= acuan) terlihat = i + 1;
+        else break;
+      }
+      setCurrentPage(terlihat);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [status, numPages]);
 
   useEffect(() => {
     // Deterrents only — none of these can fully stop a determined user,
@@ -171,6 +249,76 @@ export default function ViewerPage() {
         </p>
       )}
       {status === "error" && <p className="error-text">{errorMsg}</p>}
+
+      {/* BILAH NAVIGASI HALAMAN — menempel di atas saat menggulir */}
+      {status === "ready" && numPages > 0 && (
+        <div
+          style={{
+            position: "sticky",
+            top: 0,
+            zIndex: 20,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            flexWrap: "wrap",
+            padding: "10px 14px",
+            marginBottom: 14,
+            borderRadius: 12,
+            border: "1px solid #e2e8f0",
+            background: "rgba(255,255,255,0.92)",
+            backdropFilter: "blur(10px)",
+            boxShadow: "0 2px 8px rgba(15,23,42,0.06)",
+          }}
+        >
+          <button
+            onClick={() => gotoPage(currentPage - 1)}
+            disabled={currentPage <= 1}
+            title="Halaman sebelumnya"
+            style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: currentPage <= 1 ? "#cbd5e1" : "#334155", fontSize: 12, fontWeight: 700, cursor: currentPage <= 1 ? "not-allowed" : "pointer" }}
+          >
+            ↑
+          </button>
+          <button
+            onClick={() => gotoPage(currentPage + 1)}
+            disabled={currentPage >= numPages}
+            title="Halaman berikutnya"
+            style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: currentPage >= numPages ? "#cbd5e1" : "#334155", fontSize: 12, fontWeight: 700, cursor: currentPage >= numPages ? "not-allowed" : "pointer" }}
+          >
+            ↓
+          </button>
+
+          <span style={{ fontSize: 12, color: "#64748b" }}>
+            Halaman <strong style={{ color: "#1e4d8f" }}>{currentPage}</strong> dari {numPages}
+          </span>
+
+          <form onSubmit={submitPageInput} style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
+            <input
+              type="number"
+              min={1}
+              max={numPages}
+              value={pageInput}
+              onChange={(e) => setPageInput(e.target.value)}
+              placeholder="Ke hal..."
+              style={{ width: 90, padding: "6px 10px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 12, outline: "none" }}
+            />
+            <button
+              type="submit"
+              style={{ padding: "6px 12px", borderRadius: 8, border: "none", background: "#1e4d8f", color: "white", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+            >
+              Buka
+            </button>
+            <button
+              type="button"
+              onClick={copyPageLink}
+              title="Salin tautan yang langsung terbuka di halaman ini"
+              style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: copied ? "#16a34a" : "#334155", fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}
+            >
+              {copied ? "✓ Tersalin" : "🔗 Salin tautan"}
+            </button>
+          </form>
+        </div>
+      )}
+
       <div ref={containerRef} />
     </div>
     </>
