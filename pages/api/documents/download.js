@@ -23,6 +23,13 @@ async function handler(req, res) {
   const { documentId } = req.query;
   if (!documentId) return res.status(400).json({ error: "documentId wajib diisi" });
 
+  // Alasan pengunduhan wajib: ikut dicetak pada salinan dan dicatat di audit
+  // trail, sehingga setiap berkas yang beredar membawa keterangan keperluannya.
+  const alasan = String(req.query.alasan || "").trim().slice(0, 160);
+  if (alasan.length < 5) {
+    return res.status(400).json({ error: "Alasan pengunduhan wajib diisi (minimal 5 karakter)" });
+  }
+
   const docs = await findRows("Documents", (d) => d.documentId === documentId);
   const doc = docs[0];
   if (!doc || doc.status !== "active") {
@@ -73,6 +80,7 @@ async function handler(req, res) {
     watermarkedBuffer = await addControlledWatermark(buffer, origin, {
       userLabel,
       timeLabel,
+      reasonLabel: alasan,
     });
   } catch (err) {
     console.error("Watermark failed, sending original file instead:", err);
@@ -85,7 +93,7 @@ async function handler(req, res) {
     userEmail: session.email,
     documentId,
     action: "DOWNLOAD",
-    detail: timeLabel,
+    detail: `${timeLabel} — alasan: ${alasan}`,
   });
 
   res.setHeader("Content-Type", "application/pdf");

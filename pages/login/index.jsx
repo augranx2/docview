@@ -59,7 +59,7 @@ export default function LoginPage() {
             <h1>
               Dokumen mutu,
               <br />
-              <span>terkendali sampai ke tangan.</span>
+              <span>terkendali sampai ke pengguna.</span>
             </h1>
             <p>
               Setiap dokumen hanya terbuka bagi personel yang diberi akses, dan setiap
@@ -69,7 +69,7 @@ export default function LoginPage() {
 
           <ul className="points">
             <li>
-              <span className="ico">👁</span> Baku lihat-saja — izin unduh diberikan per dokumen
+              <span className="ico">👁</span> Hanya bisa dibaca — izin unduh diberikan per dokumen
             </li>
             <li>
               <span className="ico">🔖</span> Watermark identitas pengguna di setiap halaman

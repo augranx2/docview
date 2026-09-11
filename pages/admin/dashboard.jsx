@@ -2,6 +2,7 @@ import Head from "next/head";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import DownloadButton from "../../components/DownloadButton";
 
 export default function AdminDashboard() {
   const [documents, setDocuments] = useState([]);
@@ -979,13 +980,12 @@ export default function AdminDashboard() {
                         >
                           Lihat
                         </Link>
-                        <a
-                          href={`/api/documents/download?documentId=${doc.documentId}`}
-                          style={{ padding: "6px 9px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 11, fontWeight: 600, textDecoration: "none" }}
-                          title="Download file asli"
-                        >
-                          ⬇
-                        </a>
+                        <DownloadButton
+                          documentId={doc.documentId}
+                          namaDokumen={doc.namaDokumen}
+                          label="⬇"
+                          style={{ padding: "6px 9px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+                        />
                         <button
                           onClick={() => setExpandedDoc(isExpanded ? null : doc.documentId)}
                           style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: isExpanded ? "#eff6ff" : "white", color: "#1e4d8f", fontSize: 11, fontWeight: 700, cursor: "pointer" }}

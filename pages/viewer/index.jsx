@@ -2,6 +2,7 @@ import Head from "next/head";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import DownloadButton from "../../components/DownloadButton";
 
 export default function DocumentListPage() {
   const [docs, setDocs] = useState([]);
@@ -26,6 +27,7 @@ export default function DocumentListPage() {
 
   const [auditLogs, setAuditLogs] = useState([]);
   const [auditTotal, setAuditTotal] = useState(0);
+  const [catFilter, setCatFilter] = useState("");
   const [loadingAudit, setLoadingAudit] = useState(false);
 
   const router = useRouter();
@@ -236,83 +238,123 @@ export default function DocumentListPage() {
             <div
               className="cat-sidebar"
               style={{
-                width: 220,
+                width: 260,
                 flexShrink: 0,
                 background: "white",
                 border: "1px solid #e2e8f0",
                 borderRadius: 16,
-                padding: 10,
                 position: "sticky",
                 top: 84,
+                // Dibatasi setinggi layar dengan area gulir sendiri. Tanpa ini
+                // elemen sticky menjadi lebih tinggi dari layar, sehingga bagian
+                // bawah daftar tidak pernah bisa dijangkau dengan roda mouse.
+                maxHeight: "calc(100vh - 104px)",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                boxShadow: "0 1px 3px rgba(15,23,42,0.04)",
               }}
             >
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.04em", padding: "8px 10px 6px" }}>
-                Kategori
+              <div style={{ padding: "12px 12px 10px", borderBottom: "1px solid #f1f5f9", flexShrink: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    Kategori
+                  </span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", background: "#f1f5f9", borderRadius: 999, padding: "2px 8px" }}>
+                    {categoryList.length}
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={catFilter}
+                  onChange={(e) => setCatFilter(e.target.value)}
+                  placeholder="Saring kategori..."
+                  style={{ width: "100%", padding: "7px 10px", border: "1px solid #e2e8f0", borderRadius: 9, fontSize: 12, outline: "none", background: "#f8fafc", color: "#0f172a" }}
+                />
               </div>
-              <button
-                onClick={() => setSelectedCategory(null)}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "9px 10px",
-                  borderRadius: 10,
-                  border: "none",
-                  background: selectedCategory === null ? "#1e4d8f" : "transparent",
-                  color: selectedCategory === null ? "white" : "#334155",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  textAlign: "left",
-                  marginBottom: 2,
-                }}
-              >
-                <span>📋 Semua Dokumen</span>
-                <span style={{ fontSize: 11, opacity: 0.85 }}>{docs.length}</span>
-              </button>
 
-              {categoryList.map((cat) => (
-                // title = tooltip bawaan browser saat kursor diarahkan, supaya nama
-                // kategori yang terpotong tetap terbaca tanpa perlu diklik.
+              <div className="cat-scroll" style={{ overflowY: "auto", padding: 8, flex: 1 }}>
                 <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  title={cat === UNCATEGORIZED ? cat : `${cat} (${categoryCounts[cat]} dokumen)`}
-                  className={`cat-item${selectedCategory === cat ? " cat-item--active" : ""}`}
+                  onClick={() => setSelectedCategory(null)}
                   style={{
                     width: "100%",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
+                    gap: 8,
                     padding: "9px 10px",
                     borderRadius: 10,
                     border: "none",
-                    background: selectedCategory === cat ? "#1e4d8f" : "transparent",
-                    color: selectedCategory === cat ? "white" : "#334155",
+                    background: selectedCategory === null ? "#1e4d8f" : "transparent",
+                    color: selectedCategory === null ? "white" : "#334155",
                     fontSize: 13,
                     fontWeight: 600,
                     cursor: "pointer",
                     textAlign: "left",
-                    marginBottom: 2,
-                    // Kategori aktif ditampilkan penuh; sisanya dipotong "...".
-                    alignItems: selectedCategory === cat ? "flex-start" : "center",
+                    marginBottom: 4,
                   }}
                 >
-                  <span
-                    className="cat-label"
-                    style={
-                      selectedCategory === cat
-                        ? { whiteSpace: "normal", overflow: "visible", wordBreak: "break-word", lineHeight: 1.35 }
-                        : { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }
-                    }
-                  >
-                    {cat === UNCATEGORIZED ? "🗂 " : "📁 "}
-                    {cat}
+                  <span>📋 Semua Dokumen</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, opacity: 0.9, background: selectedCategory === null ? "rgba(255,255,255,0.18)" : "#f1f5f9", borderRadius: 999, padding: "1px 7px" }}>
+                    {docs.length}
                   </span>
-                  <span style={{ fontSize: 11, opacity: 0.85, flexShrink: 0, marginLeft: 6 }}>{categoryCounts[cat]}</span>
                 </button>
-              ))}
+
+                {categoryList
+                  .filter((cat) => cat.toLowerCase().includes(catFilter.trim().toLowerCase()))
+                  .map((cat) => {
+                    const aktif = selectedCategory === cat;
+                    return (
+                      // title = tooltip bawaan browser saat kursor diarahkan, supaya
+                      // nama kategori yang terpotong tetap terbaca tanpa perlu diklik.
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        title={cat === UNCATEGORIZED ? cat : `${cat} (${categoryCounts[cat]} dokumen)`}
+                        className={`cat-item${aktif ? " cat-item--active" : ""}`}
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 8,
+                          padding: "8px 10px",
+                          borderRadius: 10,
+                          border: "none",
+                          borderLeft: aktif ? "3px solid #60a5fa" : "3px solid transparent",
+                          background: aktif ? "#1e4d8f" : "transparent",
+                          color: aktif ? "white" : "#334155",
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          textAlign: "left",
+                          marginBottom: 2,
+                          alignItems: aktif ? "flex-start" : "center",
+                        }}
+                      >
+                        <span
+                          className="cat-label"
+                          style={
+                            aktif
+                              ? { whiteSpace: "normal", overflow: "visible", wordBreak: "break-word", lineHeight: 1.35 }
+                              : { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }
+                          }
+                        >
+                          {cat === UNCATEGORIZED ? "🗂 " : "📁 "}
+                          {cat}
+                        </span>
+                        <span style={{ fontSize: 10.5, fontWeight: 700, flexShrink: 0, background: aktif ? "rgba(255,255,255,0.18)" : "#f1f5f9", color: aktif ? "white" : "#64748b", borderRadius: 999, padding: "1px 7px" }}>
+                          {categoryCounts[cat]}
+                        </span>
+                      </button>
+                    );
+                  })}
+
+                {categoryList.filter((cat) => cat.toLowerCase().includes(catFilter.trim().toLowerCase())).length === 0 && (
+                  <p style={{ fontSize: 11, color: "#94a3b8", textAlign: "center", padding: "14px 8px", margin: 0 }}>
+                    Tidak ada kategori yang cocok.
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -393,13 +435,12 @@ export default function DocumentListPage() {
                     </Link>
 
                     {doc.canDownload ? (
-                      <a
-                        href={`/api/documents/download?documentId=${doc.documentId}`}
-                        style={{ padding: "8px 12px", borderRadius: 10, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, textDecoration: "none" }}
-                        title="Download file asli"
-                      >
-                        ⬇ Download
-                      </a>
+                      <DownloadButton
+                        documentId={doc.documentId}
+                        namaDokumen={doc.namaDokumen}
+                        label="⬇ Download"
+                        style={{ padding: "8px 12px", borderRadius: 10, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                      />
                     ) : (
                       <span
                         style={{ padding: "8px 12px", borderRadius: 10, border: "1px dashed #e2e8f0", color: "#94a3b8", fontSize: 11, fontWeight: 600 }}

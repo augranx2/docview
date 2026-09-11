@@ -2,6 +2,7 @@ import Head from "next/head";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import DownloadButton from "../../components/DownloadButton";
 
 export default function ViewerPage() {
   const router = useRouter();
@@ -10,6 +11,7 @@ export default function ViewerPage() {
   const [status, setStatus] = useState("loading"); // loading | ready | error
   const [errorMsg, setErrorMsg] = useState("");
   const [canDownload, setCanDownload] = useState(false);
+  const [namaDokumen, setNamaDokumen] = useState("");
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageInput, setPageInput] = useState("");
@@ -46,7 +48,10 @@ export default function ViewerPage() {
       const tokenData = await tokenRes.json();
       // The same call tells us whether this user may download THIS document
       // (Admin always, a Viewer only if the Admin ticked the download box).
-      if (!cancelled) setCanDownload(!!tokenData.canDownload);
+      if (!cancelled) {
+        setCanDownload(!!tokenData.canDownload);
+        setNamaDokumen(tokenData.namaDokumen || "");
+      }
       if (!tokenRes.ok) {
         setStatus("error");
         setErrorMsg(tokenData.error || "Tidak bisa membuka dokumen");
@@ -232,16 +237,112 @@ export default function ViewerPage() {
         <title>Baca Dokumen — SIDOK</title>
       </Head>
       <div className="page" style={{ maxWidth: 900 }}>
-      <div className="topbar" style={{ marginBottom: 16 }}>
-        <Link href="/viewer" className="back-link">
-          ← Kembali ke Dokumen Saya
-        </Link>
-        {canDownload && documentId && (
-          <a href={`/api/documents/download?documentId=${documentId}`} className="btn btn-outline btn-sm">
-            ⬇ Download File Asli
-          </a>
+      {/* BILAH ATAS TERPADU — menempel di atas layar, sehingga tombol kembali
+          dan navigasi halaman selalu terjangkau tanpa menggulir ke puncak. */}
+      <div
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 30,
+          margin: "0 0 16px",
+          padding: "10px 12px",
+          borderRadius: 14,
+          border: "1px solid #e2e8f0",
+          background: "rgba(255,255,255,0.94)",
+          backdropFilter: "blur(12px)",
+          boxShadow: "0 4px 14px rgba(15,23,42,0.07)",
+        }}
+      >
+        {/* BARIS 1 — identitas dokumen & aksi utama */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <Link
+            href="/viewer"
+            title="Kembali ke daftar Dokumen Saya"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 10, background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1e4d8f", fontSize: 12.5, fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap" }}
+          >
+            ← Dokumen Saya
+          </Link>
+
+          <div style={{ flex: 1, minWidth: 120, overflow: "hidden" }}>
+            <p
+              title={namaDokumen || ""}
+              style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+            >
+              {namaDokumen || "Dokumen"}
+            </p>
+            {status === "ready" && numPages > 0 && (
+              <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>
+                Halaman <strong style={{ color: "#1e4d8f" }}>{currentPage}</strong> dari {numPages}
+              </p>
+            )}
+          </div>
+
+          {canDownload && documentId && (
+            <DownloadButton
+              documentId={documentId}
+              namaDokumen={namaDokumen}
+              label="⬇ Download File Asli"
+              style={{ padding: "7px 13px", borderRadius: 10, border: "none", background: "#1e4d8f", color: "white", fontSize: 12.5, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}
+            />
+          )}
+        </div>
+
+        {/* BARIS 2 — navigasi halaman */}
+        {status === "ready" && numPages > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 10, paddingTop: 10, borderTop: "1px solid #f1f5f9" }}>
+            <button
+              onClick={() => gotoPage(currentPage - 1)}
+              disabled={currentPage <= 1}
+              title="Halaman sebelumnya"
+              style={{ padding: "6px 11px", borderRadius: 8, border: "1px solid #e2e8f0", background: "white", color: currentPage <= 1 ? "#cbd5e1" : "#334155", fontSize: 12, fontWeight: 700, cursor: currentPage <= 1 ? "not-allowed" : "pointer" }}
+            >
+              ↑
+            </button>
+            <button
+              onClick={() => gotoPage(currentPage + 1)}
+              disabled={currentPage >= numPages}
+              title="Halaman berikutnya"
+              style={{ padding: "6px 11px", borderRadius: 8, border: "1px solid #e2e8f0", background: "white", color: currentPage >= numPages ? "#cbd5e1" : "#334155", fontSize: 12, fontWeight: 700, cursor: currentPage >= numPages ? "not-allowed" : "pointer" }}
+            >
+              ↓
+            </button>
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              title="Kembali ke awal dokumen"
+              style={{ padding: "6px 11px", borderRadius: 8, border: "1px solid #e2e8f0", background: "white", color: "#334155", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+            >
+              ⤒
+            </button>
+
+            <form onSubmit={submitPageInput} style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
+              <input
+                type="number"
+                min={1}
+                max={numPages}
+                value={pageInput}
+                onChange={(e) => setPageInput(e.target.value)}
+                placeholder="Ke hal..."
+                style={{ width: 84, padding: "6px 10px", border: "1px solid #e2e8f0", borderRadius: 8, fontSize: 12, outline: "none" }}
+              />
+              <button
+                type="submit"
+                style={{ padding: "6px 12px", borderRadius: 8, border: "none", background: "#1e4d8f", color: "white", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+              >
+                Buka
+              </button>
+              <button
+                type="button"
+                onClick={copyPageLink}
+                title="Salin tautan yang langsung terbuka di halaman ini"
+                style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #e2e8f0", background: "white", color: copied ? "#16a34a" : "#334155", fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                {copied ? "✓ Tersalin" : "🔗 Salin tautan"}
+              </button>
+            </form>
+          </div>
         )}
       </div>
+
       {status === "loading" && (
         <p className="muted">
           <span className="spinner" style={{ marginRight: 8 }} />
@@ -249,75 +350,6 @@ export default function ViewerPage() {
         </p>
       )}
       {status === "error" && <p className="error-text">{errorMsg}</p>}
-
-      {/* BILAH NAVIGASI HALAMAN — menempel di atas saat menggulir */}
-      {status === "ready" && numPages > 0 && (
-        <div
-          style={{
-            position: "sticky",
-            top: 0,
-            zIndex: 20,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            flexWrap: "wrap",
-            padding: "10px 14px",
-            marginBottom: 14,
-            borderRadius: 12,
-            border: "1px solid #e2e8f0",
-            background: "rgba(255,255,255,0.92)",
-            backdropFilter: "blur(10px)",
-            boxShadow: "0 2px 8px rgba(15,23,42,0.06)",
-          }}
-        >
-          <button
-            onClick={() => gotoPage(currentPage - 1)}
-            disabled={currentPage <= 1}
-            title="Halaman sebelumnya"
-            style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: currentPage <= 1 ? "#cbd5e1" : "#334155", fontSize: 12, fontWeight: 700, cursor: currentPage <= 1 ? "not-allowed" : "pointer" }}
-          >
-            ↑
-          </button>
-          <button
-            onClick={() => gotoPage(currentPage + 1)}
-            disabled={currentPage >= numPages}
-            title="Halaman berikutnya"
-            style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: currentPage >= numPages ? "#cbd5e1" : "#334155", fontSize: 12, fontWeight: 700, cursor: currentPage >= numPages ? "not-allowed" : "pointer" }}
-          >
-            ↓
-          </button>
-
-          <span style={{ fontSize: 12, color: "#64748b" }}>
-            Halaman <strong style={{ color: "#1e4d8f" }}>{currentPage}</strong> dari {numPages}
-          </span>
-
-          <form onSubmit={submitPageInput} style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
-            <input
-              type="number"
-              min={1}
-              max={numPages}
-              value={pageInput}
-              onChange={(e) => setPageInput(e.target.value)}
-              placeholder="Ke hal..."
-              style={{ width: 90, padding: "6px 10px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 12, outline: "none" }}
-            />
-            <button
-              type="submit"
-              style={{ padding: "6px 12px", borderRadius: 8, border: "none", background: "#1e4d8f", color: "white", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-            >
-              Buka
-            </button>
-            <button
-              type="button"
-              onClick={copyPageLink}
-              title="Salin tautan yang langsung terbuka di halaman ini"
-              style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: copied ? "#16a34a" : "#334155", fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}
-            >
-              {copied ? "✓ Tersalin" : "🔗 Salin tautan"}
-            </button>
-          </form>
-        </div>
-      )}
 
       <div ref={containerRef} />
     </div>

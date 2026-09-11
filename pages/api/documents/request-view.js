@@ -31,12 +31,17 @@ async function handler(req, res) {
     canDownload = access.some((a) => isDownloadFlagTrue(a.canDownload));
   }
 
+  // Nama dokumen dikirim bersama token supaya bilah atas halaman baca bisa
+  // menampilkannya tanpa permintaan tambahan.
+  const docs = await findRows("Documents", (d) => d.documentId === documentId);
+  const namaDokumen = docs[0] ? docs[0].namaDokumen || "" : "";
+
   const viewToken = uuidv4();
   await createViewToken(viewToken, { documentId, userEmail: session.email });
 
   await logAudit({ userEmail: session.email, documentId, action: "VIEW" });
 
-  return res.status(200).json({ viewToken, canDownload });
+  return res.status(200).json({ viewToken, canDownload, namaDokumen });
 }
 
 export default withErrorHandling(handler);
