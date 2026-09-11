@@ -38,215 +38,291 @@ export default function LoginPage() {
       <Head>
         <title>Masuk — SIDOK</title>
       </Head>
-      <div className="login-bg">
-      {/* Lapisan dekoratif: dua bola cahaya biru + pola titik halus.
-          Murni CSS, tidak ada file gambar tambahan yang perlu di-load. */}
-      <div className="glow glow-a" />
-      <div className="glow glow-b" />
-      <div className="dots" />
 
-      <div className="login-shell">
-        {/* BRAND HEADER DENGAN LOGO RAMA */}
-        <div className="brand">
-          <div className="brand-logo">
-            <img src="/logo-rama.png" alt="Logo" />
-          </div>
-          <h1>SIDOK</h1>
-          <p className="brand-sub">Sistem Dokumen Terkendali</p>
-          <p>PT. Rama Emerald Multi Sukses</p>
-        </div>
+      <div className="split">
+        {/* ================= PANEL KIRI: IDENTITAS & NILAI SISTEM ================= */}
+        <aside className="panel">
+          <div className="grid-overlay" />
+          <div className="glow" />
 
-        {/* KARTU FORM LOGIN */}
-        <div className="card">
-          <div className="card-head">
-            <span className="pill">🔒 Akses Terbatas</span>
-            <h2>Masuk ke akun Anda</h2>
-            <p>Gunakan username dan password yang diberikan Administrator.</p>
-          </div>
-
-          <form onSubmit={handleSubmit}>
-            <div className="field">
-              <label htmlFor="username">Username</label>
-              <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                autoFocus
-                autoComplete="username"
-                placeholder="Masukkan username Anda..."
-              />
+          <div className="brand">
+            <div className="brand-mark">
+              <img src="/logo-rama.png" alt="Logo PT. Rama Emerald Multi Sukses" />
             </div>
+            <div>
+              <p className="brand-name">PT. Rama Emerald Multi Sukses</p>
+              <p className="brand-sub">SIDOK — Sistem Dokumen Terkendali</p>
+            </div>
+          </div>
 
-            <div className="field">
-              <label htmlFor="password">Password</label>
-              <div className="password-wrap">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  className="peek"
-                  onClick={() => setShowPassword((v) => !v)}
-                  title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
-                  aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
-                >
-                  {showPassword ? "🙈" : "👁"}
-                </button>
+          <div className="headline">
+            <h1>
+              Dokumen mutu,
+              <br />
+              <span>terkendali sampai ke tangan.</span>
+            </h1>
+            <p>
+              Setiap dokumen hanya terbuka bagi personel yang diberi akses, dan setiap
+              salinan membawa identitas pengunduhnya.
+            </p>
+          </div>
+
+          <ul className="points">
+            <li>
+              <span className="ico">👁</span> Baku lihat-saja — izin unduh diberikan per dokumen
+            </li>
+            <li>
+              <span className="ico">🔖</span> Watermark identitas pengguna di setiap halaman
+            </li>
+            <li>
+              <span className="ico">🕘</span> Audit trail mencatat akses, unduh, dan perubahan hak
+            </li>
+          </ul>
+        </aside>
+
+        {/* ================= PANEL KANAN: FORM ================= */}
+        <main className="form-side">
+          <div className="form-wrap">
+            {/* Brand ringkas — hanya tampil saat panel kiri disembunyikan di layar sempit */}
+            <div className="brand-mobile">
+              <div className="brand-mark">
+                <img src="/logo-rama.png" alt="Logo" />
+              </div>
+              <div>
+                <p className="brand-name">SIDOK</p>
+                <p className="brand-sub">Sistem Dokumen Terkendali</p>
               </div>
             </div>
 
-            {error && <p className="error">⚠️ {error}</p>}
+            <h2>Masuk ke SIDOK</h2>
+            <p className="lead">
+              Gunakan username dan password yang diberikan Administrator sistem.
+            </p>
 
-            <button type="submit" className="submit" disabled={loading}>
-              {loading ? "Memproses..." : "Masuk Sistem"}
-            </button>
-          </form>
-        </div>
+            <form onSubmit={handleSubmit}>
+              <div className="field">
+                <label htmlFor="username">Username</label>
+                <input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  autoFocus
+                  autoComplete="username"
+                  placeholder="username personil"
+                />
+              </div>
 
-        <p className="foot">
-          Dokumen di sistem ini bersifat terkendali. Setiap aktivitas login, akses, dan
-          unduh tercatat dalam audit log.
-        </p>
+              <div className="field">
+                <label htmlFor="password">Password</label>
+                <div className="pw">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                    aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                  >
+                    {showPassword ? "🙈" : "👁"}
+                  </button>
+                </div>
+              </div>
+
+              {error && <p className="error">⚠️ {error}</p>}
+
+              <button type="submit" className="submit" disabled={loading}>
+                {loading ? "Memproses..." : "Masuk"}
+              </button>
+            </form>
+
+            <p className="hint">Lupa password? Hubungi Administrator sistem untuk direset.</p>
+
+            <p className="foot">Aktivitas login, akses, dan unduh tercatat dalam audit trail.</p>
+          </div>
+        </main>
       </div>
 
       <style jsx>{`
-        .login-bg {
-          position: relative;
+        .split {
+          display: grid;
+          grid-template-columns: 1.05fr 1fr;
           min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 24px 20px;
-          overflow: hidden;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          background: linear-gradient(160deg, #010810 0%, #0b2545 45%, #15427d 100%);
         }
 
-        /* Bola cahaya — memberi kedalaman tanpa membuat teks sulit dibaca. */
-        .glow {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(90px);
-          pointer-events: none;
+        /* ---------- PANEL KIRI ---------- */
+        .panel {
+          position: relative;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 46px 52px;
+          color: #ffffff;
+          background: linear-gradient(150deg, #020b17 0%, #0b2545 52%, #15427d 100%);
         }
-        .glow-a {
-          width: 460px;
-          height: 460px;
-          top: -160px;
-          right: -120px;
-          background: rgba(59, 130, 246, 0.38);
-        }
-        .glow-b {
-          width: 420px;
-          height: 420px;
-          bottom: -180px;
-          left: -140px;
-          background: rgba(37, 99, 235, 0.28);
-        }
-
-        /* Pola titik halus, memudar ke bawah supaya tidak mengganggu kartu. */
-        .dots {
+        /* Garis kisi tipis — memberi tekstur tanpa mengganggu keterbacaan teks */
+        .grid-overlay {
           position: absolute;
           inset: 0;
           pointer-events: none;
-          background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px);
-          background-size: 26px 26px;
-          -webkit-mask-image: linear-gradient(to bottom, black, transparent 70%);
-          mask-image: linear-gradient(to bottom, black, transparent 70%);
+          background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+          background-size: 46px 46px;
+          -webkit-mask-image: radial-gradient(ellipse at 30% 40%, black, transparent 75%);
+          mask-image: radial-gradient(ellipse at 30% 40%, black, transparent 75%);
+        }
+        .glow {
+          position: absolute;
+          width: 520px;
+          height: 520px;
+          right: -180px;
+          bottom: -200px;
+          border-radius: 50%;
+          filter: blur(100px);
+          background: rgba(37, 99, 235, 0.35);
+          pointer-events: none;
         }
 
-        .login-shell {
+        .brand,
+        .brand-mobile {
           position: relative;
-          z-index: 1;
-          width: 100%;
-          max-width: 420px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
         }
-
-        .brand {
-          text-align: center;
-          margin-bottom: 22px;
-        }
-        .brand-logo {
+        .brand-mark {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 68px;
-          height: 68px;
-          padding: 14px;
-          margin-bottom: 14px;
-          border-radius: 20px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.22);
-          backdrop-filter: blur(10px);
-          box-shadow: 0 8px 24px rgba(2, 11, 23, 0.45);
+          width: 46px;
+          height: 46px;
+          padding: 9px;
+          border-radius: 13px;
+          background: #ffffff;
+          flex-shrink: 0;
         }
-        .brand-logo img {
+        .brand-mark img {
           width: 100%;
           height: 100%;
           object-fit: contain;
-          filter: brightness(0) invert(1);
         }
-        .brand h1 {
-          font-size: 22px;
+        .brand .brand-name {
+          margin: 0;
+          font-size: 14px;
           font-weight: 800;
-          color: #ffffff;
-          margin: 0 0 4px;
-          letter-spacing: -0.02em;
-        }
-        .brand h1 {
-          letter-spacing: 0.08em;
+          letter-spacing: -0.01em;
         }
         .brand .brand-sub {
-          font-size: 13px;
-          font-weight: 700;
-          color: #dbeafe;
-          margin: 0 0 2px;
-        }
-        .brand p {
-          font-size: 12px;
+          margin: 2px 0 0;
+          font-size: 11px;
           color: #bfdbfe;
+        }
+
+        .headline {
+          position: relative;
+          max-width: 460px;
+        }
+        .headline h1 {
+          font-size: 40px;
+          line-height: 1.14;
+          font-weight: 800;
+          letter-spacing: -0.03em;
+          margin: 0 0 16px;
+        }
+        .headline h1 span {
+          color: #60a5fa;
+        }
+        .headline p {
+          font-size: 14px;
+          line-height: 1.65;
+          color: #cbd5e1;
           margin: 0;
         }
 
-        .card {
+        .points {
+          position: relative;
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .points li {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-size: 12.5px;
+          color: #dbeafe;
+        }
+        .ico {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 26px;
+          height: 26px;
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          font-size: 12px;
+          flex-shrink: 0;
+        }
+
+        /* ---------- PANEL KANAN ---------- */
+        .form-side {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 40px 32px;
           background: #ffffff;
-          border: 1px solid rgba(255, 255, 255, 0.6);
-          border-radius: 22px;
-          padding: 28px 26px;
-          box-shadow: 0 24px 48px -12px rgba(1, 8, 16, 0.55);
         }
-        .card-head {
-          margin-bottom: 20px;
+        .form-wrap {
+          width: 100%;
+          max-width: 370px;
         }
-        .pill {
-          display: inline-block;
+        .brand-mobile {
+          display: none;
+          margin-bottom: 26px;
+        }
+        .brand-mobile .brand-mark {
           background: #eff6ff;
-          border: 1px solid #bfdbfe;
-          color: #1e4d8f;
-          border-radius: 999px;
-          padding: 3px 10px;
-          font-size: 10px;
-          font-weight: 700;
-          margin-bottom: 10px;
+          border: 1px solid #dbeafe;
         }
-        .card-head h2 {
-          font-size: 17px;
+        .brand-mobile .brand-name {
+          margin: 0;
+          font-size: 15px;
           font-weight: 800;
           color: #0f172a;
-          margin: 0 0 4px;
+          letter-spacing: 0.06em;
         }
-        .card-head p {
-          font-size: 12px;
+        .brand-mobile .brand-sub {
+          margin: 2px 0 0;
+          font-size: 11px;
           color: #64748b;
-          margin: 0;
+        }
+
+        h2 {
+          font-size: 24px;
+          font-weight: 800;
+          color: #0f172a;
+          margin: 0 0 6px;
+          letter-spacing: -0.02em;
+        }
+        .lead {
+          font-size: 13px;
+          color: #64748b;
+          margin: 0 0 26px;
+          line-height: 1.55;
         }
 
         .field {
@@ -254,40 +330,37 @@ export default function LoginPage() {
         }
         .field label {
           display: block;
-          font-size: 11px;
+          font-size: 12px;
           font-weight: 700;
           color: #334155;
           margin-bottom: 6px;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
         }
         .field input {
           width: 100%;
           padding: 12px 14px;
           border: 1px solid #cbd5e1;
-          border-radius: 12px;
-          font-size: 13px;
-          background: #f8fafc;
+          border-radius: 10px;
+          font-size: 13.5px;
           color: #0f172a;
+          background: #ffffff;
           outline: none;
-          transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+          transition: border-color 0.15s, box-shadow 0.15s;
         }
         .field input::placeholder {
           color: #94a3b8;
         }
         .field input:focus {
           border-color: #1e4d8f;
-          background: #ffffff;
-          box-shadow: 0 0 0 3px rgba(30, 77, 143, 0.15);
+          box-shadow: 0 0 0 3px rgba(30, 77, 143, 0.13);
         }
 
-        .password-wrap {
+        .pw {
           position: relative;
         }
-        .password-wrap input {
+        .pw input {
           padding-right: 44px;
         }
-        .peek {
+        .pw button {
           position: absolute;
           right: 6px;
           top: 50%;
@@ -298,9 +371,9 @@ export default function LoginPage() {
           line-height: 1;
           padding: 8px;
           cursor: pointer;
-          opacity: 0.6;
+          opacity: 0.55;
         }
-        .peek:hover {
+        .pw button:hover {
           opacity: 1;
         }
 
@@ -316,55 +389,62 @@ export default function LoginPage() {
 
         .submit {
           width: 100%;
-          padding: 12px 16px;
+          padding: 13px 16px;
+          margin-top: 6px;
           border: none;
-          border-radius: 12px;
-          background: linear-gradient(135deg, #1e4d8f 0%, #2563eb 100%);
+          border-radius: 10px;
+          background: #1e4d8f;
           color: #ffffff;
-          font-size: 13px;
+          font-size: 14px;
           font-weight: 700;
           cursor: pointer;
-          box-shadow: 0 6px 16px rgba(30, 77, 143, 0.35);
-          transition: transform 0.12s, box-shadow 0.15s, filter 0.15s;
+          transition: background 0.15s, transform 0.1s;
         }
         .submit:hover:not(:disabled) {
-          filter: brightness(1.08);
-          box-shadow: 0 8px 20px rgba(30, 77, 143, 0.45);
+          background: #16406f;
         }
         .submit:active:not(:disabled) {
           transform: translateY(1px);
         }
         .submit:disabled {
           background: #94a3b8;
-          box-shadow: none;
           cursor: not-allowed;
         }
 
+        .hint {
+          text-align: center;
+          font-size: 11.5px;
+          color: #94a3b8;
+          margin: 16px 0 0;
+        }
         .foot {
           text-align: center;
           font-size: 11px;
-          line-height: 1.5;
-          color: rgba(191, 219, 254, 0.75);
-          margin: 18px auto 0;
-          max-width: 330px;
+          color: #cbd5e1;
+          margin: 30px 0 0;
+          padding-top: 16px;
+          border-top: 1px solid #f1f5f9;
         }
 
-        /* Di layar pendek, kurangi padding supaya kartu tidak terpotong. */
-        @media (max-height: 700px) {
-          .brand {
-            margin-bottom: 14px;
+        /* ---------- LAYAR SEMPIT ----------
+           Panel kiri disembunyikan, bukan ditumpuk di atas form: menumpuknya
+           akan mendorong kolom isian jauh ke bawah layar. */
+        @media (max-width: 900px) {
+          .split {
+            grid-template-columns: 1fr;
           }
-          .brand-logo {
-            width: 56px;
-            height: 56px;
-            margin-bottom: 10px;
+          .panel {
+            display: none;
           }
-          .foot {
-            margin-top: 12px;
+          .brand-mobile {
+            display: flex;
+          }
+          .form-side {
+            padding: 52px 20px 28px;
+            align-items: flex-start;
           }
         }
       `}</style>
-    </div>
     </>
   );
 }

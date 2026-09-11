@@ -373,23 +373,49 @@ function updateRowsByMatch_(tab, match, patch) {
  * Deletes bottom-to-top so row indices don't shift mid-loop.
  */
 function deleteRows_(tab, match) {
-  const sheet = getSheet_(tab);
-  const cols = GENERIC_SCHEMAS[tab];
   const matchKeys = Object.keys(match || {});
   if (matchKeys.length === 0) throw new Error("deleteRows requires at least one match field");
+  return rewriteWithout_(tab, function (obj) {
+    return matchKeys.every(function (k) {
+      return String(obj[k]) === String(match[k]);
+    });
+  });
+}
+
+/**
+ * Removes every row for which `shouldDelete(obj)` is true, by rewriting the
+ * whole data range ONCE instead of calling sheet.deleteRow() per hit.
+ *
+ * This matters a great deal at scale: deleteRow() is an individual
+ * spreadsheet operation, so revoking access for 30+ users on a sheet with
+ * tens of thousands of rows meant tens of separate operations on a large
+ * sheet. That ran past the calling function's timeout, which surfaced in the
+ * browser as an HTML gateway error page and the message
+ * "Unexpected token '<' ... is not valid JSON" — the frontend was trying to
+ * parse an error page as JSON. Rewriting in one pass keeps it to two
+ * operations regardless of how many rows are removed.
+ */
+function rewriteWithout_(tab, shouldDelete) {
+  const sheet = getSheet_(tab);
+  const cols = GENERIC_SCHEMAS[tab];
 
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return { success: true, deleted: 0 };
 
   const values = sheet.getRange(2, 1, lastRow - 1, cols.length).getValues();
+  const kept = [];
   let deleted = 0;
-  for (let i = values.length - 1; i >= 0; i--) {
-    const obj = rowToObject_(tab, values[i]);
-    const isMatch = matchKeys.every((k) => String(obj[k]) === String(match[k]));
-    if (isMatch) {
-      sheet.deleteRow(i + 2); // +1 header, +1 for 1-index
-      deleted++;
-    }
+
+  for (let i = 0; i < values.length; i++) {
+    if (shouldDelete(rowToObject_(tab, values[i]))) deleted++;
+    else kept.push(values[i]);
+  }
+
+  if (deleted === 0) return { success: true, deleted: 0 };
+
+  sheet.getRange(2, 1, values.length, cols.length).clearContent();
+  if (kept.length > 0) {
+    sheet.getRange(2, 1, kept.length, cols.length).setValues(kept);
   }
   return { success: true, deleted };
 }
@@ -406,26 +432,23 @@ function deleteRowsBatch_(tab, matches) {
   if (!Array.isArray(matches) || matches.length === 0) {
     throw new Error("deleteRowsBatch requires at least one match object");
   }
-  const sheet = getSheet_(tab);
-  const cols = GENERIC_SCHEMAS[tab];
+  // Index the match objects so checking a row is a hash lookup instead of a
+  // scan over every match — with 1000+ documents and 30+ users, a nested loop
+  // over the whole sheet is what pushes this past the timeout.
+  const keyOf = function (obj, keys) {
+    return keys.map(function (k) { return String(obj[k]); }).join("\u0000");
+  };
+  const keys = Object.keys(matches[0] || {});
+  if (keys.length === 0) throw new Error("deleteRowsBatch requires non-empty match objects");
 
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return { success: true, deleted: 0 };
-
-  const values = sheet.getRange(2, 1, lastRow - 1, cols.length).getValues();
-  let deleted = 0;
-  for (let i = values.length - 1; i >= 0; i--) {
-    const obj = rowToObject_(tab, values[i]);
-    const matchesAny = matches.some((match) => {
-      const keys = Object.keys(match || {});
-      return keys.length > 0 && keys.every((k) => String(obj[k]) === String(match[k]));
-    });
-    if (matchesAny) {
-      sheet.deleteRow(i + 2);
-      deleted++;
-    }
+  const wanted = {};
+  for (let m = 0; m < matches.length; m++) {
+    wanted[keyOf(matches[m], keys)] = true;
   }
-  return { success: true, deleted };
+
+  return rewriteWithout_(tab, function (obj) {
+    return wanted[keyOf(obj, keys)] === true;
+  });
 }
 
 /**

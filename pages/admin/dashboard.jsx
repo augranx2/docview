@@ -21,6 +21,8 @@ export default function AdminDashboard() {
   const [selectedCategory, setSelectedCategory] = useState(null); // null = semua kategori
   const [editingCategoryDoc, setEditingCategoryDoc] = useState(null); // documentId being edited
   const [categoryIsNew, setCategoryIsNew] = useState(false); // sedang mengetik kategori baru
+  const [catFilter, setCatFilter] = useState("");
+  const [bulkShare, setBulkShare] = useState(null); // { usernames: [], canDownload: bool, busy, hasil }
   const [migrasi, setMigrasi] = useState(null); // { running, dryRun, index, total, processed, skipped, failed, log }
   const [categoryDraft, setCategoryDraft] = useState("");
   const [savingCategory, setSavingCategory] = useState(false);
@@ -90,7 +92,7 @@ export default function AdminDashboard() {
           canDownload: !!grantWithDownload[documentId],
         }),
       });
-      const data = await res.json();
+      const data = await bacaRespons(res);
       if (!res.ok) throw new Error(data.error || "Gagal menambah akses");
       setSelectedUsers((prev) => ({ ...prev, [documentId]: [] }));
       setOpenPickerDoc(null);
@@ -117,7 +119,7 @@ export default function AdminDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ documentId, canDownload: withDownload }),
       });
-      const data = await res.json();
+      const data = await bacaRespons(res);
       if (!res.ok) throw new Error(data.error || "Gagal membagikan ke semua user");
       await loadAll();
     } catch (err) {
@@ -137,7 +139,7 @@ export default function AdminDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ documentId, username }),
       });
-      const data = await res.json();
+      const data = await bacaRespons(res);
       if (!res.ok) throw new Error(data.error || "Gagal mengakhiri akses");
       await loadAll();
     } catch (err) {
@@ -168,7 +170,7 @@ export default function AdminDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ documentId, usernames }),
       });
-      const data = await res.json();
+      const data = await bacaRespons(res);
       if (!res.ok) throw new Error(data.error || "Gagal mengakhiri akses");
       setSelectedRevoke((prev) => ({ ...prev, [documentId]: [] }));
       await loadAll();
@@ -176,6 +178,71 @@ export default function AdminDashboard() {
       alert(err.message);
     } finally {
       setBusyDoc(null);
+    }
+  }
+
+  // Server kadang membalas halaman HTML (mis. galat gateway saat operasi besar
+  // melewati batas waktu) alih-alih JSON. res.json() pada kasus itu melempar
+  // "Unexpected token '<'" yang tidak memberi tahu apa pun kepada pengguna.
+  async function bacaRespons(res) {
+    const teks = await res.text();
+    try {
+      return JSON.parse(teks);
+    } catch {
+      return {
+        error:
+          res.status >= 500
+            ? "Server tidak merespons tepat waktu. Operasi mungkin tetap berjalan di latar — muat ulang halaman untuk memeriksa hasilnya."
+            : `Server membalas dengan format tidak terduga (status ${res.status}).`,
+      };
+    }
+  }
+
+  // ---- CABUT SELURUH AKSES SEBUAH DOKUMEN ----
+  async function handleRevokeAll(documentId) {
+    if (!confirm("Akhiri akses SEMUA user pada dokumen ini?")) return;
+    setBusyDoc(documentId);
+    try {
+      const res = await fetch("/api/admin/revoke-access-all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId }),
+      });
+      const data = await bacaRespons(res);
+      if (!res.ok) throw new Error(data.error || "Gagal mengakhiri akses");
+      await loadAll();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setBusyDoc(null);
+    }
+  }
+
+  // ---- BAGIKAN BEBERAPA DOKUMEN SEKALIGUS ----
+  async function handleBulkShare() {
+    const usernames = bulkShare?.usernames || [];
+    if (usernames.length === 0) {
+      alert("Pilih minimal satu user terlebih dahulu.");
+      return;
+    }
+    setBulkShare((prev) => ({ ...prev, busy: true, hasil: null }));
+    try {
+      const res = await fetch("/api/admin/grant-access-bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentIds: selectedDocs,
+          usernames,
+          canDownload: !!bulkShare.canDownload,
+        }),
+      });
+      const data = await bacaRespons(res);
+      if (!res.ok) throw new Error(data.error || "Gagal membagikan dokumen");
+      setBulkShare((prev) => ({ ...prev, busy: false, hasil: data }));
+      await loadAll();
+    } catch (err) {
+      alert(err.message);
+      setBulkShare((prev) => ({ ...prev, busy: false }));
     }
   }
 
@@ -199,7 +266,7 @@ export default function AdminDashboard() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ startIndex: index, batchSize: 5, dryRun }),
         });
-        const data = await res.json();
+        const data = await bacaRespons(res);
         if (!res.ok) throw new Error(data.error || "Migrasi gagal");
 
         akumulasi = {
@@ -232,7 +299,7 @@ export default function AdminDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ documentId, usernames, canDownload }),
       });
-      const data = await res.json();
+      const data = await bacaRespons(res);
       if (!res.ok) throw new Error(data.error || "Gagal mengubah izin download");
       await loadAll();
     } catch (err) {
@@ -267,7 +334,7 @@ export default function AdminDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ documentId, kategori: categoryDraft }),
       });
-      const data = await res.json();
+      const data = await bacaRespons(res);
       if (!res.ok) throw new Error(data.error || "Gagal menyimpan kategori");
       if (data.warning) alert(data.warning);
       setEditingCategoryDoc(null);
@@ -290,7 +357,7 @@ export default function AdminDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ documentId }),
       });
-      const data = await res.json();
+      const data = await bacaRespons(res);
       if (!res.ok) throw new Error(data.error || "Gagal menghapus dokumen");
       await loadAll();
     } catch (err) {
@@ -316,7 +383,7 @@ export default function AdminDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ documentIds: selectedDocs }),
       });
-      const data = await res.json();
+      const data = await bacaRespons(res);
       if (!res.ok) throw new Error(data.error || "Gagal menghapus dokumen");
       setSelectedDocs([]);
       if (data.skipped && data.skipped.length > 0) {
@@ -507,83 +574,126 @@ export default function AdminDashboard() {
             <div
               className="cat-sidebar"
               style={{
-                width: 220,
+                width: 260,
                 flexShrink: 0,
                 background: "white",
                 border: "1px solid #e2e8f0",
                 borderRadius: 16,
-                padding: 10,
                 position: "sticky",
                 top: 84,
+                // Sidebar dibatasi setinggi layar dan digulir sendiri. Tanpa ini
+                // elemen sticky menjadi lebih tinggi dari layar, sehingga bagian
+                // bawah daftar tidak pernah bisa dijangkau dengan roda mouse.
+                maxHeight: "calc(100vh - 104px)",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                boxShadow: "0 1px 3px rgba(15,23,42,0.04)",
               }}
             >
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.04em", padding: "8px 10px 6px" }}>
-                Kategori
+              {/* KEPALA SIDEBAR — tetap terlihat saat daftar digulir */}
+              <div style={{ padding: "12px 12px 10px", borderBottom: "1px solid #f1f5f9", flexShrink: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    Kategori
+                  </span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", background: "#f1f5f9", borderRadius: 999, padding: "2px 8px" }}>
+                    {categoryList.length}
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={catFilter}
+                  onChange={(e) => setCatFilter(e.target.value)}
+                  placeholder="Saring kategori..."
+                  style={{ width: "100%", padding: "7px 10px", border: "1px solid #e2e8f0", borderRadius: 9, fontSize: 12, outline: "none", background: "#f8fafc", color: "#0f172a" }}
+                />
               </div>
-              <button
-                onClick={() => setSelectedCategory(null)}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "9px 10px",
-                  borderRadius: 10,
-                  border: "none",
-                  background: selectedCategory === null ? "#1e4d8f" : "transparent",
-                  color: selectedCategory === null ? "white" : "#334155",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  textAlign: "left",
-                  marginBottom: 2,
-                }}
-              >
-                <span>📋 Semua Dokumen</span>
-                <span style={{ fontSize: 11, opacity: 0.85 }}>{documents.length}</span>
-              </button>
 
-              {categoryList.map((cat) => (
-                // title = tooltip bawaan browser saat kursor diarahkan, supaya nama
-                // kategori yang terpotong tetap terbaca tanpa perlu diklik.
+              {/* DAFTAR KATEGORI — area gulir tersendiri */}
+              <div className="cat-scroll" style={{ overflowY: "auto", padding: 8, flex: 1 }}>
                 <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  title={cat === UNCATEGORIZED ? cat : `${cat} (${categoryCounts[cat]} dokumen)`}
-                  className={`cat-item${selectedCategory === cat ? " cat-item--active" : ""}`}
+                  onClick={() => setSelectedCategory(null)}
                   style={{
                     width: "100%",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
+                    gap: 8,
                     padding: "9px 10px",
                     borderRadius: 10,
                     border: "none",
-                    background: selectedCategory === cat ? "#1e4d8f" : "transparent",
-                    color: selectedCategory === cat ? "white" : "#334155",
+                    background: selectedCategory === null ? "#1e4d8f" : "transparent",
+                    color: selectedCategory === null ? "white" : "#334155",
                     fontSize: 13,
                     fontWeight: 600,
                     cursor: "pointer",
                     textAlign: "left",
-                    marginBottom: 2,
-                    // Kategori aktif ditampilkan penuh; sisanya dipotong "...".
-                    alignItems: selectedCategory === cat ? "flex-start" : "center",
+                    marginBottom: 4,
                   }}
                 >
-                  <span
-                    className="cat-label"
-                    style={
-                      selectedCategory === cat
-                        ? { whiteSpace: "normal", overflow: "visible", wordBreak: "break-word", lineHeight: 1.35 }
-                        : { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }
-                    }
-                  >
-                    {cat === UNCATEGORIZED ? "🗂 " : "📁 "}
-                    {cat}
+                  <span>📋 Semua Dokumen</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, opacity: 0.9, background: selectedCategory === null ? "rgba(255,255,255,0.18)" : "#f1f5f9", borderRadius: 999, padding: "1px 7px" }}>
+                    {documents.length}
                   </span>
-                  <span style={{ fontSize: 11, opacity: 0.85, flexShrink: 0, marginLeft: 6 }}>{categoryCounts[cat]}</span>
                 </button>
-              ))}
+
+                {categoryList
+                  .filter((cat) => cat.toLowerCase().includes(catFilter.trim().toLowerCase()))
+                  .map((cat) => {
+                    const aktif = selectedCategory === cat;
+                    return (
+                      // title = tooltip bawaan browser saat kursor diarahkan, supaya
+                      // nama kategori yang terpotong tetap terbaca tanpa perlu diklik.
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        title={cat === UNCATEGORIZED ? cat : `${cat} (${categoryCounts[cat]} dokumen)`}
+                        className={`cat-item${aktif ? " cat-item--active" : ""}`}
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 8,
+                          padding: "8px 10px",
+                          borderRadius: 10,
+                          border: "none",
+                          borderLeft: aktif ? "3px solid #60a5fa" : "3px solid transparent",
+                          background: aktif ? "#1e4d8f" : "transparent",
+                          color: aktif ? "white" : "#334155",
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          textAlign: "left",
+                          marginBottom: 2,
+                          // Kategori aktif ditampilkan penuh; sisanya dipotong "...".
+                          alignItems: aktif ? "flex-start" : "center",
+                        }}
+                      >
+                        <span
+                          className="cat-label"
+                          style={
+                            aktif
+                              ? { whiteSpace: "normal", overflow: "visible", wordBreak: "break-word", lineHeight: 1.35 }
+                              : { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }
+                          }
+                        >
+                          {cat === UNCATEGORIZED ? "🗂 " : "📁 "}
+                          {cat}
+                        </span>
+                        <span style={{ fontSize: 10.5, fontWeight: 700, flexShrink: 0, background: aktif ? "rgba(255,255,255,0.18)" : "#f1f5f9", color: aktif ? "white" : "#64748b", borderRadius: 999, padding: "1px 7px" }}>
+                          {categoryCounts[cat]}
+                        </span>
+                      </button>
+                    );
+                  })}
+
+                {categoryList.filter((cat) => cat.toLowerCase().includes(catFilter.trim().toLowerCase())).length === 0 && (
+                  <p style={{ fontSize: 11, color: "#94a3b8", textAlign: "center", padding: "14px 8px", margin: 0 }}>
+                    Tidak ada kategori yang cocok.
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -630,14 +740,118 @@ export default function AdminDashboard() {
               {selectedDocs.length > 0 ? `${selectedDocs.length} dokumen dipilih` : "Pilih semua"}
             </label>
             {selectedDocs.length > 0 && (
-              <button
-                onClick={handleBulkDelete}
-                disabled={bulkBusy}
-                style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #dc2626", background: bulkBusy ? "#fca5a5" : "#dc2626", color: "white", fontSize: 12, fontWeight: 700, cursor: bulkBusy ? "not-allowed" : "pointer" }}
-              >
-                {bulkBusy ? "Menghapus..." : `Hapus ${selectedDocs.length} Dokumen Terpilih`}
-              </button>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  onClick={() => setBulkShare({ usernames: [], canDownload: false, busy: false, hasil: null })}
+                  style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: "#1e4d8f", color: "white", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                >
+                  📤 Bagikan {selectedDocs.length} Dokumen
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={bulkBusy}
+                  style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #dc2626", background: bulkBusy ? "#fca5a5" : "#dc2626", color: "white", fontSize: 12, fontWeight: 700, cursor: bulkBusy ? "not-allowed" : "pointer" }}
+                >
+                  {bulkBusy ? "Menghapus..." : `Hapus ${selectedDocs.length} Dokumen`}
+                </button>
+              </div>
             )}
+          </div>
+        )}
+
+        {/* PANEL BAGIKAN BEBERAPA DOKUMEN SEKALIGUS */}
+        {bulkShare && (
+          <div style={{ marginBottom: 14, padding: 16, background: "white", border: "1px solid #bfdbfe", borderRadius: 14, boxShadow: "0 2px 8px rgba(15,23,42,0.06)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 10 }}>
+              <div>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: "#0f172a" }}>
+                  Bagikan {selectedDocs.length} dokumen terpilih
+                </p>
+                <p style={{ margin: "2px 0 0", fontSize: 11, color: "#64748b" }}>
+                  Pilih user penerima. User yang sudah memiliki akses pada sebuah dokumen akan dilewati.
+                </p>
+              </div>
+              <button
+                onClick={() => setBulkShare(null)}
+                style={{ border: "none", background: "#f1f5f9", width: 26, height: 26, borderRadius: "50%", fontSize: 13, cursor: "pointer", fontWeight: 700, flexShrink: 0 }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+              <button
+                onClick={() => setBulkShare((prev) => ({ ...prev, usernames: users.map((u) => u.username) }))}
+                style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+              >
+                Pilih semua user
+              </button>
+              <button
+                onClick={() => setBulkShare((prev) => ({ ...prev, usernames: [] }))}
+                style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+              >
+                Kosongkan
+              </button>
+              <span style={{ fontSize: 11, color: "#64748b", alignSelf: "center" }}>
+                {bulkShare.usernames.length} user dipilih
+              </span>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, maxHeight: 190, overflowY: "auto", padding: 8, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10 }}>
+              {users.map((u) => {
+                const dipilih = bulkShare.usernames.includes(u.username);
+                return (
+                  <label
+                    key={u.username}
+                    style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 999, fontSize: 11.5, cursor: "pointer", background: dipilih ? "#1e4d8f" : "white", color: dipilih ? "white" : "#334155", border: `1px solid ${dipilih ? "#1e4d8f" : "#e2e8f0"}` }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={dipilih}
+                      onChange={() =>
+                        setBulkShare((prev) => ({
+                          ...prev,
+                          usernames: prev.usernames.includes(u.username)
+                            ? prev.usernames.filter((x) => x !== u.username)
+                            : [...prev.usernames, u.username],
+                        }))
+                      }
+                      style={{ margin: 0 }}
+                    />
+                    {u.username}
+                  </label>
+                );
+              })}
+            </div>
+
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 10, fontSize: 12, lineHeight: 1.45, color: "#334155", cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={!!bulkShare.canDownload}
+                onChange={(e) => setBulkShare((prev) => ({ ...prev, canDownload: e.target.checked }))}
+              />
+              <span>
+                Sekaligus beri izin <strong>download file asli</strong> untuk seluruh dokumen dan user di atas{" "}
+                <span style={{ color: "#94a3b8" }}>(bisa diubah kapan saja setelahnya)</span>
+              </span>
+            </label>
+
+            {bulkShare.hasil && (
+              <p style={{ margin: "10px 0 0", fontSize: 12, color: "#166534", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: 10 }}>
+                ✓ {bulkShare.hasil.added} akses baru ditambahkan
+                {bulkShare.hasil.skipped > 0 && `, ${bulkShare.hasil.skipped} dilewati karena sudah punya akses`}.
+              </p>
+            )}
+
+            <button
+              onClick={handleBulkShare}
+              disabled={bulkShare.busy}
+              style={{ marginTop: 12, padding: "9px 18px", borderRadius: 10, border: "none", background: bulkShare.busy ? "#94a3b8" : "#1e4d8f", color: "white", fontSize: 12.5, fontWeight: 700, cursor: bulkShare.busy ? "not-allowed" : "pointer" }}
+            >
+              {bulkShare.busy
+                ? "Membagikan..."
+                : `Bagikan ke ${bulkShare.usernames.length} user`}
+            </button>
           </div>
         )}
 
@@ -799,6 +1013,16 @@ export default function AdminDashboard() {
                             <div style={{ fontSize: 12, fontWeight: 700, color: "#334155" }}>
                               Dibagikan ke ({doc.sharedTo.length} user)
                             </div>
+                            {doc.sharedTo.length > 0 && (selectedRevoke[doc.documentId] || []).length === 0 && (
+                              <button
+                                disabled={isBusy}
+                                onClick={() => handleRevokeAll(doc.documentId)}
+                                title="Akhiri akses seluruh user pada dokumen ini sekaligus"
+                                style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #dc2626", background: "white", color: "#dc2626", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                              >
+                                Akhiri Akses Semua ({doc.sharedTo.length})
+                              </button>
+                            )}
                             {(selectedRevoke[doc.documentId] || []).length > 0 && (
                               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                                 <button

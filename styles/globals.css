@@ -518,3 +518,30 @@ a {
     gap: 8px;
   }
 }
+
+/* Batang gulir sidebar kategori dibuat tipis agar tidak memakan lebar daftar */
+.cat-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+  overscroll-behavior: contain; /* guliran tidak "bocor" ke halaman saat sudah mentok */
+}
+.cat-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.cat-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.cat-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+  background-clip: content-box;
+}
+
+@media (max-width: 820px) {
+  /* Di layar sempit sidebar kembali jadi panel pendek di atas daftar dokumen */
+  .cat-sidebar {
+    max-height: 300px !important;
+  }
+}
