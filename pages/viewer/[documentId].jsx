@@ -241,7 +241,7 @@ export default function ViewerPage() {
           selalu terjangkau tanpa menggulir ke puncak dokumen. */}
       <div className="reader__bar">
         <div className="row" style={{ flexWrap: "nowrap", gap: 10 }}>
-          <Link href="/viewer" className="btn btn--sm" title="Kembali ke daftar dokumen">
+          <Link href="/viewer" className="btn btn--back" title="Kembali ke daftar dokumen">
             ← Dokumen saya
           </Link>
 

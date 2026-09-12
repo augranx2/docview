@@ -432,19 +432,30 @@ textarea {
   pointer-events: none;
 }
 
+/* Tombol identitas dibuat setinggi tombol di sebelahnya agar sejajar, bukan
+   kapsul besar yang menonjol sendiri di kop. */
 .who {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 5px 11px 5px 6px;
+  gap: 8px;
+  height: 34px;
+  padding: 0 11px 0 5px;
   border: 1px solid var(--line);
-  border-radius: var(--r-pill);
+  border-radius: var(--r-md);
   background: var(--card);
+  cursor: pointer;
+  transition: border-color 0.14s, background 0.14s;
+}
+
+.who:hover {
+  border-color: #cbd8e8;
+  background: #f8fbff;
 }
 
 .who__dot {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -457,13 +468,79 @@ textarea {
 .who__name {
   font-size: 12.5px;
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.1;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .who__role {
   font-size: 10px;
   color: var(--muted);
-  line-height: 1.15;
+  line-height: 1.1;
+}
+
+/* Sakelar peran Admin / Pengguna di rail */
+.mode {
+  display: flex;
+  gap: 3px;
+  margin: 0 14px 12px;
+  padding: 3px;
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.mode a {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 9px;
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #cfe0f5;
+  transition: background 0.14s, color 0.14s;
+}
+
+.mode a:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mode a[aria-current="page"] {
+  background: #fff;
+  color: var(--navy-800);
+}
+
+.mode__note {
+  margin: -6px 18px 12px;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: rgba(207, 224, 245, 0.72);
+}
+
+/* Menu identitas yang terbuka dari kop */
+.menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  width: 268px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--card);
+  box-shadow: var(--shadow-2);
+}
+
+.menu__id {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 11px;
+  margin-bottom: 11px;
+  border-bottom: 1px solid var(--line-soft);
 }
 
 /* Tombol pembuka rail — hanya muncul di layar sempit */
@@ -734,6 +811,14 @@ textarea {
   flex-shrink: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+/* Baris dokumen pada dashboard: kotak centang, isi, lalu tombol aksi. */
+.doc__top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: nowrap;
 }
 
 /* --------------------------------- LENCANA ------------------------------- */
@@ -1094,6 +1179,18 @@ textarea {
   box-shadow: var(--shadow-2);
 }
 
+.btn--back {
+  border-color: var(--blue-100);
+  background: var(--blue-50);
+  color: var(--blue-600);
+}
+
+.btn--back:hover:not(:disabled) {
+  background: var(--blue-100);
+  border-color: #bfd6f5;
+  color: var(--navy-800);
+}
+
 .reader__nav {
   display: flex;
   align-items: center;
@@ -1171,6 +1268,32 @@ textarea {
   .doc {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  /* Di layar sempit judul dan tombol ditumpuk. Tanpa ini kolom judul terjepit
+     di antara kotak centang dan deretan tombol, sehingga teksnya menumpuk
+     satu huruf per baris. */
+  .doc__top {
+    flex-wrap: wrap;
+  }
+
+  .doc__top > .doc__body {
+    flex: 1 1 100%;
+    order: 2;
+  }
+
+  .doc__top > input[type="checkbox"] {
+    order: 1;
+  }
+
+  .doc__top > .doc__acts {
+    order: 3;
+    flex: 1 1 100%;
+    justify-content: stretch;
+  }
+
+  .doc__top > .doc__acts > * {
+    flex: 1 1 0;
   }
 
   .doc__acts {

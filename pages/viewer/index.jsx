@@ -150,15 +150,7 @@ export default function DocumentListPage() {
     return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
   }
 
-  const nav = [
-    ...(isAdmin
-      ? [
-          { label: "Kelola dokumen", href: "/admin/dashboard", icon: "⚙" },
-          { label: "Rekam jejak", onClick: fetchAuditLogs, icon: "🕘" },
-        ]
-      : []),
-    { label: "Akun saya", onClick: () => setShowProfileModal(true), icon: "👤" },
-  ];
+  const nav = isAdmin ? [{ label: "Rekam jejak", onClick: fetchAuditLogs, icon: "🕘" }] : [];
 
   return (
     <>
@@ -168,6 +160,7 @@ export default function DocumentListPage() {
 
       <AppShell
         user={{ nama: user.nama, email: user.username, role: user.role }}
+        mode="user"
         nav={nav}
         categories={categoryList}
         categoryCounts={categoryCounts}
@@ -264,95 +257,6 @@ export default function DocumentListPage() {
           </>
         )}
       </AppShell>
-
-      {/* ---------------- AKUN SAYA ---------------- */}
-      {showProfileModal && (
-        <div className="modal" onClick={() => setShowProfileModal(false)}>
-          <div className="modal__card" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal__head">
-              <div>
-                <div className="card__title">Akun saya</div>
-                <div className="card__sub">Identitas ini yang tercetak pada watermark dokumen.</div>
-              </div>
-              <button className="x" onClick={() => setShowProfileModal(false)} aria-label="Tutup">
-                ✕
-              </button>
-            </div>
-            <div className="modal__body stack">
-              <div className="row" style={{ gap: 12 }}>
-                <span className="who__dot" style={{ width: 44, height: 44, fontSize: 17 }}>
-                  {avatarLetter}
-                </span>
-                <div className="grow">
-                  <div style={{ fontWeight: 800 }}>{user.nama || "—"}</div>
-                  <div className="hint">
-                    {user.username} · {user.role}
-                  </div>
-                </div>
-              </div>
-              <button
-                className="btn btn--primary btn--block"
-                onClick={() => {
-                  setShowProfileModal(false);
-                  setShowPasswordModal(true);
-                }}
-              >
-                Ganti password
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ---------------- GANTI PASSWORD ---------------- */}
-      {showPasswordModal && (
-        <div className="modal" onClick={() => setShowPasswordModal(false)}>
-          <div className="modal__card" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal__head">
-              <div>
-                <div className="card__title">Ganti password</div>
-                <div className="card__sub">Masukkan password lama untuk mengonfirmasi.</div>
-              </div>
-              <button className="x" onClick={() => setShowPasswordModal(false)} aria-label="Tutup">
-                ✕
-              </button>
-            </div>
-            <form className="modal__body stack" onSubmit={handleChangePassword}>
-              <div>
-                <label className="label" htmlFor="pw-lama">Password lama</label>
-                <input
-                  id="pw-lama"
-                  className="input"
-                  type="password"
-                  value={oldPassword}
-                  onChange={(e) => setOldPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                />
-              </div>
-              <div>
-                <label className="label" htmlFor="pw-baru">Password baru</label>
-                <input
-                  id="pw-baru"
-                  className="input"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                />
-                <p className="hint" style={{ marginTop: 5 }}>Minimal 6 karakter.</p>
-              </div>
-              {passError && <p className="notice notice--bad">{passError}</p>}
-              {passMsg && <p className="notice notice--ok">{passMsg}</p>}
-              <button type="submit" className="btn btn--primary btn--block" disabled={changingPass}>
-                {changingPass ? "Menyimpan..." : "Simpan password baru"}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* ---------------- REKAM JEJAK ---------------- */}
       {showAuditModal && (

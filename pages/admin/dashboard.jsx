@@ -450,9 +450,11 @@ export default function AdminDashboard() {
       }
     });
 
-  const selectableDocIds = filteredDocuments
-    .filter((d) => d.sharedTo.length === 0)
-    .map((d) => d.documentId);
+  // Seluruh dokumen yang sedang tampil dapat dipilih. Sebelumnya daftar ini
+  // dibatasi pada dokumen yang belum dibagikan — sisa aturan lama ketika
+  // pilihan massal hanya dipakai untuk menghapus. Akibatnya "Pilih semua" tidak
+  // bereaksi sama sekali pada kategori yang seluruh dokumennya sudah dibagikan.
+  const selectableDocIds = filteredDocuments.map((d) => d.documentId);
   const allSelectableChecked =
     selectableDocIds.length > 0 && selectableDocIds.every((id) => selectedDocs.includes(id));
 
@@ -470,10 +472,7 @@ export default function AdminDashboard() {
     return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
   }
 
-  const nav = [
-    { label: "Unggah dokumen", href: "/admin/upload", icon: "＋" },
-    { label: "Tampilan pengguna", href: "/viewer", icon: "👁" },
-  ];
+  const nav = [{ label: "Unggah dokumen", href: "/admin/upload", icon: "＋" }];
 
   return (
     <>
@@ -483,6 +482,7 @@ export default function AdminDashboard() {
 
       <AppShell
         user={me}
+        mode="admin"
         nav={nav}
         categories={categoryList}
         categoryCounts={categoryCounts}
@@ -704,7 +704,7 @@ export default function AdminDashboard() {
                   className={`doc${downloadCount > 0 ? " doc--grant" : ""}${dipilih ? " doc--on" : ""}`}
                   style={{ flexDirection: "column", alignItems: "stretch" }}
                 >
-                  <div className="row" style={{ alignItems: "flex-start", flexWrap: "nowrap", gap: 12 }}>
+                  <div className="doc__top">
                     <input
                       type="checkbox"
                       checked={dipilih}

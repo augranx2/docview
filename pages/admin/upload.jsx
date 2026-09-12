@@ -223,11 +223,15 @@ export default function UploadPage() {
 
       <div className="main" style={{ minHeight: "100vh" }}>
         <header className="appbar">
-          <Link href="/admin/dashboard" className="btn btn--sm">
-            ← Kembali
+          <Link href="/admin/dashboard" className="btn btn--back">
+            ← Kelola dokumen
           </Link>
+          <div className="row" style={{ gap: 9, flexWrap: "nowrap", marginLeft: 4 }}>
+            <img src="/logo-rama.png" alt="" style={{ width: 26, height: 26, objectFit: "contain" }} />
+            <span style={{ fontSize: 13, fontWeight: 800 }}>SIDOK</span>
+          </div>
           <div className="grow" />
-          <button className="btn btn--sm" onClick={handleLogout}>
+          <button className="btn" onClick={handleLogout}>
             Keluar
           </button>
         </header>
