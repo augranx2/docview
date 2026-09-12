@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import DownloadButton from "../../components/DownloadButton";
+import AppShell from "../../components/AppShell";
 
 export default function AdminDashboard() {
   const [documents, setDocuments] = useState([]);
@@ -32,7 +33,17 @@ export default function AdminDashboard() {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [query, setQuery] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
+  const [me, setMe] = useState({ nama: "Administrator", email: "", role: "Admin" });
   const router = useRouter();
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setMe({ nama: data.nama || data.email, email: data.email, role: data.role });
+      })
+      .catch(() => {});
+  }, []);
 
   async function loadAll() {
     setLoading(true);
@@ -453,371 +464,177 @@ export default function AdminDashboard() {
     }
   }
 
+  function fmtTgl(iso) {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  }
+
+  const nav = [
+    { label: "Unggah dokumen", href: "/admin/upload", icon: "＋" },
+    { label: "Tampilan pengguna", href: "/viewer", icon: "👁" },
+  ];
+
   return (
     <>
       <Head>
-        <title>Dashboard Admin — SIDOK</title>
+        <title>Kelola Dokumen — SIDOK</title>
       </Head>
-      <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #e6eefb 0%, #eef3fb 180px, #f4f7fc 380px)", backgroundAttachment: "fixed", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", color: "#0f172a", paddingBottom: 60 }}>
 
-      {/* HEADER BAR ADMIN */}
-      <header className="app-header" style={{ height: 64, borderBottom: "1px solid #e2e8f0", background: "rgba(255,255,255,0.72)", backdropFilter: "blur(10px)", padding: "0 28px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 30 }}>
-        <div className="header-brand" style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-          <img src="/logo-rama.png" alt="Logo" style={{ height: 32, width: 32, objectFit: "contain" }} />
+      <AppShell
+        user={me}
+        nav={nav}
+        categories={categoryList}
+        categoryCounts={categoryCounts}
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+        totalCount={documents.length}
+        searchValue={query}
+        onSearchChange={setQuery}
+        searchPlaceholder="Cari dokumen, kategori, atau nama pengguna"
+        onLogout={handleLogout}
+        loggingOut={loggingOut}
+      >
+        <div className="pagehead">
           <div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#1e293b", margin: 0 }}>PT. Rama Emerald Multi Sukses</p>
-            <p style={{ fontSize: 10, color: "#64748b", margin: 0 }}>SIDOK · Panel Kontrol Administrator</p>
+            <h1>{selectedCategory || "Kelola dokumen"}</h1>
+            <p>
+              Unggah dokumen baru, atur siapa yang boleh membaca dan mengunduh, serta pantau
+              arsip terkendali.
+            </p>
           </div>
-        </div>
-
-        <div className="header-actions" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Link
-            href="/viewer"
-            style={{ padding: "7px 14px", borderRadius: 10, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, textDecoration: "none" }}
-          >
-            ← Lihat Mode User
-          </Link>
-          <button
-            onClick={handleLogout}
-            disabled={loggingOut}
-            style={{ padding: "7px 14px", borderRadius: 10, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-          >
-            {loggingOut ? "Keluar..." : "Logout"}
-          </button>
-        </div>
-      </header>
-
-      {/* KONTEN UTAMA ADMIN */}
-      <div className="app-shell" style={{ maxWidth: "none", margin: "0 auto", padding: "32px 28px" }}>
-
-        {/* KOP HEADER BERGRADASI ADMIN */}
-        <div style={{ overflow: "hidden", borderRadius: 20, border: "1px solid #e2e8f0", boxShadow: "0 4px 12px rgba(15,23,42,0.05)", marginBottom: 24 }}>
-          <div className="hero-band" style={{ background: "linear-gradient(135deg, #000000 0%, #020b17 50%, #15427d 100%)", padding: "28px 24px", color: "white" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <img src="/logo-rama.png" alt="Logo" style={{ height: 44, width: 44, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
-                <div>
-                  <span style={{ display: "inline-block", background: "rgba(59, 130, 246, 0.2)", border: "1px solid rgba(59, 130, 246, 0.4)", borderRadius: 999, padding: "2px 10px", fontSize: 10, fontWeight: 600, color: "#bfdbfe", marginBottom: 6 }}>
-                    ⚙️ Panel Administrator
-                  </span>
-                  <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: "-0.02em" }}>Dashboard Kelola Dokumen</h1>
-                  <p style={{ fontSize: 12, color: "#bfdbfe", margin: "4px 0 0" }}>Unggah dokumen baru, atur hak akses user, dan pantau arsip terkendali</p>
-                </div>
-              </div>
-
-              <Link
-                href="/admin/upload"
-                style={{ padding: "10px 18px", borderRadius: 12, background: "white", color: "#1e4d8f", fontSize: 12, fontWeight: 700, textDecoration: "none", boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }}
-              >
-                + Upload Dokumen Baru
-              </Link>
-            </div>
-          </div>
-
-          {/* PANEL RAPIKAN DRIVE */}
-          <div style={{ background: "#f8fafc", borderTop: "1px solid #e2e8f0", padding: "14px 24px" }}>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-              <span style={{ fontSize: 11, color: "#64748b", flex: 1, minWidth: 200 }}>
-                <strong style={{ color: "#334155" }}>Rapikan file di Google Drive</strong> — ubah nama
-                file lama yang masih berupa kode acak, dan pindahkan ke folder sesuai kategorinya.
-              </span>
-              <button
-                disabled={migrasi?.running}
-                onClick={() => jalankanMigrasi(true)}
-                style={{ padding: "7px 12px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
-                title="Hanya menampilkan rencana, tidak mengubah apa pun"
-              >
-                Pratinjau
-              </button>
-              <button
-                disabled={migrasi?.running}
-                onClick={() => jalankanMigrasi(false)}
-                style={{ padding: "7px 12px", borderRadius: 8, border: "none", background: "#1e4d8f", color: "white", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
-              >
-                {migrasi?.running ? "Sedang berjalan..." : "Jalankan"}
-              </button>
-            </div>
-
-            {migrasi && (
-              <div style={{ marginTop: 10 }}>
-                <div style={{ height: 6, background: "#e2e8f0", borderRadius: 999, overflow: "hidden" }}>
-                  <div
-                    style={{
-                      height: "100%",
-                      width: migrasi.total ? `${Math.round((migrasi.index / migrasi.total) * 100)}%` : "0%",
-                      background: migrasi.failed > 0 ? "#f59e0b" : "#1e4d8f",
-                      transition: "width 0.2s",
-                    }}
-                  />
-                </div>
-                <div style={{ fontSize: 11, color: "#475569", marginTop: 6 }}>
-                  {migrasi.dryRun && <strong>[PRATINJAU] </strong>}
-                  {migrasi.index}/{migrasi.total} diperiksa · {migrasi.processed}{" "}
-                  {migrasi.dryRun ? "akan diubah" : "dirapikan"} · {migrasi.skipped} sudah benar
-                  {migrasi.failed > 0 && ` · ${migrasi.failed} gagal`}
-                  {!migrasi.running && migrasi.total > 0 && " — selesai"}
-                </div>
-                {migrasi.log.length > 0 && (
-                  <pre style={{ marginTop: 8, maxHeight: 160, overflowY: "auto", background: "white", border: "1px solid #e2e8f0", borderRadius: 8, padding: 10, fontSize: 10, lineHeight: 1.5, color: "#475569", whiteSpace: "pre-wrap" }}>
-                    {migrasi.log.join("\n")}
-                  </pre>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* LAYOUT SIDEBAR + KONTEN */}
-        <div className="split-layout" style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
-
-          {/* SIDEBAR KATEGORI */}
-          {!loading && documents.length > 0 && (
-            <div
-              className="cat-sidebar"
-              style={{
-                width: 260,
-                flexShrink: 0,
-                background: "white",
-                border: "1px solid #e2e8f0",
-                borderRadius: 16,
-                position: "sticky",
-                top: 84,
-                // Sidebar dibatasi setinggi layar dan digulir sendiri. Tanpa ini
-                // elemen sticky menjadi lebih tinggi dari layar, sehingga bagian
-                // bawah daftar tidak pernah bisa dijangkau dengan roda mouse.
-                maxHeight: "calc(100vh - 104px)",
-                display: "flex",
-                flexDirection: "column",
-                overflow: "hidden",
-                boxShadow: "0 1px 3px rgba(15,23,42,0.04)",
-              }}
-            >
-              {/* KEPALA SIDEBAR — tetap terlihat saat daftar digulir */}
-              <div style={{ padding: "12px 12px 10px", borderBottom: "1px solid #f1f5f9", flexShrink: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                    Kategori
-                  </span>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", background: "#f1f5f9", borderRadius: 999, padding: "2px 8px" }}>
-                    {categoryList.length}
-                  </span>
-                </div>
-                <input
-                  type="text"
-                  value={catFilter}
-                  onChange={(e) => setCatFilter(e.target.value)}
-                  placeholder="Saring kategori..."
-                  style={{ width: "100%", padding: "7px 10px", border: "1px solid #e2e8f0", borderRadius: 9, fontSize: 12, outline: "none", background: "#f8fafc", color: "#0f172a" }}
-                />
-              </div>
-
-              {/* DAFTAR KATEGORI — area gulir tersendiri */}
-              <div className="cat-scroll" style={{ overflowY: "auto", padding: 8, flex: 1 }}>
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "9px 10px",
-                    borderRadius: 10,
-                    border: "none",
-                    background: selectedCategory === null ? "#1e4d8f" : "transparent",
-                    color: selectedCategory === null ? "white" : "#334155",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    textAlign: "left",
-                    marginBottom: 4,
-                  }}
-                >
-                  <span>📋 Semua Dokumen</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, opacity: 0.9, background: selectedCategory === null ? "rgba(255,255,255,0.18)" : "#f1f5f9", borderRadius: 999, padding: "1px 7px" }}>
-                    {documents.length}
-                  </span>
-                </button>
-
-                {categoryList
-                  .filter((cat) => cat.toLowerCase().includes(catFilter.trim().toLowerCase()))
-                  .map((cat) => {
-                    const aktif = selectedCategory === cat;
-                    return (
-                      // title = tooltip bawaan browser saat kursor diarahkan, supaya
-                      // nama kategori yang terpotong tetap terbaca tanpa perlu diklik.
-                      <button
-                        key={cat}
-                        onClick={() => setSelectedCategory(cat)}
-                        title={cat === UNCATEGORIZED ? cat : `${cat} (${categoryCounts[cat]} dokumen)`}
-                        className={`cat-item${aktif ? " cat-item--active" : ""}`}
-                        style={{
-                          width: "100%",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: 8,
-                          padding: "8px 10px",
-                          borderRadius: 10,
-                          border: "none",
-                          borderLeft: aktif ? "3px solid #60a5fa" : "3px solid transparent",
-                          background: aktif ? "#1e4d8f" : "transparent",
-                          color: aktif ? "white" : "#334155",
-                          fontSize: 12.5,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          textAlign: "left",
-                          marginBottom: 2,
-                          // Kategori aktif ditampilkan penuh; sisanya dipotong "...".
-                          alignItems: aktif ? "flex-start" : "center",
-                        }}
-                      >
-                        <span
-                          className="cat-label"
-                          style={
-                            aktif
-                              ? { whiteSpace: "normal", overflow: "visible", wordBreak: "break-word", lineHeight: 1.35 }
-                              : { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }
-                          }
-                        >
-                          {cat === UNCATEGORIZED ? "🗂 " : "📁 "}
-                          {cat}
-                        </span>
-                        <span style={{ fontSize: 10.5, fontWeight: 700, flexShrink: 0, background: aktif ? "rgba(255,255,255,0.18)" : "#f1f5f9", color: aktif ? "white" : "#64748b", borderRadius: 999, padding: "1px 7px" }}>
-                          {categoryCounts[cat]}
-                        </span>
-                      </button>
-                    );
-                  })}
-
-                {categoryList.filter((cat) => cat.toLowerCase().includes(catFilter.trim().toLowerCase())).length === 0 && (
-                  <p style={{ fontSize: 11, color: "#94a3b8", textAlign: "center", padding: "14px 8px", margin: 0 }}>
-                    Tidak ada kategori yang cocok.
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* AREA KONTEN DOKUMEN */}
-          <div className="content-col" style={{ flex: 1, minWidth: 0 }}>
-
-        {/* KOTAK PENCARIAN + SORT */}
-        {!loading && documents.length > 0 && (
-          <div className="search-row" style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-            <div style={{ position: "relative", flex: 1 }}>
-              <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}>🔍</span>
-              <input
-                type="text"
-                style={{ width: "100%", padding: "11px 14px 11px 38px", border: "1px solid #cbd5e1", borderRadius: 12, fontSize: 13, background: "white", color: "#0f172a", outline: "none", boxShadow: "0 1px 2px rgba(15,23,42,0.04)" }}
-                placeholder="Cari nama dokumen, kategori, atau username..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </div>
+          <div className="pagehead__acts">
             <select
+              className="select"
+              style={{ width: "auto" }}
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              title="Urutkan dokumen"
-              style={{ padding: "0 14px", borderRadius: 12, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+              aria-label="Urutkan dokumen"
             >
-              <option value="newest">↓ Terbaru Diupload</option>
-              <option value="oldest">↑ Terlama Diupload</option>
-              <option value="name-asc">A → Z Nama Dokumen</option>
-              <option value="name-desc">Z → A Nama Dokumen</option>
+              <option value="newest">Terbaru diunggah</option>
+              <option value="oldest">Terlama diunggah</option>
+              <option value="name-asc">Nama A → Z</option>
+              <option value="name-desc">Nama Z → A</option>
             </select>
+            <Link href="/admin/upload" className="btn btn--primary">
+              Unggah dokumen
+            </Link>
           </div>
-        )}
+        </div>
 
-        {/* TOOLBAR BULK ACTION */}
+        {error && <p className="notice notice--bad" style={{ marginBottom: 14 }}>{error}</p>}
+
+        {/* ---------- PERAPIAN BERKAS DI GOOGLE DRIVE ---------- */}
+        <details className="card card--pad" style={{ marginBottom: 14 }}>
+          <summary style={{ cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
+            Perapian berkas di Google Drive
+          </summary>
+          <p className="hint" style={{ margin: "8px 0 12px" }}>
+            Menyesuaikan nama berkas lama yang masih berupa kode acak dan memindahkannya ke folder
+            sesuai kategori. Aman dijalankan berulang — berkas yang sudah rapi dilewati.
+          </p>
+          <div className="row">
+            <button className="btn btn--sm" disabled={migrasi?.running} onClick={() => jalankanMigrasi(true)}>
+              Lihat rencana
+            </button>
+            <button
+              className="btn btn--primary btn--sm"
+              disabled={migrasi?.running}
+              onClick={() => jalankanMigrasi(false)}
+            >
+              {migrasi?.running ? "Sedang berjalan..." : "Jalankan perapian"}
+            </button>
+          </div>
+
+          {migrasi && (
+            <div style={{ marginTop: 12 }}>
+              <div className="bar">
+                <div style={{ width: migrasi.total ? `${Math.round((migrasi.index / migrasi.total) * 100)}%` : "0%" }} />
+              </div>
+              <p className="hint" style={{ marginTop: 6 }}>
+                {migrasi.dryRun && "Rencana — "}
+                {migrasi.index}/{migrasi.total} diperiksa, {migrasi.processed}{" "}
+                {migrasi.dryRun ? "akan diubah" : "dirapikan"}, {migrasi.skipped} sudah sesuai
+                {migrasi.failed > 0 && `, ${migrasi.failed} gagal`}
+                {!migrasi.running && migrasi.total > 0 && " — selesai"}
+              </p>
+              {migrasi.log.length > 0 && <pre className="log">{migrasi.log.join("\n")}</pre>}
+            </div>
+          )}
+        </details>
+
+        {/* ---------- PILIH BANYAK ---------- */}
         {!loading && filteredDocuments.length > 0 && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, padding: "8px 4px" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#64748b", cursor: selectableDocIds.length > 0 ? "pointer" : "default" }}>
-              <input
-                type="checkbox"
-                checked={allSelectableChecked}
-                disabled={selectableDocIds.length === 0}
-                onChange={toggleSelectAll}
-              />
-              {selectedDocs.length > 0 ? `${selectedDocs.length} dokumen dipilih` : "Pilih semua"}
+          <div className="row row--between" style={{ marginBottom: 10 }}>
+            <label className="check" style={{ alignItems: "center" }}>
+              <input type="checkbox" checked={allSelectableChecked} onChange={toggleSelectAll} />
+              <span style={{ fontWeight: 600 }}>
+                {selectedDocs.length > 0
+                  ? `${selectedDocs.length} dokumen dipilih`
+                  : `Pilih semua (${filteredDocuments.length})`}
+              </span>
             </label>
+
             {selectedDocs.length > 0 && (
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div className="row">
                 <button
+                  className="btn btn--primary btn--sm"
                   onClick={() => setBulkShare({ usernames: [], canDownload: false, busy: false, hasil: null })}
-                  style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: "#1e4d8f", color: "white", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
                 >
-                  📤 Bagikan {selectedDocs.length} Dokumen
+                  Bagikan {selectedDocs.length} dokumen
                 </button>
-                <button
-                  onClick={handleBulkDelete}
-                  disabled={bulkBusy}
-                  style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #dc2626", background: bulkBusy ? "#fca5a5" : "#dc2626", color: "white", fontSize: 12, fontWeight: 700, cursor: bulkBusy ? "not-allowed" : "pointer" }}
-                >
-                  {bulkBusy ? "Menghapus..." : `Hapus ${selectedDocs.length} Dokumen`}
+                <button className="btn btn--danger btn--sm" onClick={handleBulkDelete} disabled={bulkBusy}>
+                  {bulkBusy ? "Menghapus..." : "Hapus terpilih"}
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* PANEL BAGIKAN BEBERAPA DOKUMEN SEKALIGUS */}
+        {/* ---------- PANEL BAGIKAN BANYAK DOKUMEN ---------- */}
         {bulkShare && (
-          <div style={{ marginBottom: 14, padding: 16, background: "white", border: "1px solid #bfdbfe", borderRadius: 14, boxShadow: "0 2px 8px rgba(15,23,42,0.06)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 10 }}>
+          <div className="card card--pad" style={{ marginBottom: 14, borderColor: "var(--blue-100)" }}>
+            <div className="card__head">
               <div>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: "#0f172a" }}>
-                  Bagikan {selectedDocs.length} dokumen terpilih
-                </p>
-                <p style={{ margin: "2px 0 0", fontSize: 11, color: "#64748b" }}>
-                  Pilih user penerima. User yang sudah memiliki akses pada sebuah dokumen akan dilewati.
-                </p>
+                <div className="card__title">Bagikan {selectedDocs.length} dokumen</div>
+                <div className="card__sub">
+                  Pilih penerima. Pengguna yang sudah punya akses pada sebuah dokumen akan dilewati.
+                </div>
               </div>
-              <button
-                onClick={() => setBulkShare(null)}
-                style={{ border: "none", background: "#f1f5f9", width: 26, height: 26, borderRadius: "50%", fontSize: 13, cursor: "pointer", fontWeight: 700, flexShrink: 0 }}
-              >
+              <button className="x" onClick={() => setBulkShare(null)} aria-label="Tutup">
                 ✕
               </button>
             </div>
 
-            <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+            <div className="row" style={{ marginBottom: 9 }}>
               <button
-                onClick={() => setBulkShare((prev) => ({ ...prev, usernames: users.map((u) => u.username) }))}
-                style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                className="btn btn--sm"
+                onClick={() => setBulkShare((p) => ({ ...p, usernames: users.map((u) => u.username) }))}
               >
-                Pilih semua user
+                Pilih semua pengguna
               </button>
-              <button
-                onClick={() => setBulkShare((prev) => ({ ...prev, usernames: [] }))}
-                style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
-              >
+              <button className="btn btn--sm" onClick={() => setBulkShare((p) => ({ ...p, usernames: [] }))}>
                 Kosongkan
               </button>
-              <span style={{ fontSize: 11, color: "#64748b", alignSelf: "center" }}>
-                {bulkShare.usernames.length} user dipilih
-              </span>
+              <span className="hint">{bulkShare.usernames.length} dipilih</span>
             </div>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, maxHeight: 190, overflowY: "auto", padding: 8, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10 }}>
+            <div className="scrollbox row" style={{ gap: 6 }}>
               {users.map((u) => {
-                const dipilih = bulkShare.usernames.includes(u.username);
+                const on = bulkShare.usernames.includes(u.username);
                 return (
-                  <label
-                    key={u.username}
-                    style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 999, fontSize: 11.5, cursor: "pointer", background: dipilih ? "#1e4d8f" : "white", color: dipilih ? "white" : "#334155", border: `1px solid ${dipilih ? "#1e4d8f" : "#e2e8f0"}` }}
-                  >
+                  <label key={u.username} className={`who-chip${on ? " who-chip--on" : ""}`}>
                     <input
                       type="checkbox"
-                      checked={dipilih}
+                      checked={on}
                       onChange={() =>
-                        setBulkShare((prev) => ({
-                          ...prev,
-                          usernames: prev.usernames.includes(u.username)
-                            ? prev.usernames.filter((x) => x !== u.username)
-                            : [...prev.usernames, u.username],
+                        setBulkShare((p) => ({
+                          ...p,
+                          usernames: p.usernames.includes(u.username)
+                            ? p.usernames.filter((x) => x !== u.username)
+                            : [...p.usernames, u.username],
                         }))
                       }
-                      style={{ margin: 0 }}
                     />
                     {u.username}
                   </label>
@@ -825,262 +642,271 @@ export default function AdminDashboard() {
               })}
             </div>
 
-            <label style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 10, fontSize: 12, lineHeight: 1.45, color: "#334155", cursor: "pointer" }}>
+            <label className="check" style={{ marginTop: 10 }}>
               <input
                 type="checkbox"
                 checked={!!bulkShare.canDownload}
-                onChange={(e) => setBulkShare((prev) => ({ ...prev, canDownload: e.target.checked }))}
+                onChange={(e) => setBulkShare((p) => ({ ...p, canDownload: e.target.checked }))}
               />
               <span>
-                Sekaligus beri izin <strong>download file asli</strong> untuk seluruh dokumen dan user di atas{" "}
-                <span style={{ color: "#94a3b8" }}>(bisa diubah kapan saja setelahnya)</span>
+                Sekaligus izinkan mengunduh berkas asli untuk seluruh dokumen dan pengguna di atas.
+                Bisa diubah kapan saja.
               </span>
             </label>
 
             {bulkShare.hasil && (
-              <p style={{ margin: "10px 0 0", fontSize: 12, color: "#166534", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: 10 }}>
-                ✓ {bulkShare.hasil.added} akses baru ditambahkan
+              <p className="notice notice--ok" style={{ marginTop: 10 }}>
+                {bulkShare.hasil.added} akses ditambahkan
                 {bulkShare.hasil.skipped > 0 && `, ${bulkShare.hasil.skipped} dilewati karena sudah punya akses`}.
               </p>
             )}
 
             <button
+              className="btn btn--primary"
+              style={{ marginTop: 12 }}
               onClick={handleBulkShare}
               disabled={bulkShare.busy}
-              style={{ marginTop: 12, padding: "9px 18px", borderRadius: 10, border: "none", background: bulkShare.busy ? "#94a3b8" : "#1e4d8f", color: "white", fontSize: 12.5, fontWeight: 700, cursor: bulkShare.busy ? "not-allowed" : "pointer" }}
             >
-              {bulkShare.busy
-                ? "Membagikan..."
-                : `Bagikan ke ${bulkShare.usernames.length} user`}
+              {bulkShare.busy ? "Membagikan..." : `Bagikan ke ${bulkShare.usernames.length} pengguna`}
             </button>
           </div>
         )}
 
-        {loading && <p style={{ color: "#64748b", fontSize: 13, textAlign: "center", padding: 40 }}>Memuat data dokumen...</p>}
-        {error && <p style={{ color: "#dc2626", fontSize: 13, background: "#fef2f2", padding: 12, borderRadius: 12, border: "1px solid #fecaca" }}>{error}</p>}
+        {/* ---------- DAFTAR DOKUMEN ---------- */}
+        {loading ? (
+          <p className="muted">
+            <span className="spinner" style={{ marginRight: 8 }} />
+            Memuat dokumen...
+          </p>
+        ) : filteredDocuments.length === 0 ? (
+          <div className="card empty">
+            <h3>{documents.length === 0 ? "Belum ada dokumen" : "Tidak ada yang cocok"}</h3>
+            <p>
+              {documents.length === 0
+                ? "Unggah dokumen pertama untuk mulai membagikannya ke personel."
+                : "Ubah kata kunci pencarian atau pilih kategori lain di panel kiri."}
+            </p>
+          </div>
+        ) : (
+          <div className="docs">
+            {filteredDocuments.map((doc) => {
+              const isExpanded = expandedDoc === doc.documentId;
+              const isBusy = busyDoc === doc.documentId;
+              const dipilih = selectedDocs.includes(doc.documentId);
+              const sharedUsernames = doc.sharedTo.map((x) => x.username);
+              const availableUsers = users.filter((u) => !sharedUsernames.includes(u.username));
+              const downloadCount = doc.sharedTo.filter((x) => x.canDownload).length;
+              const revokePicked = selectedRevoke[doc.documentId] || [];
 
-        {/* DAFTAR KARTU DOKUMEN ADMIN */}
-        {!loading && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {filteredDocuments.length === 0 ? (
-              <div style={{ textAlign: "center", color: "#64748b", padding: "48px 20px", fontSize: 13, background: "white", borderRadius: 20, border: "1px dashed #cbd5e1" }}>
-                {documents.length === 0 ? "Belum ada dokumen yang diupload." : "Tidak ada dokumen yang cocok dengan pencarian."}
-              </div>
-            ) : (
-              filteredDocuments.map((doc) => {
-                const sharedUsernames = doc.sharedTo.map((s) => s.username);
-                const availableUsers = users.filter((u) => !sharedUsernames.includes(u.username));
-                const downloadCount = doc.sharedTo.filter((s) => s.canDownload).length;
-                const isBusy = busyDoc === doc.documentId;
-                const isExpanded = expandedDoc === doc.documentId;
-                const canDelete = doc.sharedTo.length === 0;
+              return (
+                <div
+                  key={doc.documentId}
+                  className={`doc${downloadCount > 0 ? " doc--grant" : ""}${dipilih ? " doc--on" : ""}`}
+                  style={{ flexDirection: "column", alignItems: "stretch" }}
+                >
+                  <div className="row" style={{ alignItems: "flex-start", flexWrap: "nowrap", gap: 12 }}>
+                    <input
+                      type="checkbox"
+                      checked={dipilih}
+                      onChange={() => toggleDocSelected(doc.documentId)}
+                      style={{ marginTop: 3, accentColor: "var(--blue-500)" }}
+                      aria-label={`Pilih ${doc.namaDokumen}`}
+                    />
 
-                return (
-                  <div key={doc.documentId} style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: 16, boxShadow: "0 1px 3px rgba(15,23,42,0.04)", padding: 16, opacity: isBusy ? 0.6 : 1 }}>
-                    <div className="doc-row-top" style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
-                      <div style={{ display: "flex", gap: 10, alignItems: "flex-start", minWidth: 0 }}>
-                        <input
-                          type="checkbox"
-                          checked={selectedDocs.includes(doc.documentId)}
-                          disabled={!canDelete}
-                          title={canDelete ? "Pilih untuk hapus massal" : "Masih dibagikan — tidak bisa dihapus"}
-                          onChange={() => toggleDocSelected(doc.documentId)}
-                          style={{ marginTop: 4, flexShrink: 0 }}
-                        />
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontWeight: 700, fontSize: 14, color: "#1e293b", wordBreak: "break-word" }}>{doc.namaDokumen}</div>
+                    <div className="doc__body">
+                      <h2 className="doc__title">{doc.namaDokumen}</h2>
 
-                          {editingCategoryDoc === doc.documentId ? (
-                            <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 6, flexWrap: "wrap" }}>
-                              <select
-                                autoFocus
-                                value={categoryIsNew ? "__new__" : categoryDraft}
-                                onChange={(e) => {
-                                  const v = e.target.value;
-                                  if (v === "__new__") {
-                                    setCategoryIsNew(true);
-                                    setCategoryDraft("");
-                                  } else {
-                                    setCategoryIsNew(false);
-                                    setCategoryDraft(v);
-                                  }
-                                }}
-                                style={{ fontSize: 11, padding: "3px 8px", border: "1px solid #cbd5e1", borderRadius: 6, outline: "none", maxWidth: 260, background: "white" }}
-                              >
-                                <option value="">— Pilih kategori —</option>
-                                {categoryOptions.map((c) => (
-                                  <option key={c} value={c}>
-                                    {c}
-                                  </option>
-                                ))}
-                                <option value="__new__">+ Buat kategori baru…</option>
-                              </select>
-                              {categoryIsNew && (
-                                <input
-                                  type="text"
-                                  autoFocus
-                                  value={categoryDraft}
-                                  onChange={(e) => setCategoryDraft(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") handleSaveCategory(doc.documentId);
-                                    if (e.key === "Escape") setEditingCategoryDoc(null);
-                                  }}
-                                  placeholder="Nama kategori baru..."
-                                  style={{ fontSize: 11, padding: "3px 8px", border: "1px solid #cbd5e1", borderRadius: 6, outline: "none", width: 160 }}
-                                />
-                              )}
-                              <button
-                                disabled={savingCategory}
-                                onClick={() => handleSaveCategory(doc.documentId)}
-                                style={{ fontSize: 11, fontWeight: 700, color: "white", background: "#1e4d8f", border: "none", borderRadius: 6, padding: "3px 8px", cursor: "pointer" }}
-                              >
-                                Simpan
-                              </button>
-                              <button
-                                disabled={savingCategory}
-                                onClick={() => {
-                                  setEditingCategoryDoc(null);
+                      <div className="doc__meta">
+                        {editingCategoryDoc === doc.documentId ? (
+                          <span className="row" style={{ gap: 6 }}>
+                            <select
+                              className="select"
+                              style={{ width: "auto", padding: "4px 8px", fontSize: 11.5 }}
+                              autoFocus
+                              value={categoryIsNew ? "__new__" : categoryDraft}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                if (v === "__new__") {
+                                  setCategoryIsNew(true);
+                                  setCategoryDraft("");
+                                } else {
                                   setCategoryIsNew(false);
+                                  setCategoryDraft(v);
+                                }
+                              }}
+                            >
+                              <option value="">Pilih kategori</option>
+                              {categoryOptions.map((c) => (
+                                <option key={c} value={c}>
+                                  {c}
+                                </option>
+                              ))}
+                              <option value="__new__">Buat kategori baru</option>
+                            </select>
+                            {categoryIsNew && (
+                              <input
+                                className="input"
+                                style={{ width: 170, padding: "4px 8px", fontSize: 11.5 }}
+                                autoFocus
+                                value={categoryDraft}
+                                onChange={(e) => setCategoryDraft(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleSaveCategory(doc.documentId);
+                                  if (e.key === "Escape") setEditingCategoryDoc(null);
                                 }}
-                                style={{ fontSize: 11, fontWeight: 600, color: "#334155", background: "white", border: "1px solid #cbd5e1", borderRadius: 6, padding: "3px 8px", cursor: "pointer" }}
-                              >
-                                Batal
-                              </button>
-                            </div>
-                          ) : (
-                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
-                              {doc.kategori ? (
-                                <span style={{ display: "inline-block", fontSize: 11, fontWeight: 600, color: "#1e4d8f", background: "#eff6ff", borderRadius: 6, padding: "2px 8px", border: "1px solid #bfdbfe" }}>
-                                  {doc.kategori}
-                                </span>
-                              ) : (
-                                <span style={{ fontSize: 11, color: "#94a3b8", fontStyle: "italic" }}>Tanpa kategori</span>
-                              )}
-                              <button
-                                onClick={() => startEditCategory(doc)}
-                                title="Edit kategori"
-                                style={{ border: "none", background: "none", color: "#94a3b8", fontSize: 11, cursor: "pointer", padding: "2px 4px" }}
-                              >
-                                ✏️
-                              </button>
-                            </div>
-                          )}
+                                placeholder="Nama kategori baru"
+                              />
+                            )}
+                            <button
+                              className="btn btn--primary btn--sm"
+                              disabled={savingCategory}
+                              onClick={() => handleSaveCategory(doc.documentId)}
+                            >
+                              {savingCategory ? "..." : "Simpan"}
+                            </button>
+                            <button
+                              className="btn btn--sm"
+                              onClick={() => {
+                                setEditingCategoryDoc(null);
+                                setCategoryIsNew(false);
+                              }}
+                            >
+                              Batal
+                            </button>
+                          </span>
+                        ) : (
+                          <>
+                            <span className="tag">{doc.kategori || "Tanpa kategori"}</span>
+                            <button
+                              className="btn btn--quiet btn--sm"
+                              onClick={() => startEditCategory(doc)}
+                              title="Ubah kategori"
+                            >
+                              Ubah
+                            </button>
+                          </>
+                        )}
 
-                          <div style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>
-                            {new Date(doc.uploadedAt).toLocaleString("id-ID")} · {doc.uploadedBy} · {doc.sharedTo.length} user
-                            {downloadCount > 0 && ` · ${downloadCount} boleh download`}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="doc-actions" style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
-                        <Link
-                          href={`/viewer/${doc.documentId}`}
-                          style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 11, fontWeight: 600, textDecoration: "none" }}
-                        >
-                          Lihat
-                        </Link>
-                        <DownloadButton
-                          documentId={doc.documentId}
-                          namaDokumen={doc.namaDokumen}
-                          label="⬇"
-                          style={{ padding: "6px 9px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
-                        />
-                        <button
-                          onClick={() => setExpandedDoc(isExpanded ? null : doc.documentId)}
-                          style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: isExpanded ? "#eff6ff" : "white", color: "#1e4d8f", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
-                        >
-                          Kelola Akses {isExpanded ? "▲" : "▼"}
-                        </button>
-                        <button
-                          disabled={isBusy || !canDelete}
-                          onClick={() => handleDelete(doc.documentId, doc.namaDokumen)}
-                          title={canDelete ? "Hapus dokumen permanen" : "Akhiri semua share dulu sebelum menghapus"}
-                          style={{ background: "transparent", border: "none", color: canDelete ? "#dc2626" : "#cbd5e1", fontSize: 12, fontWeight: 600, cursor: canDelete ? "pointer" : "not-allowed", padding: "6px 4px" }}
-                        >
-                          Hapus
-                        </button>
+                        <i aria-hidden="true" />
+                        <span>Diunggah {fmtTgl(doc.uploadedAt)}</span>
+                        <i aria-hidden="true" />
+                        <span>{doc.sharedTo.length} pembaca</span>
+                        {downloadCount > 0 && (
+                          <>
+                            <i aria-hidden="true" />
+                            <span>{downloadCount} boleh mengunduh</span>
+                          </>
+                        )}
                       </div>
                     </div>
 
-                    {isExpanded && (
-                      <>
-                        <hr style={{ border: "none", borderTop: "1px solid #f1f5f9", margin: "14px 0" }} />
+                    <div className="doc__acts">
+                      <Link href={`/viewer/${doc.documentId}`} className="btn btn--sm">
+                        Buka
+                      </Link>
+                      <DownloadButton
+                        documentId={doc.documentId}
+                        namaDokumen={doc.namaDokumen}
+                        label="Unduh"
+                        className="btn btn--sm"
+                      />
+                      <button
+                        className={`btn btn--sm${isExpanded ? " btn--primary" : ""}`}
+                        onClick={() => setExpandedDoc(isExpanded ? null : doc.documentId)}
+                      >
+                        Akses
+                      </button>
+                      <button
+                        className="btn btn--danger btn--sm"
+                        disabled={isBusy}
+                        onClick={() => handleDelete(doc.documentId, doc.namaDokumen)}
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
 
-                        {/* DAFTAR USER YANG DIBAGIKAN — dengan multi-select revoke */}
-                        <div>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: "#334155" }}>
-                              Dibagikan ke ({doc.sharedTo.length} user)
-                            </div>
-                            {doc.sharedTo.length > 0 && (selectedRevoke[doc.documentId] || []).length === 0 && (
-                              <button
-                                disabled={isBusy}
-                                onClick={() => handleRevokeAll(doc.documentId)}
-                                title="Akhiri akses seluruh user pada dokumen ini sekaligus"
-                                style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #dc2626", background: "white", color: "#dc2626", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
-                              >
-                                Akhiri Akses Semua ({doc.sharedTo.length})
-                              </button>
-                            )}
-                            {(selectedRevoke[doc.documentId] || []).length > 0 && (
-                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                                <button
-                                  disabled={isBusy}
-                                  onClick={() =>
-                                    handleSetDownload(doc.documentId, selectedRevoke[doc.documentId], true)
-                                  }
-                                  title="Beri izin download file asli untuk user terpilih"
-                                  style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #16a34a", background: "white", color: "#16a34a", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
-                                >
-                                  ⬇ Izinkan Download
-                                </button>
-                                <button
-                                  disabled={isBusy}
-                                  onClick={() =>
-                                    handleSetDownload(doc.documentId, selectedRevoke[doc.documentId], false)
-                                  }
-                                  title="Cabut izin download — user tetap bisa melihat dokumen"
-                                  style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
-                                >
-                                  👁 Lihat Saja
-                                </button>
-                                <button
-                                  disabled={isBusy}
-                                  onClick={() => handleRevokeSelected(doc.documentId)}
-                                  style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #dc2626", background: "white", color: "#dc2626", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
-                                >
-                                  Akhiri {(selectedRevoke[doc.documentId] || []).length} Terpilih
-                                </button>
-                              </div>
-                            )}
+                  {/* ---------- PENGATURAN AKSES ---------- */}
+                  {isExpanded && (
+                    <div className="panel">
+                      <div className="row row--between" style={{ marginBottom: 8 }}>
+                        <span className="panel__title" style={{ margin: 0 }}>
+                          Pembaca dokumen ini ({doc.sharedTo.length})
+                        </span>
+
+                        {doc.sharedTo.length > 0 && revokePicked.length === 0 && (
+                          <button
+                            className="btn btn--danger btn--sm"
+                            disabled={isBusy}
+                            onClick={() => handleRevokeAll(doc.documentId)}
+                          >
+                            Cabut akses semua
+                          </button>
+                        )}
+
+                        {revokePicked.length > 0 && (
+                          <div className="row">
+                            <button
+                              className="btn btn--ok btn--sm"
+                              disabled={isBusy}
+                              onClick={() => handleSetDownload(doc.documentId, revokePicked, true)}
+                            >
+                              Izinkan unduh
+                            </button>
+                            <button
+                              className="btn btn--sm"
+                              disabled={isBusy}
+                              onClick={() => handleSetDownload(doc.documentId, revokePicked, false)}
+                            >
+                              Baca saja
+                            </button>
+                            <button
+                              className="btn btn--danger btn--sm"
+                              disabled={isBusy}
+                              onClick={() => handleRevokeSelected(doc.documentId)}
+                            >
+                              Cabut {revokePicked.length} akses
+                            </button>
                           </div>
-                          {doc.sharedTo.length === 0 ? (
-                            <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 10, fontStyle: "italic" }}>
-                              Belum dibagikan ke siapa pun.
-                            </div>
-                          ) : (
-                            <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 8 }}>
-                              Klik label di sebelah nama untuk mengatur izin download user tersebut pada dokumen ini.
-                            </div>
-                          )}
-                          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        )}
+                      </div>
+
+                      {doc.sharedTo.length === 0 ? (
+                        <p className="hint">Belum dibagikan ke siapa pun.</p>
+                      ) : (
+                        <>
+                          <p className="hint" style={{ marginBottom: 7 }}>
+                            Klik lencana di sebelah nama untuk mengatur izin unduh orang tersebut
+                            pada dokumen ini.
+                          </p>
+                          <div className="scrollbox stack" style={{ gap: 4 }}>
                             {doc.sharedTo.map(({ username, canDownload }) => {
-                              const checked = (selectedRevoke[doc.documentId] || []).includes(username);
+                              const dicentang = revokePicked.includes(username);
                               return (
                                 <label
                                   key={username}
-                                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 8px", borderRadius: 6, fontSize: 12, background: checked ? "#eff6ff" : "#fafafa", cursor: "pointer" }}
+                                  className="row"
+                                  style={{
+                                    gap: 9,
+                                    padding: "5px 8px",
+                                    borderRadius: 8,
+                                    background: dicentang ? "var(--blue-50)" : "transparent",
+                                    cursor: "pointer",
+                                    flexWrap: "nowrap",
+                                  }}
                                 >
                                   <input
                                     type="checkbox"
-                                    checked={checked}
+                                    checked={dicentang}
                                     onChange={() => toggleRevokeSelected(doc.documentId, username)}
+                                    style={{ accentColor: "var(--blue-500)" }}
                                   />
-                                  <span style={{ flex: 1 }}>{username}</span>
-
-                                  {/* SAKELAR IZIN DOWNLOAD — per user, per dokumen */}
+                                  <span className="grow truncate" style={{ fontSize: 12.5 }}>
+                                    {username}
+                                  </span>
                                   <button
+                                    type="button"
+                                    className={`pill${canDownload ? " pill--ok" : ""}`}
                                     disabled={isBusy}
                                     onClick={(e) => {
                                       e.preventDefault();
@@ -1088,72 +914,57 @@ export default function AdminDashboard() {
                                     }}
                                     title={
                                       canDownload
-                                        ? "Izin download AKTIF — klik untuk mencabut (jadi lihat saja)"
-                                        : "Lihat saja — klik untuk mengizinkan download file asli"
+                                        ? "Boleh mengunduh — klik untuk mengubah jadi baca saja"
+                                        : "Baca saja — klik untuk mengizinkan mengunduh"
                                     }
-                                    style={{
-                                      border: canDownload ? "1px solid #16a34a" : "1px solid #cbd5e1",
-                                      background: canDownload ? "#f0fdf4" : "white",
-                                      color: canDownload ? "#16a34a" : "#94a3b8",
-                                      fontSize: 10,
-                                      fontWeight: 700,
-                                      borderRadius: 6,
-                                      padding: "2px 8px",
-                                      cursor: "pointer",
-                                      whiteSpace: "nowrap",
-                                    }}
+                                    style={{ cursor: "pointer" }}
                                   >
-                                    {canDownload ? "⬇ Boleh download" : "👁 Lihat saja"}
+                                    {canDownload ? "Boleh unduh" : "Baca saja"}
                                   </button>
-
                                   <button
+                                    type="button"
+                                    className="btn btn--quiet btn--sm"
                                     disabled={isBusy}
                                     onClick={(e) => {
                                       e.preventDefault();
                                       handleRevoke(doc.documentId, username);
                                     }}
-                                    title="Akhiri akses user ini saja"
-                                    style={{ border: "none", background: "none", color: "#dc2626", fontSize: 12, cursor: "pointer", fontWeight: 700 }}
+                                    title="Cabut akses orang ini"
                                   >
-                                    ×
+                                    ✕
                                   </button>
                                 </label>
                               );
                             })}
                           </div>
-                        </div>
+                        </>
+                      )}
 
-                        {/* TAMBAH AKSES USER — multi-select */}
-                        {availableUsers.length > 0 && (
-                          <div style={{ marginTop: 14 }}>
-                            <div style={{ display: "flex", gap: 8 }}>
-                              <button
-                                type="button"
-                                disabled={isBusy}
-                                onClick={() =>
-                                  setOpenPickerDoc((prev) => (prev === doc.documentId ? null : doc.documentId))
-                                }
-                                style={{ flex: 1, padding: "8px 12px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 13, background: "white", color: "#334155", textAlign: "left", cursor: "pointer" }}
-                              >
-                                {(selectedUsers[doc.documentId] || []).length > 0
-                                  ? `${(selectedUsers[doc.documentId] || []).length} user dipilih`
-                                  : "Pilih user untuk ditambahkan akses..."}
-                                <span style={{ float: "right" }}>{openPickerDoc === doc.documentId ? "▲" : "▼"}</span>
-                              </button>
-                              <button
-                                disabled={isBusy}
-                                onClick={() => handleGrantAll(doc.documentId)}
-                                title={`Bagikan ke ${availableUsers.length} user aktif lainnya sekaligus`}
-                                style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
-                              >
-                                Bagikan ke Semua
-                              </button>
+                      {/* ---------- TAMBAH PEMBACA ---------- */}
+                      <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
+                        <div className="panel__title">Tambah pembaca</div>
+
+                        {availableUsers.length === 0 ? (
+                          <p className="hint">Semua pengguna sudah memiliki akses ke dokumen ini.</p>
+                        ) : (
+                          <>
+                            <div className="scrollbox row" style={{ gap: 6, maxHeight: 150 }}>
+                              {availableUsers.map((u) => {
+                                const on = (selectedUsers[doc.documentId] || []).includes(u.username);
+                                return (
+                                  <label key={u.username} className={`who-chip${on ? " who-chip--on" : ""}`}>
+                                    <input
+                                      type="checkbox"
+                                      checked={on}
+                                      onChange={() => toggleUserSelected(doc.documentId, u.username)}
+                                    />
+                                    {u.username}
+                                  </label>
+                                );
+                              })}
                             </div>
 
-                            {/* PILIHAN IZIN DOWNLOAD SAAT MEMBAGIKAN */}
-                            <label
-                              style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 8, fontSize: 12, lineHeight: 1.45, color: "#334155", cursor: "pointer" }}
-                            >
+                            <label className="check" style={{ marginTop: 9 }}>
                               <input
                                 type="checkbox"
                                 checked={!!grantWithDownload[doc.documentId]}
@@ -1164,71 +975,36 @@ export default function AdminDashboard() {
                                   }))
                                 }
                               />
-                              <span>
-                                Sekaligus beri izin <strong>download file asli</strong> untuk user yang
-                                dibagikan{" "}
-                                <span style={{ color: "#94a3b8" }}>(bisa diubah kapan saja setelahnya)</span>
-                              </span>
+                              <span>Sekaligus izinkan mengunduh berkas asli. Bisa diubah kapan saja.</span>
                             </label>
 
-                            {openPickerDoc === doc.documentId && (
-                              <div style={{ marginTop: 8, border: "1px solid #e2e8f0", borderRadius: 8, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.06)" }}>
-                                <div style={{ maxHeight: 220, overflowY: "auto", padding: 6 }}>
-                                  {availableUsers.map((u) => {
-                                    const checked = (selectedUsers[doc.documentId] || []).includes(u.username);
-                                    return (
-                                      <label
-                                        key={u.username}
-                                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 8px", borderRadius: 6, fontSize: 13, cursor: "pointer", background: checked ? "#eff6ff" : "transparent" }}
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          checked={checked}
-                                          onChange={() => toggleUserSelected(doc.documentId, u.username)}
-                                        />
-                                        <span>
-                                          {u.nama} ({u.username}) — {u.role}
-                                        </span>
-                                      </label>
-                                    );
-                                  })}
-                                </div>
-                                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: 8, borderTop: "1px solid #f1f5f9" }}>
-                                  <button
-                                    type="button"
-                                    onClick={() => setOpenPickerDoc(null)}
-                                    style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-                                  >
-                                    Batal
-                                  </button>
-                                  <button
-                                    disabled={isBusy || (selectedUsers[doc.documentId] || []).length === 0}
-                                    onClick={() => handleGrantSelected(doc.documentId)}
-                                    style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #1e4d8f", background: "#1e4d8f", color: "white", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-                                  >
-                                    Tambah ({(selectedUsers[doc.documentId] || []).length})
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
+                            <div className="row" style={{ marginTop: 9 }}>
+                              <button
+                                className="btn btn--primary btn--sm"
+                                disabled={isBusy || (selectedUsers[doc.documentId] || []).length === 0}
+                                onClick={() => handleGrantSelected(doc.documentId)}
+                              >
+                                Bagikan ke {(selectedUsers[doc.documentId] || []).length} pengguna
+                              </button>
+                              <button
+                                className="btn btn--sm"
+                                disabled={isBusy}
+                                onClick={() => handleGrantAll(doc.documentId)}
+                              >
+                                Bagikan ke semua
+                              </button>
+                            </div>
+                          </>
                         )}
-                      </>
-                    )}
-                  </div>
-                );
-              })
-            )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
-
-          </div>
-          {/* /AREA KONTEN DOKUMEN */}
-        </div>
-        {/* /LAYOUT SIDEBAR + KONTEN */}
-
-      </div>
-    </div>
+      </AppShell>
     </>
   );
 }

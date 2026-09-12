@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import DownloadButton from "../../components/DownloadButton";
+import AppShell from "../../components/AppShell";
 
 export default function DocumentListPage() {
   const [docs, setDocs] = useState([]);
@@ -143,502 +144,269 @@ export default function DocumentListPage() {
 
   const avatarLetter = (user.nama || user.username || "U").charAt(0).toUpperCase();
 
+  function fmtTgl(iso) {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  }
+
+  const nav = [
+    ...(isAdmin
+      ? [
+          { label: "Kelola dokumen", href: "/admin/dashboard", icon: "⚙" },
+          { label: "Rekam jejak", onClick: fetchAuditLogs, icon: "🕘" },
+        ]
+      : []),
+    { label: "Akun saya", onClick: () => setShowProfileModal(true), icon: "👤" },
+  ];
+
   return (
     <>
       <Head>
         <title>Dokumen Saya — SIDOK</title>
       </Head>
-      <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #e6eefb 0%, #eef3fb 180px, #f4f7fc 380px)", backgroundAttachment: "fixed", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", color: "#0f172a", paddingBottom: 60 }}>
-      
-      {/* HEADER BAR */}
-      <header className="app-header" style={{ height: 64, borderBottom: "1px solid #e2e8f0", background: "rgba(255,255,255,0.72)", backdropFilter: "blur(10px)", padding: "0 28px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 30 }}>
-        <div className="header-brand" style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-          <img src="/logo-rama.png" alt="Logo" style={{ height: 32, width: 32, objectFit: "contain" }} />
+
+      <AppShell
+        user={{ nama: user.nama, email: user.username, role: user.role }}
+        nav={nav}
+        categories={categoryList}
+        categoryCounts={categoryCounts}
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+        totalCount={docs.length}
+        searchValue={query}
+        onSearchChange={setQuery}
+        searchPlaceholder="Cari nama dokumen atau kategori"
+        onLogout={handleLogout}
+        loggingOut={loggingOut}
+      >
+        <div className="pagehead">
           <div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#1e293b", margin: 0 }}>PT. Rama Emerald Multi Sukses</p>
-            <p style={{ fontSize: 10, color: "#64748b", margin: 0 }}>SIDOK · Sistem Dokumen Terkendali</p>
+            <h1>{selectedCategory || "Dokumen saya"}</h1>
+            <p>
+              {isAdmin
+                ? "Sebagai Administrator Anda dapat membuka dan mengunduh seluruh dokumen aktif."
+                : "Dokumen yang dibagikan kepada Anda. Sebagian dapat diunduh bila Administrator memberi izin."}
+            </p>
           </div>
-        </div>
-
-        <div className="header-actions" style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {/* KOTAK PROFIL YANG BISA DIKLIK */}
-          <div
-            onClick={() => setShowProfileModal(true)}
-            style={{ display: "flex", alignItems: "center", gap: 8, background: "#f1f5f9", padding: "6px 14px", borderRadius: 12, fontSize: 12, fontWeight: 600, color: "#334155", cursor: "pointer", border: "1px solid #cbd5e1" }}
-            title="Klik untuk melihat Detail Profil"
-          >
-            <div style={{ width: 26, height: 26, borderRadius: 8, background: "#1e4d8f", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: "bold" }}>
-              {avatarLetter}
-            </div>
-            <div style={{ textAlign: "left", lineHeight: 1.2 }}>
-              <div style={{ fontWeight: 700, fontSize: 12 }}>{user.nama || user.username || "User"}</div>
-              <div style={{ fontSize: 9, color: "#1e4d8f", textTransform: "uppercase", fontWeight: 700 }}>{user.role || "User"}</div>
-            </div>
-          </div>
-
-          <button
-            onClick={handleLogout}
-            disabled={loggingOut}
-            style={{ padding: "7px 14px", borderRadius: 10, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-          >
-            {loggingOut ? "Keluar..." : "Logout"}
-          </button>
-        </div>
-      </header>
-
-      {/* KONTEN UTAMA */}
-      <div className="app-shell" style={{ maxWidth: "none", margin: "0 auto", padding: "32px 28px" }}>
-        
-        {/* KOP HEADER BERGRADASI */}
-        <div style={{ overflow: "hidden", borderRadius: 20, border: "1px solid #e2e8f0", boxShadow: "0 4px 12px rgba(15,23,42,0.05)", marginBottom: 24 }}>
-          <div className="hero-band" style={{ background: "linear-gradient(135deg, #000000 0%, #020b17 50%, #15427d 100%)", padding: "28px 24px", color: "white", position: "relative" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <img src="/logo-rama.png" alt="Logo" style={{ height: 44, width: 44, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
-                <div>
-                  <span style={{ display: "inline-block", background: "rgba(59, 130, 246, 0.2)", border: "1px solid rgba(59, 130, 246, 0.4)", borderRadius: 999, padding: "2px 10px", fontSize: 10, fontWeight: 600, color: "#bfdbfe", marginBottom: 6 }}>
-                    ✓ Dokumen Resmi Kantor
-                  </span>
-                  <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: "-0.02em" }}>Dokumen Saya</h1>
-                  <p style={{ fontSize: 12, color: "#bfdbfe", margin: "4px 0 0" }}>
-                    {isAdmin
-                      ? "Akses penuh Administrator & daftar dokumen terkendali"
-                      : "Dokumen yang dibagikan ke Anda — sebagian mungkin diberi izin unduh oleh Administrator"}
-                  </p>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {isAdmin && (
-                  <>
-                    <button
-                      onClick={fetchAuditLogs}
-                      style={{ padding: "9px 14px", borderRadius: 12, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "white", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-                    >
-                      📋 Audit Trail
-                    </button>
-                    <Link
-                      href="/admin/dashboard"
-                      style={{ padding: "9px 16px", borderRadius: 12, background: "white", color: "#1e4d8f", fontSize: 12, fontWeight: 700, textDecoration: "none", boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }}
-                    >
-                      ⚙️ Dashboard Admin
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* LAYOUT SIDEBAR + KONTEN */}
-        <div className="split-layout" style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
-
-          {/* SIDEBAR KATEGORI */}
-          {!loading && docs.length > 0 && (
-            <div
-              className="cat-sidebar"
-              style={{
-                width: 260,
-                flexShrink: 0,
-                background: "white",
-                border: "1px solid #e2e8f0",
-                borderRadius: 16,
-                position: "sticky",
-                top: 84,
-                // Dibatasi setinggi layar dengan area gulir sendiri. Tanpa ini
-                // elemen sticky menjadi lebih tinggi dari layar, sehingga bagian
-                // bawah daftar tidak pernah bisa dijangkau dengan roda mouse.
-                maxHeight: "calc(100vh - 104px)",
-                display: "flex",
-                flexDirection: "column",
-                overflow: "hidden",
-                boxShadow: "0 1px 3px rgba(15,23,42,0.04)",
-              }}
-            >
-              <div style={{ padding: "12px 12px 10px", borderBottom: "1px solid #f1f5f9", flexShrink: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                    Kategori
-                  </span>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", background: "#f1f5f9", borderRadius: 999, padding: "2px 8px" }}>
-                    {categoryList.length}
-                  </span>
-                </div>
-                <input
-                  type="text"
-                  value={catFilter}
-                  onChange={(e) => setCatFilter(e.target.value)}
-                  placeholder="Saring kategori..."
-                  style={{ width: "100%", padding: "7px 10px", border: "1px solid #e2e8f0", borderRadius: 9, fontSize: 12, outline: "none", background: "#f8fafc", color: "#0f172a" }}
-                />
-              </div>
-
-              <div className="cat-scroll" style={{ overflowY: "auto", padding: 8, flex: 1 }}>
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "9px 10px",
-                    borderRadius: 10,
-                    border: "none",
-                    background: selectedCategory === null ? "#1e4d8f" : "transparent",
-                    color: selectedCategory === null ? "white" : "#334155",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    textAlign: "left",
-                    marginBottom: 4,
-                  }}
-                >
-                  <span>📋 Semua Dokumen</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, opacity: 0.9, background: selectedCategory === null ? "rgba(255,255,255,0.18)" : "#f1f5f9", borderRadius: 999, padding: "1px 7px" }}>
-                    {docs.length}
-                  </span>
-                </button>
-
-                {categoryList
-                  .filter((cat) => cat.toLowerCase().includes(catFilter.trim().toLowerCase()))
-                  .map((cat) => {
-                    const aktif = selectedCategory === cat;
-                    return (
-                      // title = tooltip bawaan browser saat kursor diarahkan, supaya
-                      // nama kategori yang terpotong tetap terbaca tanpa perlu diklik.
-                      <button
-                        key={cat}
-                        onClick={() => setSelectedCategory(cat)}
-                        title={cat === UNCATEGORIZED ? cat : `${cat} (${categoryCounts[cat]} dokumen)`}
-                        className={`cat-item${aktif ? " cat-item--active" : ""}`}
-                        style={{
-                          width: "100%",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: 8,
-                          padding: "8px 10px",
-                          borderRadius: 10,
-                          border: "none",
-                          borderLeft: aktif ? "3px solid #60a5fa" : "3px solid transparent",
-                          background: aktif ? "#1e4d8f" : "transparent",
-                          color: aktif ? "white" : "#334155",
-                          fontSize: 12.5,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          textAlign: "left",
-                          marginBottom: 2,
-                          alignItems: aktif ? "flex-start" : "center",
-                        }}
-                      >
-                        <span
-                          className="cat-label"
-                          style={
-                            aktif
-                              ? { whiteSpace: "normal", overflow: "visible", wordBreak: "break-word", lineHeight: 1.35 }
-                              : { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }
-                          }
-                        >
-                          {cat === UNCATEGORIZED ? "🗂 " : "📁 "}
-                          {cat}
-                        </span>
-                        <span style={{ fontSize: 10.5, fontWeight: 700, flexShrink: 0, background: aktif ? "rgba(255,255,255,0.18)" : "#f1f5f9", color: aktif ? "white" : "#64748b", borderRadius: 999, padding: "1px 7px" }}>
-                          {categoryCounts[cat]}
-                        </span>
-                      </button>
-                    );
-                  })}
-
-                {categoryList.filter((cat) => cat.toLowerCase().includes(catFilter.trim().toLowerCase())).length === 0 && (
-                  <p style={{ fontSize: 11, color: "#94a3b8", textAlign: "center", padding: "14px 8px", margin: 0 }}>
-                    Tidak ada kategori yang cocok.
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* AREA KONTEN DOKUMEN */}
-          <div className="content-col" style={{ flex: 1, minWidth: 0 }}>
-
-        {/* PENCARIAN + SORT */}
-        {!loading && docs.length > 0 && (
-          <div className="search-row" style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-            <div style={{ position: "relative", flex: 1 }}>
-              <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}>🔍</span>
-              <input
-                type="text"
-                style={{ width: "100%", padding: "11px 14px 11px 38px", border: "1px solid #cbd5e1", borderRadius: 12, fontSize: 13, background: "white", color: "#0f172a", outline: "none", boxShadow: "0 1px 2px rgba(15,23,42,0.04)" }}
-                placeholder="Cari nama dokumen atau kategori..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </div>
+          <div className="pagehead__acts">
             <select
+              className="select"
+              style={{ width: "auto" }}
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              title="Urutkan dokumen"
-              style={{ padding: "0 14px", borderRadius: 12, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+              aria-label="Urutkan dokumen"
             >
-              <option value="newest">↓ Terbaru Diupload</option>
-              <option value="oldest">↑ Terlama Diupload</option>
-              <option value="name-asc">A → Z Nama Dokumen</option>
-              <option value="name-desc">Z → A Nama Dokumen</option>
+              <option value="newest">Terbaru diunggah</option>
+              <option value="oldest">Terlama diunggah</option>
+              <option value="name-asc">Nama A → Z</option>
+              <option value="name-desc">Nama Z → A</option>
             </select>
           </div>
-        )}
+        </div>
 
-        {loading && <p style={{ color: "#64748b", fontSize: 13, textAlign: "center", padding: 40 }}>Memuat daftar dokumen...</p>}
-        {error && <p style={{ color: "#dc2626", fontSize: 13, background: "#fef2f2", padding: 12, borderRadius: 12, border: "1px solid #fecaca" }}>{error}</p>}
+        {error && <p className="notice notice--bad" style={{ marginBottom: 14 }}>{error}</p>}
 
-        {/* DAFTAR DOKUMEN */}
-        {!loading && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {filtered.length === 0 ? (
-              <div style={{ textAlign: "center", color: "#64748b", padding: "48px 20px", fontSize: 13, background: "white", borderRadius: 20, border: "1px dashed #cbd5e1" }}>
-                {docs.length === 0 ? "Belum ada dokumen yang dibagikan ke Anda." : "Tidak ada dokumen yang cocok dengan pencarian."}
-              </div>
-            ) : (
-              filtered.map((doc) => (
-                <div
-                  key={doc.documentId}
-                  className="doc-card"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "16px 20px", background: "white", border: "1px solid #e2e8f0", borderRadius: 16, boxShadow: "0 1px 3px rgba(15,23,42,0.04)" }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 12, background: "#eff6ff", color: "#1e4d8f", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
-                      📄
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <p className="doc-title" style={{ fontWeight: 700, fontSize: 14, color: "#1e293b", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {doc.namaDokumen}
-                      </p>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-                        {doc.kategori && (
-                          <span style={{ fontSize: 10, fontWeight: 600, background: "#f1f5f9", color: "#475569", padding: "2px 8px", borderRadius: 6 }}>
-                            {doc.kategori}
-                          </span>
-                        )}
-                        <span style={{ fontSize: 11, color: "#94a3b8" }}>
-                          Diupload: {new Date(doc.uploadedAt).toLocaleDateString("id-ID")}
-                        </span>
-                      </div>
+        {loading ? (
+          <p className="muted">
+            <span className="spinner" style={{ marginRight: 8 }} />
+            Memuat dokumen...
+          </p>
+        ) : filtered.length === 0 ? (
+          <div className="card empty">
+            <h3>{docs.length === 0 ? "Belum ada dokumen untuk Anda" : "Tidak ada yang cocok"}</h3>
+            <p>
+              {docs.length === 0
+                ? "Administrator belum membagikan dokumen apa pun. Hubungi Administrator bila Anda membutuhkan akses."
+                : "Ubah kata kunci pencarian atau pilih kategori lain di panel kiri."}
+            </p>
+          </div>
+        ) : (
+          <>
+            <p className="hint" style={{ marginBottom: 10 }}>
+              {filtered.length} dokumen
+              {selectedCategory ? ` dalam kategori ini` : ""}
+            </p>
+
+            <div className="docs">
+              {filtered.map((doc) => (
+                <article key={doc.documentId} className={`doc${doc.canDownload ? " doc--grant" : ""}`}>
+                  <div className="doc__body">
+                    <h2 className="doc__title">{doc.namaDokumen}</h2>
+                    <div className="doc__meta">
+                      {doc.kategori && <span className="tag">{doc.kategori}</span>}
+                      <span>Diunggah {fmtTgl(doc.uploadedAt)}</span>
+                      <i aria-hidden="true" />
+                      <span>{doc.canDownload ? "Boleh diunduh" : "Hanya bisa dibaca"}</span>
                     </div>
                   </div>
 
-                  <div className="doc-actions" style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                    <Link
-                      href={`/viewer/${doc.documentId}`}
-                      style={{ padding: "8px 16px", borderRadius: 10, background: "#0f172a", color: "white", fontSize: 12, fontWeight: 600, textDecoration: "none" }}
-                    >
-                      Lihat
+                  <div className="doc__acts">
+                    <Link href={`/viewer/${doc.documentId}`} className="btn btn--primary btn--sm">
+                      Buka
                     </Link>
-
                     {doc.canDownload ? (
                       <DownloadButton
                         documentId={doc.documentId}
                         namaDokumen={doc.namaDokumen}
-                        label="⬇ Download"
-                        style={{ padding: "8px 12px", borderRadius: 10, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                        label="Unduh"
+                        className="btn btn--sm"
                       />
                     ) : (
-                      <span
-                        style={{ padding: "8px 12px", borderRadius: 10, border: "1px dashed #e2e8f0", color: "#94a3b8", fontSize: 11, fontWeight: 600 }}
-                        title="Dokumen ini dibagikan untuk dilihat saja"
-                      >
-                        👁 Lihat saja
+                      <span className="pill pill--mute" title="Dibagikan untuk dibaca saja">
+                        Baca saja
                       </span>
                     )}
                   </div>
-                </div>
-              ))
-            )}
-          </div>
+                </article>
+              ))}
+            </div>
+          </>
         )}
+      </AppShell>
 
-          </div>
-          {/* /AREA KONTEN DOKUMEN */}
-        </div>
-        {/* /LAYOUT SIDEBAR + KONTEN */}
-      </div>
-
-      {/* MODAL PROFIL */}
+      {/* ---------------- AKUN SAYA ---------------- */}
       {showProfileModal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(15,23,42,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, backdropFilter: "blur(2px)" }}>
-          <div style={{ width: "100%", maxWidth: 380, background: "white", borderRadius: 24, padding: 24, boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid #f1f5f9", paddingBottom: 16, marginBottom: 16 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: "#1e4d8f", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: "bold" }}>
-                {avatarLetter}
-              </div>
+        <div className="modal" onClick={() => setShowProfileModal(false)}>
+          <div className="modal__card" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal__head">
               <div>
-                <h3 style={{ fontSize: 16, fontWeight: 800, color: "#1e293b", margin: 0 }}>Profil Pengguna</h3>
-                <p style={{ fontSize: 11, color: "#64748b", margin: 0 }}>Informasi akun aktif Anda</p>
+                <div className="card__title">Akun saya</div>
+                <div className="card__sub">Identitas ini yang tercetak pada watermark dokumen.</div>
               </div>
+              <button className="x" onClick={() => setShowProfileModal(false)} aria-label="Tutup">
+                ✕
+              </button>
             </div>
-
-            <div style={{ fontSize: 13, display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8fafc", paddingBottom: 6 }}>
-                <span style={{ color: "#64748b" }}>Nama Lengkap</span>
-                <span style={{ fontWeight: 700, color: "#0f172a" }}>{user.nama || "—"}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8fafc", paddingBottom: 6 }}>
-                <span style={{ color: "#64748b" }}>Username</span>
-                <span style={{ fontWeight: 700, color: "#0f172a" }}>{user.username || "—"}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8fafc", paddingBottom: 6 }}>
-                <span style={{ color: "#64748b" }}>Hak Akses (Role)</span>
-                <span style={{ fontWeight: 700, color: "#1e4d8f", background: "#eff6ff", padding: "2px 8px", borderRadius: 6, fontSize: 11 }}>
-                  {user.role || "—"}
+            <div className="modal__body stack">
+              <div className="row" style={{ gap: 12 }}>
+                <span className="who__dot" style={{ width: 44, height: 44, fontSize: 17 }}>
+                  {avatarLetter}
                 </span>
+                <div className="grow">
+                  <div style={{ fontWeight: 800 }}>{user.nama || "—"}</div>
+                  <div className="hint">
+                    {user.username} · {user.role}
+                  </div>
+                </div>
               </div>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <button
+                className="btn btn--primary btn--block"
                 onClick={() => {
                   setShowProfileModal(false);
                   setShowPasswordModal(true);
                 }}
-                style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
               >
-                🔑 Ganti Password
-              </button>
-              <button
-                onClick={() => setShowProfileModal(false)}
-                style={{ width: "100%", padding: "10px", borderRadius: 10, background: "#0f172a", color: "white", fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer" }}
-              >
-                Tutup
+                Ganti password
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL GANTI PASSWORD */}
+      {/* ---------------- GANTI PASSWORD ---------------- */}
       {showPasswordModal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(15,23,42,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, backdropFilter: "blur(2px)" }}>
-          <div style={{ width: "100%", maxWidth: 380, background: "white", borderRadius: 24, padding: 24, boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0" }}>
-            <h3 style={{ fontSize: 16, fontWeight: 800, color: "#1e293b", marginBottom: 4 }}>Ganti Password</h3>
-            <p style={{ fontSize: 11, color: "#64748b", marginBottom: 16 }}>Masukkan password lama dan password baru Anda</p>
-
-            <form onSubmit={handleChangePassword} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div className="modal" onClick={() => setShowPasswordModal(false)}>
+          <div className="modal__card" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal__head">
               <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#334155", marginBottom: 4 }}>Password Lama</label>
+                <div className="card__title">Ganti password</div>
+                <div className="card__sub">Masukkan password lama untuk mengonfirmasi.</div>
+              </div>
+              <button className="x" onClick={() => setShowPasswordModal(false)} aria-label="Tutup">
+                ✕
+              </button>
+            </div>
+            <form className="modal__body stack" onSubmit={handleChangePassword}>
+              <div>
+                <label className="label" htmlFor="pw-lama">Password lama</label>
                 <input
+                  id="pw-lama"
+                  className="input"
                   type="password"
                   value={oldPassword}
                   onChange={(e) => setOldPassword(e.target.value)}
                   required
-                  style={{ width: "100%", padding: "9px 12px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 13, outline: "none" }}
+                  autoComplete="current-password"
                 />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#334155", marginBottom: 4 }}>Password Baru (Min. 6 Karakter)</label>
+                <label className="label" htmlFor="pw-baru">Password baru</label>
                 <input
+                  id="pw-baru"
+                  className="input"
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
-                  style={{ width: "100%", padding: "9px 12px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 13, outline: "none" }}
+                  minLength={6}
+                  autoComplete="new-password"
                 />
+                <p className="hint" style={{ marginTop: 5 }}>Minimal 6 karakter.</p>
               </div>
-
-              {passError && <p style={{ color: "#dc2626", fontSize: 12, background: "#fef2f2", padding: 8, borderRadius: 8 }}>{passError}</p>}
-              {passMsg && <p style={{ color: "#16a34a", fontSize: 12, background: "#f0fdf4", padding: 8, borderRadius: 8 }}>{passMsg}</p>}
-
-              <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                <button
-                  type="button"
-                  onClick={() => setShowPasswordModal(false)}
-                  style={{ flex: 1, padding: "9px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={changingPass}
-                  style={{ flex: 1, padding: "9px", borderRadius: 8, background: "#1e4d8f", color: "white", fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer" }}
-                >
-                  {changingPass ? "Menyimpan..." : "Simpan Password"}
-                </button>
-              </div>
+              {passError && <p className="notice notice--bad">{passError}</p>}
+              {passMsg && <p className="notice notice--ok">{passMsg}</p>}
+              <button type="submit" className="btn btn--primary btn--block" disabled={changingPass}>
+                {changingPass ? "Menyimpan..." : "Simpan password baru"}
+              </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* MODAL AUDIT TRAIL */}
+      {/* ---------------- REKAM JEJAK ---------------- */}
       {showAuditModal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(15,23,42,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, backdropFilter: "blur(2px)" }}>
-          <div style={{ width: "100%", maxWidth: 700, background: "white", borderRadius: 24, padding: 24, boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0", maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: 12, marginBottom: 16 }}>
-              <div style={{ minWidth: 0 }}>
-                <h3 style={{ fontSize: 16, fontWeight: 800, color: "#1e293b", margin: 0 }}>Audit Trail (Rekam Jejak Aktivitas)</h3>
-                <p style={{ fontSize: 11, color: "#64748b", margin: 0 }}>
-                  Catatan aktivitas login, view, dan manajemen dokumen
+        <div className="modal" onClick={() => setShowAuditModal(false)}>
+          <div className="modal__card" style={{ maxWidth: 880 }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal__head">
+              <div>
+                <div className="card__title">Rekam jejak aktivitas</div>
+                <div className="card__sub">
+                  Login, akses, unduhan, dan perubahan hak akses
                   {auditTotal > auditLogs.length && ` — menampilkan ${auditLogs.length} terbaru dari ${auditTotal}`}
-                </p>
+                </div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                {/* Unduhan mengambil SELURUH log dari server, bukan hanya yang
-                    ditampilkan di layar. */}
-                <a
-                  href="/api/admin/audit-log?format=csv"
-                  style={{ padding: "7px 12px", borderRadius: 8, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 11, fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap" }}
-                  title="Unduh seluruh audit log sebagai file CSV"
-                >
-                  ⬇ Unduh CSV
+              <div className="row" style={{ flexWrap: "nowrap" }}>
+                <a className="btn btn--sm" href="/api/admin/audit-log?format=csv">
+                  Unduh CSV
                 </a>
-                <button
-                  onClick={() => setShowAuditModal(false)}
-                  style={{ border: "none", background: "#f1f5f9", width: 30, height: 30, borderRadius: "50%", fontSize: 14, cursor: "pointer", fontWeight: "bold" }}
-                >
+                <button className="x" onClick={() => setShowAuditModal(false)} aria-label="Tutup">
                   ✕
                 </button>
               </div>
             </div>
-
-            <div style={{ flex: 1, overflowY: "auto", fontSize: 12 }}>
+            <div className="modal__body">
               {loadingAudit ? (
-                <p style={{ textAlign: "center", color: "#64748b", padding: 30 }}>Memuat log aktivitas...</p>
+                <p className="muted">
+                  <span className="spinner" style={{ marginRight: 8 }} />
+                  Memuat rekam jejak...
+                </p>
               ) : auditLogs.length === 0 ? (
-                <p style={{ textAlign: "center", color: "#64748b", padding: 30 }}>Belum ada data audit log.</p>
+                <p className="muted">Belum ada aktivitas tercatat.</p>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div className="docs">
                   {auditLogs.map((log, idx) => (
-                    <div key={idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: 10, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-                      <div>
-                        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 2 }}>
-                          <span style={{ fontWeight: 700, color: "#1e293b" }}>{log.userEmail || "Sistem"}</span>
-                          <span style={{ fontSize: 10, background: "#eff6ff", color: "#1e4d8f", border: "1px solid #bfdbfe", padding: "1px 6px", borderRadius: 4, fontWeight: 700 }}>
-                            {log.action}
-                          </span>
+                    <div key={idx} className="doc" style={{ padding: "10px 14px" }}>
+                      <div className="doc__body">
+                        <div className="row" style={{ gap: 8 }}>
+                          <span className="pill">{log.action}</span>
+                          <span style={{ fontSize: 12.5, fontWeight: 700 }}>{log.userEmail}</span>
                         </div>
-                        {log.detail && <div style={{ color: "#475569", fontSize: 11 }}>{log.detail}</div>}
-                        {log.documentId && <div style={{ color: "#94a3b8", fontSize: 10, fontFamily: "monospace" }}>DocID: {log.documentId}</div>}
+                        {log.detail && (
+                          <p className="hint" style={{ marginTop: 4 }}>{log.detail}</p>
+                        )}
                       </div>
-                      <div style={{ color: "#94a3b8", fontSize: 10, whiteSpace: "nowrap" }}>
+                      <span className="hint" style={{ flexShrink: 0 }}>
                         {new Date(log.timestamp).toLocaleString("id-ID")}
-                      </div>
+                      </span>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-
-            <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: 12, marginTop: 16, textAlign: "right" }}>
-              <button
-                onClick={() => setShowAuditModal(false)}
-                style={{ padding: "8px 16px", borderRadius: 8, background: "#0f172a", color: "white", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer" }}
-              >
-                Tutup
-              </button>
-            </div>
           </div>
         </div>
       )}
-
-    </div>
     </>
   );
 }

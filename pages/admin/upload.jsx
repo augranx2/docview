@@ -218,142 +218,113 @@ export default function UploadPage() {
   return (
     <>
       <Head>
-        <title>Upload Dokumen — SIDOK</title>
+        <title>Unggah Dokumen — SIDOK</title>
       </Head>
-      <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #e6eefb 0%, #eef3fb 180px, #f4f7fc 380px)", backgroundAttachment: "fixed", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", color: "#0f172a", paddingBottom: 60 }}>
 
-      {/* HEADER BAR */}
-      <header className="app-header" style={{ height: 64, borderBottom: "1px solid #e2e8f0", background: "rgba(255,255,255,0.72)", backdropFilter: "blur(10px)", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 30 }}>
-        <div className="header-brand" style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-          <img src="/logo-rama.png" alt="Logo" style={{ height: 32, width: 32, objectFit: "contain" }} />
-          <div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#1e293b", margin: 0 }}>PT. Rama Emerald Multi Sukses</p>
-            <p style={{ fontSize: 10, color: "#64748b", margin: 0 }}>SIDOK · Sistem Dokumen Terkendali</p>
-          </div>
-        </div>
-
-        <div className="header-actions" style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <Link
-            href="/admin/dashboard"
-            style={{ padding: "7px 14px", borderRadius: 10, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, textDecoration: "none" }}
-          >
-            ← Kembali ke Dashboard
+      <div className="main" style={{ minHeight: "100vh" }}>
+        <header className="appbar">
+          <Link href="/admin/dashboard" className="btn btn--sm">
+            ← Kembali
           </Link>
-          <button
-            onClick={handleLogout}
-            style={{ padding: "7px 14px", borderRadius: 10, border: "1px solid #cbd5e1", background: "white", color: "#334155", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-          >
-            Logout
+          <div className="grow" />
+          <button className="btn btn--sm" onClick={handleLogout}>
+            Keluar
           </button>
-        </div>
-      </header>
+        </header>
 
-      {/* KONTEN UTAMA */}
-      <div className="app-shell" style={{ maxWidth: 720, margin: "0 auto", padding: "32px 20px" }}>
-
-        {/* KOP HEADER BERGRADASI */}
-        <div style={{ overflow: "hidden", borderRadius: 20, border: "1px solid #e2e8f0", boxShadow: "0 4px 12px rgba(15,23,42,0.05)", marginBottom: 24 }}>
-          <div className="hero-band" style={{ background: "linear-gradient(135deg, #000000 0%, #020b17 50%, #15427d 100%)", padding: "28px 24px", color: "white" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
-                📤
-              </div>
-              <div>
-                <span style={{ display: "inline-block", background: "rgba(59, 130, 246, 0.2)", border: "1px solid rgba(59, 130, 246, 0.4)", borderRadius: 999, padding: "2px 10px", fontSize: 10, fontWeight: 600, color: "#bfdbfe", marginBottom: 6 }}>
-                  Administrator Only
-                </span>
-                <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: "-0.02em" }}>Upload Dokumen Baru</h1>
-                <p style={{ fontSize: 12, color: "#bfdbfe", margin: "4px 0 0" }}>
-                  Bisa pilih beberapa file sekaligus — tiap file bisa diatur kategori & akses berbagi masing-masing
-                </p>
-              </div>
+        <div className="sheet" style={{ maxWidth: 760 }}>
+          <div className="pagehead">
+            <div>
+              <h1>Unggah dokumen</h1>
+              <p>
+                Pilih satu atau beberapa berkas PDF sekaligus. Kategori menentukan folder
+                penyimpanan di Google Drive, jadi wajib diisi.
+              </p>
             </div>
           </div>
-        </div>
 
-        {/* FORM UPLOAD */}
-        <div style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: 20, padding: 24, boxShadow: "0 1px 3px rgba(15,23,42,0.04)" }}>
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <form onSubmit={handleSubmit} className="stack" style={{ gap: 16 }}>
+            {/* ---------- AREA PILIH BERKAS ---------- */}
+            <label
+              htmlFor="pdf-input"
+              className="card"
+              style={{
+                display: "block",
+                padding: "30px 20px",
+                textAlign: "center",
+                borderStyle: "dashed",
+                borderColor: "var(--blue-100)",
+                background: "linear-gradient(180deg, #fbfdff, #f4f9ff)",
+                cursor: uploading ? "not-allowed" : "pointer",
+              }}
+            >
+              <div style={{ fontSize: 26, marginBottom: 8 }} aria-hidden="true">
+                📄
+              </div>
+              <div style={{ fontWeight: 800, fontSize: 14 }}>
+                Klik atau seret berkas PDF ke sini
+              </div>
+              <p className="hint" style={{ marginTop: 4 }}>
+                Maksimal {formatMB(MAX_TOTAL_BYTES)} MB untuk seluruh berkas dalam satu kali unggah
+              </p>
+              <input
+                id="pdf-input"
+                type="file"
+                accept="application/pdf"
+                multiple
+                disabled={uploading}
+                onChange={(e) => handleFilesPicked(e.target.files)}
+                style={{ display: "none" }}
+              />
+            </label>
 
-            {/* INPUT FILE */}
-            <div>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 6 }}>
-                Tambah File PDF
-              </label>
-              <div style={{ border: "2px dashed #cbd5e1", borderRadius: 12, padding: 20, textAlign: "center", background: "#f8fafc", cursor: "pointer", position: "relative" }}>
-                <input
-                  id="file-input"
-                  type="file"
-                  accept="application/pdf"
-                  multiple
-                  onChange={(e) => handleFilesPicked(e.target.files)}
-                  style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }}
-                />
-                <div style={{ fontSize: 24, marginBottom: 4 }}>📄</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#475569" }}>
-                  Klik atau seret satu/beberapa file PDF ke sini
+            {files.length > 0 && (
+              <div>
+                <div className="row row--between" style={{ marginBottom: 6 }}>
+                  <span className="hint">{files.length} berkas dipilih</span>
+                  <span className="hint" style={{ fontWeight: 700, color: totalBytes > MAX_TOTAL_BYTES ? "var(--danger)" : "var(--ink-2)" }}>
+                    {formatMB(totalBytes)} / {formatMB(MAX_TOTAL_BYTES)} MB
+                  </span>
                 </div>
-                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
-                  Total gabungan semua file maksimal 20MB per proses upload
+                <div className="bar">
+                  <div
+                    style={{
+                      width: `${Math.min(100, (totalBytes / MAX_TOTAL_BYTES) * 100)}%`,
+                      background:
+                        totalBytes > MAX_TOTAL_BYTES ? "var(--danger)" : undefined,
+                    }}
+                  />
                 </div>
               </div>
+            )}
 
-              {/* INDIKATOR TOTAL UKURAN */}
-              {files.length > 0 && (
-                <div style={{ marginTop: 8 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#64748b", marginBottom: 4 }}>
-                    <span>{files.length} file dipilih</span>
-                    <span style={{ fontWeight: 700, color: totalBytes > MAX_TOTAL_BYTES * 0.9 ? "#dc2626" : "#334155" }}>
-                      {formatMB(totalBytes)} / 20 MB
-                    </span>
-                  </div>
-                  <div style={{ height: 6, borderRadius: 999, background: "#f1f5f9", overflow: "hidden" }}>
-                    <div
-                      style={{
-                        height: "100%",
-                        width: `${Math.min(100, (totalBytes / MAX_TOTAL_BYTES) * 100)}%`,
-                        background: totalBytes > MAX_TOTAL_BYTES * 0.9 ? "#dc2626" : "#1e4d8f",
-                        borderRadius: 999,
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* DAFTAR FILE */}
+            {/* ---------- DAFTAR BERKAS ---------- */}
             {files.map((entry) => (
-              <div
-                key={entry.id}
-                style={{
-                  border: "1px solid #e2e8f0",
-                  borderRadius: 12,
-                  padding: 14,
-                  background: entry.status === "error" ? "#fef2f2" : "#fafafa",
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div key={entry.id} className="card card--pad">
+                <div className="card__head" style={{ marginBottom: 10 }}>
+                  <div className="grow">
+                    <div className="card__title" style={{ wordBreak: "break-word" }}>
                       {entry.file.name}
                     </div>
-                    <div style={{ fontSize: 11, color: "#94a3b8" }}>{formatMB(entry.file.size)} MB</div>
+                    <div className="card__sub">{formatMB(entry.file.size)} MB</div>
                   </div>
                   {!uploading && (
                     <button
                       type="button"
+                      className="x"
                       onClick={() => removeFile(entry.id)}
-                      style={{ border: "none", background: "none", color: "#94a3b8", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 4 }}
-                      title="Hapus dari daftar"
+                      aria-label={`Buang ${entry.file.name}`}
                     >
-                      ×
+                      ✕
                     </button>
                   )}
                 </div>
 
-                <div className="file-fields" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <div className="file-fields" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div>
+                    <label className="label">Kategori</label>
                     <select
+                      className={`select${entry.kategori.trim() ? "" : " input--bad"}`}
                       value={entry.kategoriBaru ? "__new__" : entry.kategori}
                       disabled={uploading}
                       onChange={(e) => {
@@ -361,39 +332,43 @@ export default function UploadPage() {
                         if (v === "__new__") updateFile(entry.id, { kategoriBaru: true, kategori: "" });
                         else updateFile(entry.id, { kategoriBaru: false, kategori: v });
                       }}
-                      style={{ padding: "8px 10px", borderRadius: 8, fontSize: 12, outline: "none", background: "white", border: entry.kategori.trim() ? "1px solid #cbd5e1" : "1px solid #fca5a5" }}
                     >
-                      <option value="">— Pilih kategori (wajib) —</option>
+                      <option value="">Pilih kategori</option>
                       {categories.map((c) => (
                         <option key={c} value={c}>
                           {c}
                         </option>
                       ))}
-                      <option value="__new__">+ Buat kategori baru…</option>
+                      <option value="__new__">Buat kategori baru</option>
                     </select>
                     {entry.kategoriBaru && (
                       <input
+                        className="input"
+                        style={{ marginTop: 6 }}
                         type="text"
-                        placeholder="Nama kategori baru…"
+                        placeholder="Nama kategori baru"
                         value={entry.kategori}
                         disabled={uploading}
                         autoFocus
                         onChange={(e) => updateFile(entry.id, { kategori: e.target.value })}
-                        style={{ padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 12, outline: "none" }}
                       />
                     )}
                   </div>
-                  <input
-                    type="text"
-                    placeholder="Bagikan ke (username, koma)"
-                    value={entry.allowedUsers}
-                    disabled={uploading}
-                    onChange={(e) => updateFile(entry.id, { allowedUsers: e.target.value })}
-                    style={{ padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 12, outline: "none" }}
-                  />
+
+                  <div>
+                    <label className="label">Bagikan ke</label>
+                    <input
+                      className="input"
+                      type="text"
+                      placeholder="username, pisahkan dengan koma"
+                      value={entry.allowedUsers}
+                      disabled={uploading}
+                      onChange={(e) => updateFile(entry.id, { allowedUsers: e.target.value })}
+                    />
+                  </div>
                 </div>
 
-                <label style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 8, fontSize: 11, lineHeight: 1.45, color: "#475569", cursor: "pointer" }}>
+                <label className="check" style={{ marginTop: 10 }}>
                   <input
                     type="checkbox"
                     checked={entry.allowDownload}
@@ -401,71 +376,54 @@ export default function UploadPage() {
                     onChange={(e) => updateFile(entry.id, { allowDownload: e.target.checked })}
                   />
                   <span>
-                    Izinkan user di atas <strong>men-download file asli</strong>{" "}
-                    <span style={{ color: "#94a3b8" }}>(default: lihat saja)</span>
+                    Izinkan penerima mengunduh berkas asli. Bila tidak dicentang, mereka hanya bisa
+                    membacanya.
                   </span>
                 </label>
 
                 {entry.status === "uploading" && (
-                  <div style={{ marginTop: 8 }}>
-                    <div style={{ height: 5, borderRadius: 999, background: "#f1f5f9", overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${entry.progress}%`, background: "#1e4d8f", borderRadius: 999, transition: "width 0.2s ease" }} />
+                  <div style={{ marginTop: 10 }}>
+                    <div className="bar">
+                      <div style={{ width: `${entry.progress}%` }} />
                     </div>
+                    <p className="hint" style={{ marginTop: 5 }}>Mengunggah {entry.progress}%</p>
                   </div>
                 )}
                 {entry.status === "done" && (
-                  <div style={{ fontSize: 11, color: "#16a34a", marginTop: 6, fontWeight: 600 }}>✓ Selesai</div>
+                  <p className="notice notice--ok" style={{ marginTop: 10 }}>Berhasil diunggah</p>
                 )}
                 {entry.status === "error" && (
-                  <div style={{ fontSize: 11, color: "#dc2626", marginTop: 6, fontWeight: 600 }}>⚠️ {entry.errorMsg}</div>
+                  <p className="notice notice--bad" style={{ marginTop: 10 }}>{entry.errorMsg}</p>
                 )}
               </div>
             ))}
 
-            {/* NOTIFIKASI */}
-            {error && (
-              <div style={{ color: "#dc2626", background: "#fef2f2", border: "1px solid #fecaca", padding: "10px 14px", borderRadius: 10, fontSize: 12 }}>
-                ⚠️ {error}
-              </div>
-            )}
+            {error && <p className="notice notice--bad">{error}</p>}
+
             {doneSummary && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {doneSummary.success.length > 0 && (
-                  <div style={{ color: "#16a34a", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "10px 14px", borderRadius: 10, fontSize: 12 }}>
-                    ✓ {doneSummary.success.length} dokumen berhasil diunggah: {doneSummary.success.join(", ")}
-                  </div>
-                )}
-                {doneSummary.failed.length > 0 && (
-                  <div style={{ color: "#dc2626", background: "#fef2f2", border: "1px solid #fecaca", padding: "10px 14px", borderRadius: 10, fontSize: 12 }}>
-                    ⚠️ {doneSummary.failed.length} gagal — perbaiki lalu upload ulang: {doneSummary.failed.join("; ")}
-                  </div>
-                )}
-              </div>
+              <p className={`notice ${doneSummary.failed > 0 ? "notice--warn" : "notice--ok"}`}>
+                {doneSummary.success} berkas berhasil diunggah
+                {doneSummary.failed > 0 && `, ${doneSummary.failed} gagal`}.
+              </p>
             )}
 
-            {/* LABEL PROGRESS KESELURUHAN */}
-            {uploading && (
-              <div style={{ fontSize: 12, color: "#475569", fontWeight: 600 }}>{overallLabel}</div>
-            )}
+            {overallLabel && <p className="hint">{overallLabel}</p>}
 
-            {/* TOMBOL SUBMIT */}
             <button
               type="submit"
+              className="btn btn--primary btn--block"
+              style={{ padding: "12px 18px", fontSize: 13.5 }}
               disabled={uploading || files.length === 0}
-              style={{ padding: "12px", borderRadius: 12, background: uploading || files.length === 0 ? "#cbd5e1" : "#1e4d8f", color: "white", fontSize: 13, fontWeight: 700, border: "none", cursor: uploading || files.length === 0 ? "not-allowed" : "pointer", boxShadow: "0 2px 6px rgba(0,0,0,0.1)" }}
             >
               {uploading
                 ? "Mengunggah..."
-                : files.length > 0
-                ? `Upload ${files.length} Dokumen (${formatMB(totalBytes)} MB)`
-                : "Upload Sekarang"}
+                : files.length === 0
+                ? "Pilih berkas terlebih dahulu"
+                : `Unggah ${files.length} dokumen (${formatMB(totalBytes)} MB)`}
             </button>
-
           </form>
         </div>
-
       </div>
-    </div>
     </>
   );
 }

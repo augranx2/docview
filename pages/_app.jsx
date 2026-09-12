@@ -15,6 +15,14 @@ export default function App({ Component, pageProps }) {
         />
         <meta name="theme-color" content="#15427d" />
         <link rel="icon" href="/logo-rama.png" />
+        {/* Satu keluarga huruf untuk seluruh aplikasi; bobot 400-800 mencakup
+            teks isi hingga judul. preconnect memangkas waktu tunggu. */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
       </Head>
       <Component {...pageProps} />
     </>

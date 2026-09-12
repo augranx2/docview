@@ -98,7 +98,7 @@ export default function ViewerPage() {
         canvas.style.height = "auto"; // keeps aspect ratio correct when maxWidth shrinks the display width
         canvas.style.display = "block";
         canvas.style.marginBottom = "20px";
-        canvas.style.maxWidth = "100%";
+
         canvas.style.userSelect = "none";
         canvas.style.borderRadius = "8px";
         canvas.style.boxShadow = "0 1px 3px rgba(15,23,42,0.1), 0 4px 12px rgba(15,23,42,0.08)";
@@ -123,9 +123,9 @@ export default function ViewerPage() {
         ctx.restore();
 
         canvas.dataset.pageNumber = String(pageNum);
-        // scrollMarginTop menjaga agar halaman tidak tertutup toolbar yang
-        // menempel di atas saat di-scroll ke sana.
-        canvas.style.scrollMarginTop = "72px";
+        // Kelas ini membawa bingkai, bayangan, dan scroll-margin agar halaman
+        // tidak tertutup bilah yang menempel di atas saat digulir ke sana.
+        canvas.className = "reader__page";
         pageCanvasesRef.current.push(canvas);
 
         container.appendChild(canvas);
@@ -236,43 +236,22 @@ export default function ViewerPage() {
       <Head>
         <title>Baca Dokumen — SIDOK</title>
       </Head>
-      <div className="page" style={{ maxWidth: 900 }}>
-      {/* BILAH ATAS TERPADU — menempel di atas layar, sehingga tombol kembali
-          dan navigasi halaman selalu terjangkau tanpa menggulir ke puncak. */}
-      <div
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 30,
-          margin: "0 0 16px",
-          padding: "10px 12px",
-          borderRadius: 14,
-          border: "1px solid #e2e8f0",
-          background: "rgba(255,255,255,0.94)",
-          backdropFilter: "blur(12px)",
-          boxShadow: "0 4px 14px rgba(15,23,42,0.07)",
-        }}
-      >
-        {/* BARIS 1 — identitas dokumen & aksi utama */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <Link
-            href="/viewer"
-            title="Kembali ke daftar Dokumen Saya"
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 10, background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1e4d8f", fontSize: 12.5, fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap" }}
-          >
-            ← Dokumen Saya
+      <div className="reader">
+      {/* Bilah menempel di atas layar: tombol kembali dan navigasi halaman
+          selalu terjangkau tanpa menggulir ke puncak dokumen. */}
+      <div className="reader__bar">
+        <div className="row" style={{ flexWrap: "nowrap", gap: 10 }}>
+          <Link href="/viewer" className="btn btn--sm" title="Kembali ke daftar dokumen">
+            ← Dokumen saya
           </Link>
 
-          <div style={{ flex: 1, minWidth: 120, overflow: "hidden" }}>
-            <p
-              title={namaDokumen || ""}
-              style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
-            >
+          <div className="grow truncate">
+            <p className="truncate" title={namaDokumen || ""} style={{ fontSize: 13, fontWeight: 700 }}>
               {namaDokumen || "Dokumen"}
             </p>
             {status === "ready" && numPages > 0 && (
-              <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>
-                Halaman <strong style={{ color: "#1e4d8f" }}>{currentPage}</strong> dari {numPages}
+              <p className="hint">
+                Halaman {currentPage} dari {numPages}
               </p>
             )}
           </div>
@@ -281,62 +260,60 @@ export default function ViewerPage() {
             <DownloadButton
               documentId={documentId}
               namaDokumen={namaDokumen}
-              label="⬇ Download File Asli"
-              style={{ padding: "7px 13px", borderRadius: 10, border: "none", background: "#1e4d8f", color: "white", fontSize: 12.5, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}
+              label="Unduh berkas asli"
+              className="btn btn--primary btn--sm"
             />
           )}
         </div>
 
-        {/* BARIS 2 — navigasi halaman */}
         {status === "ready" && numPages > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 10, paddingTop: 10, borderTop: "1px solid #f1f5f9" }}>
+          <div className="reader__nav">
             <button
+              className="btn btn--sm btn--icon"
               onClick={() => gotoPage(currentPage - 1)}
               disabled={currentPage <= 1}
               title="Halaman sebelumnya"
-              style={{ padding: "6px 11px", borderRadius: 8, border: "1px solid #e2e8f0", background: "white", color: currentPage <= 1 ? "#cbd5e1" : "#334155", fontSize: 12, fontWeight: 700, cursor: currentPage <= 1 ? "not-allowed" : "pointer" }}
             >
               ↑
             </button>
             <button
+              className="btn btn--sm btn--icon"
               onClick={() => gotoPage(currentPage + 1)}
               disabled={currentPage >= numPages}
               title="Halaman berikutnya"
-              style={{ padding: "6px 11px", borderRadius: 8, border: "1px solid #e2e8f0", background: "white", color: currentPage >= numPages ? "#cbd5e1" : "#334155", fontSize: 12, fontWeight: 700, cursor: currentPage >= numPages ? "not-allowed" : "pointer" }}
             >
               ↓
             </button>
             <button
+              className="btn btn--sm btn--icon"
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              title="Kembali ke awal dokumen"
-              style={{ padding: "6px 11px", borderRadius: 8, border: "1px solid #e2e8f0", background: "white", color: "#334155", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+              title="Kembali ke halaman pertama"
             >
               ⤒
             </button>
 
-            <form onSubmit={submitPageInput} style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
+            <form onSubmit={submitPageInput} className="row" style={{ gap: 6, marginLeft: "auto", flexWrap: "nowrap" }}>
               <input
+                className="input"
+                style={{ width: 96, padding: "6px 10px", fontSize: 12 }}
                 type="number"
                 min={1}
                 max={numPages}
                 value={pageInput}
                 onChange={(e) => setPageInput(e.target.value)}
-                placeholder="Ke hal..."
-                style={{ width: 84, padding: "6px 10px", border: "1px solid #e2e8f0", borderRadius: 8, fontSize: 12, outline: "none" }}
+                placeholder="Ke halaman"
+                aria-label="Nomor halaman yang dituju"
               />
-              <button
-                type="submit"
-                style={{ padding: "6px 12px", borderRadius: 8, border: "none", background: "#1e4d8f", color: "white", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-              >
+              <button type="submit" className="btn btn--primary btn--sm">
                 Buka
               </button>
               <button
                 type="button"
+                className={`btn btn--sm${copied ? " btn--ok" : ""}`}
                 onClick={copyPageLink}
-                title="Salin tautan yang langsung terbuka di halaman ini"
-                style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #e2e8f0", background: "white", color: copied ? "#16a34a" : "#334155", fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}
+                title="Salin tautan yang langsung membuka halaman ini"
               >
-                {copied ? "✓ Tersalin" : "🔗 Salin tautan"}
+                {copied ? "Tersalin" : "Salin tautan"}
               </button>
             </form>
           </div>

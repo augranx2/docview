@@ -15,7 +15,7 @@ export default function LogoutButton() {
   }
 
   return (
-    <button onClick={handleLogout} disabled={loading} className="btn btn-outline btn-sm">
+    <button onClick={handleLogout} disabled={loading} className="btn btn--sm">
       {loading ? <span className="spinner" /> : "Logout"}
     </button>
   );
