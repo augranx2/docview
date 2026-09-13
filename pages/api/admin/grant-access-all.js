@@ -1,5 +1,6 @@
 import { requireAdmin } from "../../../lib/auth";
 import { findRows, appendRows, getUsersSafe, logAudit } from "../../../lib/sheets";
+import { notifyDocument } from "../../../lib/notifyDoc";
 import { withErrorHandling } from "../../../lib/apiHandler";
 
 async function handler(req, res) {
@@ -35,6 +36,16 @@ async function handler(req, res) {
   }));
 
   const added = await appendRows("Document_Access", rows);
+
+  await notifyDocument(
+    targets.map((u) => u.username),
+    documentId,
+    {
+      type: "akses-diberikan",
+      title: "Dokumen baru dibagikan ke Anda",
+      suffix: canDownload ? " — boleh diunduh" : " — baca saja",
+    }
+  );
 
   await logAudit({
     userEmail: session.email,

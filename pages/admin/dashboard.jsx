@@ -472,7 +472,9 @@ export default function AdminDashboard() {
     return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
   }
 
-  const nav = [{ label: "Unggah dokumen", href: "/admin/upload", icon: "＋" }];
+  const nav = [
+    { label: "Unggah dokumen", href: "/admin/upload", icon: "＋" },
+  ];
 
   return (
     <>

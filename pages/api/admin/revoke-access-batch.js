@@ -1,5 +1,6 @@
 import { requireAdmin } from "../../../lib/auth";
 import { deleteRowsBatch, logAudit } from "../../../lib/sheets";
+import { notifyDocument } from "../../../lib/notifyDoc";
 import { withErrorHandling } from "../../../lib/apiHandler";
 
 async function handler(req, res) {
@@ -15,6 +16,11 @@ async function handler(req, res) {
 
   const matches = usernames.map((username) => ({ documentId, userEmail: username }));
   const deleted = await deleteRowsBatch("Document_Access", matches);
+
+  await notifyDocument(usernames, documentId, {
+    type: "akses-dicabut",
+    title: "Akses Anda ke sebuah dokumen dicabut",
+  });
 
   await logAudit({
     userEmail: session.email,

@@ -1,5 +1,6 @@
 import { requireAdmin } from "../../../lib/auth";
 import { updateRowsByMatch, logAudit } from "../../../lib/sheets";
+import { notifyDocument } from "../../../lib/notifyDoc";
 import { withErrorHandling } from "../../../lib/apiHandler";
 
 /**
@@ -34,6 +35,13 @@ async function handler(req, res) {
   if (updated === 0) {
     return res.status(404).json({ error: "Baris akses tidak ditemukan untuk user tersebut" });
   }
+
+  await notifyDocument(usernames, documentId, {
+    type: canDownload ? "unduh-diizinkan" : "unduh-dicabut",
+    title: canDownload
+      ? "Anda kini boleh mengunduh sebuah dokumen"
+      : "Izin mengunduh sebuah dokumen dicabut",
+  });
 
   await logAudit({
     userEmail: session.email,

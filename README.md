@@ -48,6 +48,13 @@ lewat HTTPS ke action `login`, dan Apps Script yang membalas cocok/tidak.
 `documentId | namaDokumen | kategori | driveFileId | uploadedBy | uploadedAt | status`
 - `status`: `pending` (baru dibuat, belum selesai upload) atau `active`
 
+**Notifications**
+`notifId | userEmail | createdAt | type | title | detail | readAt`
+- Pemberitahuan per pengguna: dokumen baru dibagikan, akses dicabut, izin unduh berubah
+- `readAt` kosong berarti belum dibaca
+- **Tab ini perlu dibuat manual.** Selama belum ada, aplikasi tetap berjalan penuh —
+  daftar notifikasi hanya tampil kosong.
+
 **Document_Access**
 `documentId | userEmail | grantedBy | grantedAt | canDownload`
 - Satu baris = satu izin akses user ke satu dokumen
@@ -60,7 +67,7 @@ lewat HTTPS ke action `login`, dan Apps Script yang membalas cocok/tidak.
 
 **Audit_Log**
 `timestamp | userEmail | documentId | action | detail`
-- `action`: `LOGIN`, `LOGIN_FAILED`, `LOGOUT`, `UPLOAD`, `VIEW`, `DOWNLOAD`, `ACCESS_DENIED`, `ACCESS_GRANTED`, `ACCESS_REVOKED`, `DOWNLOAD_PERMISSION_CHANGED`, `AUDIT_LOG_EXPORTED`, `DRIVE_MIGRATION`, `DOCUMENT_DELETED`, `DOCUMENT_UPDATED`, `PASSWORD_CHANGED`, `PASSWORD_CHANGE_FAILED`
+- `action`: `LOGIN`, `LOGIN_FAILED`, `LOGOUT`, `UPLOAD`, `VIEW`, `DOWNLOAD`, `ACCESS_DENIED`, `ACCESS_GRANTED`, `ACCESS_REVOKED`, `DOWNLOAD_PERMISSION_CHANGED`, `AUDIT_LOG_EXPORTED`, `DRIVE_MIGRATION`, `USER_CREATED`, `USER_UPDATED`, `USER_DELETED`, `PASSWORD_RESET`, `DOCUMENT_DELETED`, `DOCUMENT_UPDATED`, `PASSWORD_CHANGED`, `PASSWORD_CHANGE_FAILED`
 - Baris `LOGIN`/`LOGIN_FAILED` ditulis langsung oleh Apps Script (di dalam action `login`)
 
 ## Struktur file di Google Drive

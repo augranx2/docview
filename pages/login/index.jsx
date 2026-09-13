@@ -84,14 +84,20 @@ export default function LoginPage() {
         <main className="form-side">
           <div className="form-wrap">
             {/* Brand ringkas — hanya tampil saat panel kiri disembunyikan di layar sempit */}
-            <div className="brand-mobile">
-              <div className="brand-mark">
-                <img src="/logo-rama.png" alt="Logo" />
+            <div className="hero-mobile">
+              <div className="hero-mobile__grid" />
+              <div className="brand-mobile">
+                <div className="brand-mark">
+                  <img src="/logo-rama.png" alt="Logo" />
+                </div>
+                <div>
+                  <p className="brand-name">SIDOK</p>
+                  <p className="brand-sub">Sistem Dokumen Terkendali</p>
+                </div>
               </div>
-              <div>
-                <p className="brand-name">SIDOK</p>
-                <p className="brand-sub">Sistem Dokumen Terkendali</p>
-              </div>
+              <p className="hero-mobile__line">
+                Dokumen mutu, terkendali sampai ke pengguna.
+              </p>
             </div>
 
             <h2>Masuk ke SIDOK</h2>
@@ -150,6 +156,19 @@ export default function LoginPage() {
           </div>
         </main>
       </div>
+
+      <style jsx global>{`
+        /* Halaman masuk menempel penuh ke tepi layar. Tanpa penegasan ini,
+           margin bawaan peramban menyisakan bingkai putih di sekeliling panel. */
+        html,
+        body,
+        #__next {
+          margin: 0;
+          padding: 0;
+          height: 100%;
+          background: #ffffff;
+        }
+      `}</style>
 
       <style jsx>{`
         .split {
@@ -290,25 +309,54 @@ export default function LoginPage() {
           width: 100%;
           max-width: 370px;
         }
-        .brand-mobile {
+        /* Pita gradasi untuk layar sempit: membawa warna tema ke halaman masuk
+           yang tanpa panel kiri akan terasa kosong. */
+        .hero-mobile {
           display: none;
-          margin-bottom: 26px;
+          position: relative;
+          overflow: hidden;
+          margin: -52px -20px 26px;
+          padding: 30px 20px 26px;
+          background: linear-gradient(150deg, #020b17 0%, #0b2545 55%, #15427d 100%);
+          border-radius: 0 0 24px 24px;
+        }
+        .hero-mobile__grid {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+          background-size: 40px 40px;
+          -webkit-mask-image: radial-gradient(ellipse at 25% 20%, black, transparent 78%);
+          mask-image: radial-gradient(ellipse at 25% 20%, black, transparent 78%);
+        }
+        .hero-mobile__line {
+          position: relative;
+          margin: 16px 0 0;
+          font-size: 19px;
+          font-weight: 800;
+          line-height: 1.25;
+          letter-spacing: -0.02em;
+          color: #ffffff;
+        }
+        .brand-mobile {
+          position: relative;
+          margin-bottom: 0;
         }
         .brand-mobile .brand-mark {
-          background: #eff6ff;
-          border: 1px solid #dbeafe;
+          background: #ffffff;
         }
         .brand-mobile .brand-name {
           margin: 0;
           font-size: 15px;
           font-weight: 800;
-          color: #0f172a;
+          color: #ffffff;
           letter-spacing: 0.06em;
         }
         .brand-mobile .brand-sub {
           margin: 2px 0 0;
           font-size: 11px;
-          color: #64748b;
+          color: #bfdbfe;
         }
 
         h2 {
@@ -436,8 +484,8 @@ export default function LoginPage() {
           .panel {
             display: none;
           }
-          .brand-mobile {
-            display: flex;
+          .hero-mobile {
+            display: block;
           }
           .form-side {
             padding: 52px 20px 28px;

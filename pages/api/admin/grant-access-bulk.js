@@ -1,5 +1,5 @@
 import { requireAdmin } from "../../../lib/auth";
-import { getAllRows, appendRows, logAudit } from "../../../lib/sheets";
+import { getAllRows, appendRows, logAudit, notify } from "../../../lib/sheets";
 import { withErrorHandling } from "../../../lib/apiHandler";
 
 /**
@@ -43,6 +43,15 @@ async function handler(req, res) {
   }
 
   if (rows.length > 0) await appendRows("Document_Access", rows);
+
+  if (rows.length > 0) {
+    const penerima = [...new Set(rows.map((r) => r.userEmail))];
+    await notify(penerima, {
+      type: "akses-diberikan",
+      title: "Dokumen baru dibagikan ke Anda",
+      detail: `${documentIds.length} dokumen${canDownload ? " — boleh diunduh" : " — baca saja"}`,
+    });
+  }
 
   await logAudit({
     userEmail: session.email,

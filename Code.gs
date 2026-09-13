@@ -32,6 +32,8 @@
  *                       berarti lihat saja. Header kolomnya WAJIB ada, tapi
  *                       isinya tidak perlu diisi manual — app yang mengisi.)
  *   Audit_Log        : timestamp | userEmail | documentId | action | detail
+ *   Notifications    : notifId | userEmail | createdAt | type | title | detail | readAt
+ *                       (readAt kosong berarti pemberitahuan belum dibaca)
  */
 
 const WEBAPP_SECRET = "rms-2026-x7Kp9qL3vN8wZmT2";
@@ -48,6 +50,8 @@ const GENERIC_SCHEMAS = {
   ],
   Document_Access: ["documentId", "userEmail", "grantedBy", "grantedAt", "canDownload"],
   Audit_Log: ["timestamp", "userEmail", "documentId", "action", "detail"],
+  // Pemberitahuan per pengguna. readAt kosong = belum dibaca.
+  Notifications: ["notifId", "userEmail", "createdAt", "type", "title", "detail", "readAt"],
 };
 
 // ---------------------------------------------------------------------------
@@ -92,6 +96,18 @@ function doPost(e) {
       case "deleteRowsBatch":
         assertGenericTab_(body.tab);
         return jsonOut_(deleteRowsBatch_(body.tab, body.matches));
+
+      case "createUser":
+        return jsonOut_(createUser_(body));
+
+      case "updateUser":
+        return jsonOut_(updateUser_(body));
+
+      case "resetPassword":
+        return jsonOut_(resetPassword_(body));
+
+      case "deleteUser":
+        return jsonOut_(deleteUser_(body));
 
       case "getUsersSafe":
         return jsonOut_({ users: getUsersSafe_() });
@@ -163,6 +179,97 @@ function migratePasswords_() {
     }
   }
   if (changed) range.setValues(values);
+}
+
+/**
+ * Manajemen pengguna dikerjakan di sini, bukan di aplikasi, karena hanya
+ * Apps Script yang boleh menyentuh kolom PasswordHash dan Salt. Aplikasi
+ * hanya mengirim password apa adanya lewat kanal ber-kunci rahasia, dan
+ * tidak pernah menerima nilai hash kembali.
+ */
+function createUser_(body) {
+  const nama = String(body.nama || "").trim();
+  const username = String(body.username || "").trim();
+  const role = String(body.role || "").trim();
+  const status = String(body.status || "Aktif").trim();
+  const password = String(body.password || "");
+
+  if (!nama || !username || !password) throw new Error("Nama, username, dan password wajib diisi");
+  if (["Admin", "Viewer"].indexOf(role) === -1) throw new Error("Role harus Admin atau Viewer");
+  if (password.length < 6) throw new Error("Password minimal 6 karakter");
+  if (findUserByUsername_(username)) throw new Error("Username sudah dipakai");
+
+  const salt = generateSalt_();
+  const hash = hashPassword_(password, salt);
+
+  getUsersSheet_().appendRow([nama, role, username, status, "", hash, salt]);
+  return { success: true };
+}
+
+/** Mengubah nama, role, atau status. Username sengaja tidak dapat diubah —
+ *  nilainya dipakai sebagai kunci pada Document_Access dan Audit_Log. */
+function updateUser_(body) {
+  const username = String(body.username || "").trim();
+  const sheet = getUsersSheet_();
+  const rowIndex = findUserRowIndex_(username);
+  if (rowIndex === -1) throw new Error("Pengguna tidak ditemukan");
+
+  if (body.nama !== undefined) {
+    const nama = String(body.nama).trim();
+    if (!nama) throw new Error("Nama tidak boleh kosong");
+    sheet.getRange(rowIndex, 1).setValue(nama);
+  }
+  if (body.role !== undefined) {
+    const role = String(body.role).trim();
+    if (["Admin", "Viewer"].indexOf(role) === -1) throw new Error("Role harus Admin atau Viewer");
+    sheet.getRange(rowIndex, 2).setValue(role);
+  }
+  if (body.status !== undefined) {
+    const status = String(body.status).trim();
+    if (["Aktif", "Nonaktif"].indexOf(status) === -1) throw new Error("Status harus Aktif atau Nonaktif");
+    sheet.getRange(rowIndex, 4).setValue(status);
+  }
+  return { success: true };
+}
+
+/** Menetapkan password baru tanpa perlu password lama — dipakai Admin saat
+ *  pengguna lupa password. Hash dan salt langsung ditulis ulang. */
+function resetPassword_(body) {
+  const username = String(body.username || "").trim();
+  const password = String(body.password || "");
+  if (password.length < 6) throw new Error("Password minimal 6 karakter");
+
+  const sheet = getUsersSheet_();
+  const rowIndex = findUserRowIndex_(username);
+  if (rowIndex === -1) throw new Error("Pengguna tidak ditemukan");
+
+  const salt = generateSalt_();
+  const hash = hashPassword_(password, salt);
+  sheet.getRange(rowIndex, 5, 1, 3).setValues([["", hash, salt]]);
+  return { success: true };
+}
+
+function deleteUser_(body) {
+  const username = String(body.username || "").trim();
+  const sheet = getUsersSheet_();
+  const rowIndex = findUserRowIndex_(username);
+  if (rowIndex === -1) throw new Error("Pengguna tidak ditemukan");
+  sheet.deleteRow(rowIndex);
+  return { success: true };
+}
+
+/** Nomor baris sesungguhnya pada sheet (sudah termasuk baris judul), atau -1. */
+function findUserRowIndex_(username) {
+  const sheet = getUsersSheet_();
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return -1;
+  const values = sheet.getRange(2, 3, lastRow - 1, 1).getValues();
+  const target = String(username || "").trim().toLowerCase();
+  if (!target) return -1;
+  for (let i = 0; i < values.length; i++) {
+    if (String(values[i][0] || "").trim().toLowerCase() === target) return i + 2;
+  }
+  return -1;
 }
 
 function findUserByUsername_(username) {

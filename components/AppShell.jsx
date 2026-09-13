@@ -15,6 +15,7 @@ export default function AppShell({
   user,
   mode, // "admin" | "user" — menentukan sakelar peran di rail
   nav = [],
+  hideCategories = false,
   categories = [],
   categoryCounts = {},
   selectedCategory,
@@ -37,6 +38,51 @@ export default function AppShell({
   const [pwPesan, setPwPesan] = useState("");
   const [pwGalat, setPwGalat] = useState("");
   const [pwSibuk, setPwSibuk] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifs, setNotifs] = useState([]);
+  const [unread, setUnread] = useState(0);
+  const [notifSiap, setNotifSiap] = useState(false);
+
+  // Jumlah belum dibaca diambil sekali saat halaman dibuka. Tidak ada
+  // penarikan berkala: lonceng ini bukan pesan instan, dan permintaan berulang
+  // ke spreadsheet mahal ketika datanya sudah puluhan ribu baris.
+  useEffect(() => {
+    let batal = false;
+    fetch("/api/notifications")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((d) => {
+        if (batal || !d) return;
+        setNotifs(d.notifications || []);
+        setUnread(d.unread || 0);
+        setNotifSiap(true);
+      })
+      .catch(() => {});
+    return () => {
+      batal = true;
+    };
+  }, []);
+
+  async function tandaiSemua() {
+    setUnread(0);
+    setNotifs((prev) => prev.map((n) => ({ ...n, readAt: n.readAt || new Date().toISOString() })));
+    await fetch("/api/notifications/read", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ all: true }),
+    }).catch(() => {});
+  }
+
+  async function tandaiSatu(notifId) {
+    setUnread((n) => Math.max(0, n - 1));
+    setNotifs((prev) =>
+      prev.map((n) => (n.notifId === notifId ? { ...n, readAt: new Date().toISOString() } : n))
+    );
+    await fetch("/api/notifications/read", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notifId }),
+    }).catch(() => {});
+  }
 
   const isAdmin = user?.role === "Admin";
 
@@ -74,6 +120,7 @@ export default function AppShell({
       if (e.key === "Escape") {
         setRailOpen(false);
         setMenuOpen(false);
+        setNotifOpen(false);
       }
     }
     window.addEventListener("keydown", onKey);
@@ -101,7 +148,7 @@ export default function AppShell({
           </div>
           <div className="grow truncate">
             <div className="rail__name">SIDOK</div>
-            <div className="rail__tag truncate">PT. Rama Emerald Multi Sukses</div>
+            <div className="rail__tag truncate">Sistem Dokumen Terkendali</div>
           </div>
         </div>
 
@@ -125,8 +172,47 @@ export default function AppShell({
           </>
         )}
 
+        <div className="rail__nav">
+          {isAdmin && (
+            <Link
+              href="/admin/users"
+              className="rail__link"
+              aria-current={mode === "admin" && nav.some((n) => n.current) ? undefined : undefined}
+              onClick={() => setRailOpen(false)}
+            >
+              <span aria-hidden="true">👥</span>
+              Kelola pengguna
+            </Link>
+          )}
+
+          <button
+            type="button"
+            className="rail__link"
+            onClick={() => {
+              setRailOpen(false);
+              setNotifOpen(true);
+            }}
+          >
+            <span aria-hidden="true">🔔</span>
+            Notifikasi
+            {unread > 0 && <span className="rail__badge">{unread}</span>}
+          </button>
+
+          <button
+            type="button"
+            className="rail__link"
+            onClick={() => {
+              setRailOpen(false);
+              setPwOpen(true);
+            }}
+          >
+            <span aria-hidden="true">🔑</span>
+            Ganti password
+          </button>
+        </div>
+
         {nav.length > 0 && (
-          <div className="rail__nav">
+          <div className="rail__nav" style={{ paddingTop: 0 }}>
             {nav.map((item) =>
               item.href ? (
                 <Link
@@ -157,14 +243,16 @@ export default function AppShell({
           </div>
         )}
 
-        <div className="rail__split" />
+        {!hideCategories && <div className="rail__split" />}
 
+        {!hideCategories && (
         <div className="rail__head">
           <span className="rail__headline">Kategori</span>
           <span className="rail__count">{categories.length}</span>
         </div>
+        )}
 
-        {categories.length > 8 && (
+        {!hideCategories && categories.length > 8 && (
           <div className="rail__find">
             <input
               type="text"
@@ -176,7 +264,7 @@ export default function AppShell({
           </div>
         )}
 
-        <div className="rail__scroll">
+        <div className="rail__scroll" style={hideCategories ? { display: "none" } : undefined}>
           <button
             type="button"
             className={`cat${selectedCategory === null ? " cat--on" : ""}`}
@@ -207,7 +295,9 @@ export default function AppShell({
         </div>
 
         <div className="rail__foot">
-          Dokumen di sini bersifat terkendali. Akses, unduhan, dan perubahan hak tercatat.
+          PT. Rama Emerald Multi Sukses
+          <br />
+          Akses, unduhan, dan perubahan hak akses tercatat.
         </div>
       </nav>
 
@@ -221,6 +311,11 @@ export default function AppShell({
           >
             ☰
           </button>
+
+          <div className="appbar__brand">
+            <span className="appbar__brand-name">SIDOK</span>
+            <span className="appbar__brand-sub">Sistem Dokumen Terkendali</span>
+          </div>
 
           <div className="appbar__find">
             <span aria-hidden="true">🔍</span>
@@ -246,10 +341,9 @@ export default function AppShell({
               <span className="who__dot" aria-hidden="true">
                 {inisial}
               </span>
-              <span style={{ textAlign: "left" }}>
+              <span className="who__id">
                 <span className="who__name">{user?.nama || user?.email || "—"}</span>
-                <br />
-                <span className="who__role">{user?.role}</span>
+                <span className="who__role">{user?.role === "Admin" ? "Administrator" : "Pengguna"}</span>
               </span>
             </button>
 
@@ -298,6 +392,78 @@ export default function AppShell({
 
         <div className="sheet">{children}</div>
       </div>
+
+      {notifOpen && (
+        <div className="modal" onClick={() => setNotifOpen(false)}>
+          <div className="modal__card" style={{ maxWidth: 560 }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal__head">
+              <div>
+                <div className="card__title">Notifikasi</div>
+                <div className="card__sub">
+                  Perubahan akses dan dokumen baru yang dibagikan kepada Anda.
+                </div>
+              </div>
+              <div className="row" style={{ flexWrap: "nowrap" }}>
+                {unread > 0 && (
+                  <button className="btn btn--sm" onClick={tandaiSemua}>
+                    Tandai semua dibaca
+                  </button>
+                )}
+                <button className="x" onClick={() => setNotifOpen(false)} aria-label="Tutup">
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="modal__body">
+              {!notifSiap ? (
+                <p className="muted">
+                  <span className="spinner" style={{ marginRight: 8 }} />
+                  Memuat notifikasi...
+                </p>
+              ) : notifs.length === 0 ? (
+                <div className="empty" style={{ padding: "28px 8px" }}>
+                  <h3>Belum ada notifikasi</h3>
+                  <p>
+                    Pemberitahuan muncul di sini saat ada dokumen baru dibagikan kepada Anda atau
+                    hak akses Anda berubah.
+                  </p>
+                </div>
+              ) : (
+                <div className="docs">
+                  {notifs.map((n) => {
+                    const belum = !String(n.readAt || "").trim();
+                    return (
+                      <div
+                        key={n.notifId}
+                        className={`doc${belum ? " doc--grant doc--on" : ""}`}
+                        style={{ padding: "11px 14px" }}
+                      >
+                        <div className="doc__body">
+                          <div style={{ fontSize: 13, fontWeight: belum ? 800 : 600 }}>{n.title}</div>
+                          {n.detail && (
+                            <p className="hint" style={{ marginTop: 3 }}>
+                              {n.detail}
+                            </p>
+                          )}
+                          <p className="hint" style={{ marginTop: 3 }}>
+                            {new Date(n.createdAt).toLocaleString("id-ID")}
+                          </p>
+                        </div>
+                        {belum && (
+                          <button className="btn btn--sm" onClick={() => tandaiSatu(n.notifId)}>
+                            Tandai dibaca
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {pwOpen && (
         <div className="modal" onClick={() => setPwOpen(false)}>

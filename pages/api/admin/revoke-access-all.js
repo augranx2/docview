@@ -1,5 +1,6 @@
 import { requireAdmin } from "../../../lib/auth";
-import { deleteRows, logAudit } from "../../../lib/sheets";
+import { deleteRows, findRows, logAudit } from "../../../lib/sheets";
+import { notifyDocument } from "../../../lib/notifyDoc";
 import { withErrorHandling } from "../../../lib/apiHandler";
 
 /**
@@ -16,7 +17,16 @@ async function handler(req, res) {
   const { documentId } = req.body;
   if (!documentId) return res.status(400).json({ error: "documentId wajib diisi" });
 
+  // Daftar penerima diambil sebelum baris dihapus — setelah itu tidak ada
+  // lagi cara mengetahui siapa saja yang kehilangan akses.
+  const sebelum = await findRows("Document_Access", (a) => a.documentId === documentId);
   const deleted = await deleteRows("Document_Access", { documentId });
+
+  await notifyDocument(
+    sebelum.map((a) => a.userEmail),
+    documentId,
+    { type: "akses-dicabut", title: "Akses Anda ke sebuah dokumen dicabut" }
+  );
 
   await logAudit({
     userEmail: session.email,

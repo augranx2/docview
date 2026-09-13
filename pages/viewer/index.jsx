@@ -150,7 +150,7 @@ export default function DocumentListPage() {
     return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
   }
 
-  const nav = isAdmin ? [{ label: "Rekam jejak", onClick: fetchAuditLogs, icon: "🕘" }] : [];
+  const nav = isAdmin ? [{ label: "Audit Trail", onClick: fetchAuditLogs, icon: "🕘" }] : [];
 
   return (
     <>
@@ -264,7 +264,7 @@ export default function DocumentListPage() {
           <div className="modal__card" style={{ maxWidth: 880 }} onClick={(e) => e.stopPropagation()}>
             <div className="modal__head">
               <div>
-                <div className="card__title">Rekam jejak aktivitas</div>
+                <div className="card__title">Audit Trail</div>
                 <div className="card__sub">
                   Login, akses, unduhan, dan perubahan hak akses
                   {auditTotal > auditLogs.length && ` — menampilkan ${auditLogs.length} terbaru dari ${auditTotal}`}
