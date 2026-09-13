@@ -38,6 +38,11 @@ export default function AdminDashboard() {
   const [me, setMe] = useState({ nama: "Administrator", email: "", role: "Admin" });
   const router = useRouter();
 
+  // Jalan masuk tanpa menu untuk alat perapian Drive.
+  useEffect(() => {
+    if (router.query.rapikan === "1") setDriveOpen(true);
+  }, [router.query.rapikan]);
+
   useEffect(() => {
     fetch("/api/auth/me")
       .then((res) => (res.ok ? res.json() : null))
@@ -476,9 +481,14 @@ export default function AdminDashboard() {
 
   const nav = [
     { label: "Unggah dokumen", href: "/admin/upload", icon: "＋" },
-    // Jarang dipakai, jadi ditaruh di menu alih-alih memakan satu blok penuh
-    // di area daftar dokumen.
-    { label: "Rapikan Berkas Drive", onClick: () => setDriveOpen(true), icon: "🧹" },
+    // Menu "Rapikan Berkas Drive" sengaja tidak ditampilkan: berkas sudah rapi
+    // dan alat ini hanya diperlukan sesekali. Fiturnya tetap utuh — dialog dan
+    // endpoint /api/admin/migrate-drive tidak dihapus.
+    //
+    // Cara membukanya tanpa menu: tambahkan ?rapikan=1 pada alamat halaman,
+    //   /admin/dashboard?rapikan=1
+    // Untuk mengembalikannya sebagai menu tetap, aktifkan kembali baris ini:
+    // { label: "Rapikan Berkas Drive", onClick: () => setDriveOpen(true), icon: "🧹" },
   ];
 
   return (
