@@ -25,6 +25,7 @@ export default function AdminDashboard() {
   const [categoryIsNew, setCategoryIsNew] = useState(false); // sedang mengetik kategori baru
   const [catFilter, setCatFilter] = useState("");
   const [aksesCari, setAksesCari] = useState({}); // { [documentId]: kata kunci }
+  const [driveOpen, setDriveOpen] = useState(false); // dialog rapikan berkas Drive
   const [bulkShare, setBulkShare] = useState(null); // { usernames: [], canDownload: bool, busy, hasil }
   const [migrasi, setMigrasi] = useState(null); // { running, dryRun, index, total, processed, skipped, failed, log }
   const [categoryDraft, setCategoryDraft] = useState("");
@@ -475,6 +476,9 @@ export default function AdminDashboard() {
 
   const nav = [
     { label: "Unggah dokumen", href: "/admin/upload", icon: "＋" },
+    // Jarang dipakai, jadi ditaruh di menu alih-alih memakan satu blok penuh
+    // di area daftar dokumen.
+    { label: "Rapikan Berkas Drive", onClick: () => setDriveOpen(true), icon: "🧹" },
   ];
 
   return (
@@ -527,45 +531,6 @@ export default function AdminDashboard() {
         </div>
 
         {error && <p className="notice notice--bad" style={{ marginBottom: 14 }}>{error}</p>}
-
-        {/* ---------- PERAPIAN BERKAS DI GOOGLE DRIVE ---------- */}
-        <details className="card card--pad" style={{ marginBottom: 14 }}>
-          <summary style={{ cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
-            Perapian berkas di Google Drive
-          </summary>
-          <p className="hint" style={{ margin: "8px 0 12px" }}>
-            Menyesuaikan nama berkas lama yang masih berupa kode acak dan memindahkannya ke folder
-            sesuai kategori. Aman dijalankan berulang — berkas yang sudah rapi dilewati.
-          </p>
-          <div className="row">
-            <button className="btn btn--sm" disabled={migrasi?.running} onClick={() => jalankanMigrasi(true)}>
-              Lihat rencana
-            </button>
-            <button
-              className="btn btn--primary btn--sm"
-              disabled={migrasi?.running}
-              onClick={() => jalankanMigrasi(false)}
-            >
-              {migrasi?.running ? "Sedang berjalan..." : "Jalankan perapian"}
-            </button>
-          </div>
-
-          {migrasi && (
-            <div style={{ marginTop: 12 }}>
-              <div className="bar">
-                <div style={{ width: migrasi.total ? `${Math.round((migrasi.index / migrasi.total) * 100)}%` : "0%" }} />
-              </div>
-              <p className="hint" style={{ marginTop: 6 }}>
-                {migrasi.dryRun && "Rencana — "}
-                {migrasi.index}/{migrasi.total} diperiksa, {migrasi.processed}{" "}
-                {migrasi.dryRun ? "akan diubah" : "dirapikan"}, {migrasi.skipped} sudah sesuai
-                {migrasi.failed > 0 && `, ${migrasi.failed} gagal`}
-                {!migrasi.running && migrasi.total > 0 && " — selesai"}
-              </p>
-              {migrasi.log.length > 0 && <pre className="log">{migrasi.log.join("\n")}</pre>}
-            </div>
-          )}
-        </details>
 
         {/* ---------- PILIH BANYAK ---------- */}
         {!loading && filteredDocuments.length > 0 && (
@@ -1048,6 +1013,73 @@ export default function AdminDashboard() {
           </div>
         )}
       </AppShell>
+
+      {/* ---------- RAPIKAN BERKAS DI GOOGLE DRIVE ---------- */}
+      {driveOpen && (
+        <div className="modal" onClick={() => !migrasi?.running && setDriveOpen(false)}>
+          <div className="modal__card" style={{ maxWidth: 560 }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal__head">
+              <div>
+                <div className="card__title">Rapikan Berkas di Google Drive</div>
+                <div className="card__sub">
+                  Menyesuaikan nama berkas lama yang masih berupa kode acak dan memindahkannya ke
+                  folder sesuai kategori.
+                </div>
+              </div>
+              <button
+                className="x"
+                onClick={() => setDriveOpen(false)}
+                disabled={migrasi?.running}
+                aria-label="Tutup"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="modal__body">
+              <p className="hint" style={{ marginBottom: 12 }}>
+                Aman dijalankan berulang — berkas yang sudah rapi akan dilewati. Prosesnya
+                bertahap, jadi jangan tutup tab selama masih berjalan.
+              </p>
+
+              <div className="row">
+                <button className="btn" disabled={migrasi?.running} onClick={() => jalankanMigrasi(true)}>
+                  Lihat rencana
+                </button>
+                <button
+                  className="btn btn--primary"
+                  disabled={migrasi?.running}
+                  onClick={() => jalankanMigrasi(false)}
+                >
+                  {migrasi?.running ? "Sedang berjalan..." : "Jalankan perapian"}
+                </button>
+              </div>
+
+              {migrasi && (
+                <div style={{ marginTop: 14 }}>
+                  <div className="bar">
+                    <div
+                      style={{
+                        width: migrasi.total
+                          ? `${Math.round((migrasi.index / migrasi.total) * 100)}%`
+                          : "0%",
+                      }}
+                    />
+                  </div>
+                  <p className="hint" style={{ marginTop: 6 }}>
+                    {migrasi.dryRun && "Rencana — "}
+                    {migrasi.index}/{migrasi.total} diperiksa, {migrasi.processed}{" "}
+                    {migrasi.dryRun ? "akan diubah" : "dirapikan"}, {migrasi.skipped} sudah sesuai
+                    {migrasi.failed > 0 && `, ${migrasi.failed} gagal`}
+                    {!migrasi.running && migrasi.total > 0 && " — selesai"}
+                  </p>
+                  {migrasi.log.length > 0 && <pre className="log">{migrasi.log.join("\n")}</pre>}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -88,9 +88,9 @@ Aplikasi selalu mengakses file lewat `driveFileId`, tidak pernah lewat nama atau
 lokasi folder — jadi rename atau pemindahan manual di Drive tidak merusak apa pun.
 
 **File lama** (yang bernama UUID acak dan menumpuk di folder induk) dirapikan
-lewat panel **"Rapikan file di Google Drive"** di dashboard admin, tepat di bawah
-kop header. Tombol *Pratinjau* menampilkan rencananya tanpa mengubah apa pun;
-tombol *Jalankan* mengeksekusi.
+lewat menu **"Rapikan Berkas Drive"** pada panel kiri dashboard admin. Tombol
+*Lihat rencana* menampilkan rencananya tanpa mengubah apa pun; tombol
+*Jalankan perapian* mengeksekusi.
 
 Prosesnya berjalan bertahap dari browser (beberapa file per panggilan) karena
 fungsi serverless punya batas waktu eksekusi yang pendek. Karena itu **jangan
