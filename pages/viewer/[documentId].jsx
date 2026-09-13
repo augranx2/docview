@@ -8,6 +8,10 @@ import useIdleLogout from "../../lib/useIdleLogout";
 export default function ViewerPage() {
   const router = useRouter();
   const { documentId } = router.query;
+  // Tujuan tombol kembali mengikuti tempat dokumen ini dibuka.
+  const dariAdmin = router.query.dari === "admin";
+  const kembaliKe = dariAdmin ? "/admin/dashboard" : "/viewer";
+  const labelKembali = dariAdmin ? "← Kelola dokumen" : "← Dokumen saya";
   const containerRef = useRef(null);
   useIdleLogout();
 
@@ -244,8 +248,12 @@ export default function ViewerPage() {
           selalu terjangkau tanpa menggulir ke puncak dokumen. */}
       <div className="reader__bar">
         <div className="row" style={{ flexWrap: "nowrap", gap: 10 }}>
-          <Link href="/viewer" className="btn btn--back" title="Kembali ke daftar dokumen">
-            ← Dokumen saya
+          <Link
+            href={kembaliKe}
+            className="btn btn--back"
+            title={dariAdmin ? "Kembali ke dashboard admin" : "Kembali ke daftar dokumen"}
+          >
+            {labelKembali}
           </Link>
 
           <div className="grow truncate">

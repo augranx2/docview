@@ -795,7 +795,10 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="doc__acts">
-                      <Link href={`/viewer/${doc.documentId}`} className="btn btn--sm">
+                      {/* ?dari=admin menandai bahwa dokumen dibuka dari sisi
+                          pengelolaan, sehingga tombol kembali pada halaman baca
+                          mengembalikan ke sini, bukan ke daftar pengguna. */}
+                      <Link href={`/viewer/${doc.documentId}?dari=admin`} className="btn btn--sm">
                         Buka
                       </Link>
                       <DownloadButton
