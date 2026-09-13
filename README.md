@@ -97,6 +97,21 @@ fungsi serverless punya batas waktu eksekusi yang pendek. Karena itu **jangan
 tutup tab** selama progres berjalan. Aman dijalankan berulang: file yang nama
 dan foldernya sudah benar akan dilewati.
 
+## Masa berlaku sesi
+
+Dua batas berjalan bersamaan:
+
+- **Diam 30 menit** — sesi hangus bila tidak ada aktivitas. Setiap permintaan
+  yang terautentikasi menyetel ulang hitungannya, jadi pengguna yang sedang
+  bekerja tidak pernah terlempar keluar. Peramban juga memantau sendiri dan
+  mengalihkan ke halaman masuk dengan keterangan, bukan menunggu penolakan.
+- **12 jam sejak login** — batas keras, tidak peduli seberapa aktif
+  penggunanya. Mencegah sesi hidup selamanya hanya karena tab dibiarkan
+  terbuka dan sesekali disentuh.
+
+Keduanya dapat disetel lewat `SESSION_IDLE_SECONDS` dan
+`SESSION_ABSOLUTE_SECONDS`.
+
 ## Role & izin download
 
 Hanya ada dua role: **Admin** dan **Viewer**.

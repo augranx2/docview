@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import useIdleLogout from "../lib/useIdleLogout";
 
 /**
  * Kerangka layar yang dipakai halaman daftar dokumen (admin maupun pengguna).
@@ -30,6 +31,8 @@ export default function AppShell({
   loggingOut,
   children,
 }) {
+  useIdleLogout();
+
   const [railOpen, setRailOpen] = useState(false);
   const [catFind, setCatFind] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);

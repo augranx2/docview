@@ -3,11 +3,14 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import DownloadButton from "../../components/DownloadButton";
+import useIdleLogout from "../../lib/useIdleLogout";
 
 export default function ViewerPage() {
   const router = useRouter();
   const { documentId } = router.query;
   const containerRef = useRef(null);
+  useIdleLogout();
+
   const [status, setStatus] = useState("loading"); // loading | ready | error
   const [errorMsg, setErrorMsg] = useState("");
   const [canDownload, setCanDownload] = useState(false);

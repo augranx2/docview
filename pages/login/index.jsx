@@ -9,6 +9,8 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  // ?sebab=idle dikirim oleh pengalih otomatis saat sesi hangus karena diam.
+  const sesiHabis = router.query.sebab === "idle";
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -143,6 +145,13 @@ export default function LoginPage() {
                 </div>
               </div>
 
+              {sesiHabis && !error && (
+                <p className="note">
+                  Sesi Anda berakhir karena tidak ada aktivitas selama 30 menit. Silakan masuk
+                  kembali.
+                </p>
+              )}
+
               {error && <p className="error">⚠️ {error}</p>}
 
               <button type="submit" className="submit" disabled={loading}>
@@ -175,25 +184,31 @@ export default function LoginPage() {
         html,
         body,
         #__next {
-          margin: 0;
-          padding: 0;
+          margin: 0 !important;
+          padding: 0 !important;
           height: 100%;
-          background: #ffffff;
+          background: #020b17;
+          overflow: hidden;
         }
       `}</style>
 
       <style jsx>{`
+        /* Dipasang dengan position: fixed terhadap viewport, bukan mengandalkan
+           aliran dokumen. Dengan begitu margin atau padding apa pun yang
+           tersisa pada body tidak dapat menyisakan bingkai putih di tepi
+           layar — penyebab bingkai yang sebelumnya terlihat. */
         .split {
+          position: fixed;
+          inset: 0;
           display: grid;
           grid-template-columns: 1.05fr 1fr;
-          min-height: 100vh;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         /* ---------- PANEL KIRI ---------- */
         .panel {
           position: relative;
-          overflow: hidden;
+          overflow-y: auto;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
@@ -316,6 +331,7 @@ export default function LoginPage() {
           justify-content: center;
           padding: 40px 32px;
           background: #ffffff;
+          overflow-y: auto;
         }
         .form-wrap {
           width: 100%;
@@ -435,6 +451,17 @@ export default function LoginPage() {
         }
         .pw button:hover {
           opacity: 1;
+        }
+
+        .note {
+          color: #1e4d8f;
+          font-size: 12px;
+          background: #eff6ff;
+          border: 1px solid #bfdbfe;
+          padding: 10px;
+          border-radius: 10px;
+          margin: 0 0 16px;
+          line-height: 1.5;
         }
 
         .error {

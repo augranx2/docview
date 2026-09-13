@@ -1,9 +1,10 @@
 import { loginViaAppsScript } from "../../../lib/sheets";
 import { generateToken, setSessionCookie } from "../../../lib/auth";
+import { SESSION_ABSOLUTE_SECONDS } from "../../../lib/redis";
 import { createSession, registerFailedLogin, clearFailedLogin, getFailedLoginCount } from "../../../lib/redis";
 import { withErrorHandling } from "../../../lib/apiHandler";
 
-const SESSION_TTL = Number(process.env.SESSION_TTL_SECONDS || 28800);
+
 
 /**
  * Password verification happens entirely inside Code.gs (SHA-256 + salt,
@@ -42,7 +43,7 @@ async function handler(req, res) {
     nama: result.nama,
     role: result.role,
   });
-  setSessionCookie(res, token, SESSION_TTL);
+  setSessionCookie(res, token, SESSION_ABSOLUTE_SECONDS);
 
   return res.status(200).json({
     username: result.username,
