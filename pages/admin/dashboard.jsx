@@ -485,6 +485,7 @@ export default function AdminDashboard() {
       <AppShell
         user={me}
         mode="admin"
+        currentPath="/admin/dashboard"
         nav={nav}
         categories={categoryList}
         categoryCounts={categoryCounts}

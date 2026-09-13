@@ -15,6 +15,7 @@ export default function AppShell({
   user,
   mode, // "admin" | "user" — menentukan sakelar peran di rail
   nav = [],
+  currentPath = "",
   hideCategories = false,
   categories = [],
   categoryCounts = {},
@@ -173,11 +174,14 @@ export default function AppShell({
         )}
 
         <div className="rail__nav">
-          {isAdmin && (
+          {/* Kelola pengguna hanya untuk Administrator, dan hanya saat sedang
+              berada di tampilan Admin — di tampilan Pengguna menu ini tidak
+              relevan. */}
+          {isAdmin && mode === "admin" && (
             <Link
               href="/admin/users"
               className="rail__link"
-              aria-current={mode === "admin" && nav.some((n) => n.current) ? undefined : undefined}
+              aria-current={currentPath === "/admin/users" ? "page" : undefined}
               onClick={() => setRailOpen(false)}
             >
               <span aria-hidden="true">👥</span>
@@ -185,18 +189,23 @@ export default function AppShell({
             </Link>
           )}
 
-          <button
-            type="button"
-            className="rail__link"
-            onClick={() => {
-              setRailOpen(false);
-              setNotifOpen(true);
-            }}
-          >
-            <span aria-hidden="true">🔔</span>
-            Notifikasi
-            {unread > 0 && <span className="rail__badge">{unread}</span>}
-          </button>
+          {/* Notifikasi berisi perubahan akses atas dokumen yang dibagikan
+              kepada Anda — itu peristiwa yang dialami sebagai pengguna, bukan
+              sebagai pengelola. */}
+          {mode !== "admin" && (
+            <button
+              type="button"
+              className="rail__link"
+              onClick={() => {
+                setRailOpen(false);
+                setNotifOpen(true);
+              }}
+            >
+              <span aria-hidden="true">🔔</span>
+              Notifikasi
+              {unread > 0 && <span className="rail__badge">{unread}</span>}
+            </button>
+          )}
 
           <button
             type="button"
@@ -294,11 +303,7 @@ export default function AppShell({
           )}
         </div>
 
-        <div className="rail__foot">
-          PT. Rama Emerald Multi Sukses
-          <br />
-          Akses, unduhan, dan perubahan hak akses tercatat.
-        </div>
+        <div className="rail__foot">PT. Rama Emerald Multi Sukses</div>
       </nav>
 
       <div className="main">

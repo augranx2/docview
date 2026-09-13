@@ -91,8 +91,8 @@ export default function LoginPage() {
                   <img src="/logo-rama.png" alt="Logo" />
                 </div>
                 <div>
-                  <p className="brand-name">SIDOK</p>
-                  <p className="brand-sub">Sistem Dokumen Terkendali</p>
+                  <p className="brand-name">PT. Rama Emerald Multi Sukses</p>
+                  <p className="brand-sub">SIDOK — Sistem Dokumen Terkendali</p>
                 </div>
               </div>
               <p className="hero-mobile__line">
@@ -151,6 +151,18 @@ export default function LoginPage() {
             </form>
 
             <p className="hint">Lupa password? Hubungi Administrator sistem untuk direset.</p>
+
+            <ul className="points points--mobile">
+              <li>
+                <span className="ico">👁</span> Hanya bisa dibaca — izin unduh diberikan per dokumen
+              </li>
+              <li>
+                <span className="ico">🔖</span> Watermark identitas pengguna di setiap halaman
+              </li>
+              <li>
+                <span className="ico">🕘</span> Audit trail mencatat akses, unduh, dan perubahan hak
+              </li>
+            </ul>
 
             <p className="foot">Aktivitas login, akses, dan unduh tercatat dalam audit trail.</p>
           </div>
@@ -459,6 +471,23 @@ export default function LoginPage() {
           cursor: not-allowed;
         }
 
+        /* Poin nilai versi layar sempit: warna netral karena berada di atas
+           latar putih, bukan di atas panel gradasi. */
+        .points--mobile {
+          display: none;
+          margin-top: 26px;
+          padding-top: 18px;
+          border-top: 1px solid #f1f5f9;
+        }
+        .points--mobile li {
+          color: #64748b;
+          font-size: 12px;
+        }
+        .points--mobile .ico {
+          background: #eff6ff;
+          border-color: #dbeafe;
+        }
+
         .hint {
           text-align: center;
           font-size: 11.5px;
@@ -486,6 +515,9 @@ export default function LoginPage() {
           }
           .hero-mobile {
             display: block;
+          }
+          .points--mobile {
+            display: flex;
           }
           .form-side {
             padding: 52px 20px 28px;

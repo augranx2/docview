@@ -126,10 +126,10 @@ export default function UsersPage() {
       <AppShell
         user={me}
         mode="admin"
+        currentPath="/admin/users"
         nav={[
           { label: "Kelola dokumen", href: "/admin/dashboard", icon: "🗂" },
           { label: "Unggah dokumen", href: "/admin/upload", icon: "＋" },
-          { label: "Kelola pengguna", href: "/admin/users", icon: "👥", current: true },
         ]}
         categories={[]}
         selectedCategory={null}
