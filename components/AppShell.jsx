@@ -46,6 +46,7 @@ export default function AppShell({
   const [notifs, setNotifs] = useState([]);
   const [unread, setUnread] = useState(0);
   const [notifSiap, setNotifSiap] = useState(false);
+  const [notifAktif, setNotifAktif] = useState(true); // tab Notifications tersedia?
 
   // Jumlah belum dibaca diambil sekali saat halaman dibuka. Tidak ada
   // penarikan berkala: lonceng ini bukan pesan instan, dan permintaan berulang
@@ -58,6 +59,7 @@ export default function AppShell({
         if (batal || !d) return;
         setNotifs(d.notifications || []);
         setUnread(d.unread || 0);
+        setNotifAktif(d.available !== false);
         setNotifSiap(true);
       })
       .catch(() => {});
@@ -438,6 +440,17 @@ export default function AppShell({
                   <span className="spinner" style={{ marginRight: 8 }} />
                   Memuat notifikasi...
                 </p>
+              ) : !notifAktif ? (
+                /* Membedakan "belum ada kabar" dari "fiturnya memang belum
+                   dipasang" — tanpa ini kegagalan pemasangan terlihat sama
+                   persis seperti kotak masuk yang kosong. */
+                <div className="notice notice--warn">
+                  <strong>Notifikasi belum aktif.</strong>
+                  <br />
+                  Tab <code>Notifications</code> belum ada di spreadsheet, atau Apps Script belum
+                  di-deploy ulang setelah pembaruan. Hubungi pengelola sistem — kolom yang
+                  dibutuhkan: notifId, userEmail, createdAt, type, title, detail, readAt.
+                </div>
               ) : notifs.length === 0 ? (
                 <div className="empty" style={{ padding: "28px 8px" }}>
                   <h3>Belum ada notifikasi</h3>
