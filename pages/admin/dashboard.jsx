@@ -24,6 +24,7 @@ export default function AdminDashboard() {
   const [editingCategoryDoc, setEditingCategoryDoc] = useState(null); // documentId being edited
   const [categoryIsNew, setCategoryIsNew] = useState(false); // sedang mengetik kategori baru
   const [catFilter, setCatFilter] = useState("");
+  const [aksesCari, setAksesCari] = useState({}); // { [documentId]: kata kunci }
   const [bulkShare, setBulkShare] = useState(null); // { usernames: [], canDownload: bool, busy, hasil }
   const [migrasi, setMigrasi] = useState(null); // { running, dryRun, index, total, processed, skipped, failed, log }
   const [categoryDraft, setCategoryDraft] = useState("");
@@ -623,7 +624,9 @@ export default function AdminDashboard() {
             </div>
 
             <div className="scrollbox row" style={{ gap: 6 }}>
-              {users.map((u) => {
+              {[...users]
+                .sort((a, b) => a.username.localeCompare(b.username, "id"))
+                .map((u) => {
                 const on = bulkShare.usernames.includes(u.username);
                 return (
                   <label key={u.username} className={`who-chip${on ? " who-chip--on" : ""}`}>
@@ -640,9 +643,9 @@ export default function AdminDashboard() {
                       }
                     />
                     {u.username}
-                  </label>
-                );
-              })}
+                    </label>
+                  );
+                })}
             </div>
 
             <label className="check" style={{ marginTop: 10 }}>
@@ -697,7 +700,20 @@ export default function AdminDashboard() {
               const isBusy = busyDoc === doc.documentId;
               const dipilih = selectedDocs.includes(doc.documentId);
               const sharedUsernames = doc.sharedTo.map((x) => x.username);
-              const availableUsers = users.filter((u) => !sharedUsernames.includes(u.username));
+              // Kedua daftar diurutkan abjad dan disaring dengan satu kotak
+              // pencarian yang sama — dengan puluhan pengguna, menelusuri
+              // daftar tak berurutan jauh lebih lambat daripada mengetik.
+              const kunci = (aksesCari[doc.documentId] || "").trim().toLowerCase();
+              const cocok = (nama) => !kunci || String(nama).toLowerCase().includes(kunci);
+
+              const pembaca = [...doc.sharedTo]
+                .sort((a, b) => a.username.localeCompare(b.username, "id"))
+                .filter((x) => cocok(x.username));
+
+              const availableUsers = users
+                .filter((u) => !sharedUsernames.includes(u.username))
+                .sort((a, b) => a.username.localeCompare(b.username, "id"))
+                .filter((u) => cocok(u.username));
               const downloadCount = doc.sharedTo.filter((x) => x.canDownload).length;
               const revokePicked = selectedRevoke[doc.documentId] || [];
 
@@ -874,6 +890,20 @@ export default function AdminDashboard() {
                         )}
                       </div>
 
+                      {(doc.sharedTo.length > 0 || users.length > 8) && (
+                        <input
+                          className="input"
+                          style={{ marginBottom: 9 }}
+                          type="search"
+                          value={aksesCari[doc.documentId] || ""}
+                          onChange={(e) =>
+                            setAksesCari((prev) => ({ ...prev, [doc.documentId]: e.target.value }))
+                          }
+                          placeholder="Cari nama pengguna..."
+                          aria-label="Cari nama pengguna"
+                        />
+                      )}
+
                       {doc.sharedTo.length === 0 ? (
                         <p className="hint">Belum dibagikan ke siapa pun.</p>
                       ) : (
@@ -881,9 +911,15 @@ export default function AdminDashboard() {
                           <p className="hint" style={{ marginBottom: 7 }}>
                             Klik lencana di sebelah nama untuk mengatur izin unduh orang tersebut
                             pada dokumen ini.
+                            {kunci && ` Menampilkan ${pembaca.length} dari ${doc.sharedTo.length}.`}
                           </p>
                           <div className="scrollbox stack" style={{ gap: 4 }}>
-                            {doc.sharedTo.map(({ username, canDownload }) => {
+                            {pembaca.length === 0 && (
+                              <p className="hint" style={{ textAlign: "center", padding: "8px 0" }}>
+                                Tidak ada pembaca yang cocok.
+                              </p>
+                            )}
+                            {pembaca.map(({ username, canDownload }) => {
                               const dicentang = revokePicked.includes(username);
                               return (
                                 <label
@@ -948,7 +984,11 @@ export default function AdminDashboard() {
                         <div className="panel__title">Tambah pembaca</div>
 
                         {availableUsers.length === 0 ? (
-                          <p className="hint">Semua pengguna sudah memiliki akses ke dokumen ini.</p>
+                          <p className="hint">
+                            {kunci
+                              ? "Tidak ada pengguna yang cocok dengan pencarian."
+                              : "Semua pengguna sudah memiliki akses ke dokumen ini."}
+                          </p>
                         ) : (
                           <>
                             <div className="scrollbox row" style={{ gap: 6, maxHeight: 150 }}>

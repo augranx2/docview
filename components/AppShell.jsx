@@ -378,16 +378,25 @@ export default function AppShell({
                     Nama ini tercetak pada watermark setiap dokumen yang Anda buka dan unduh.
                   </p>
 
-                  <button
-                    type="button"
-                    className="btn btn--block"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setPwOpen(true);
-                    }}
-                  >
-                    Ganti password
-                  </button>
+                  <div className="stack" style={{ gap: 7 }}>
+                    <button
+                      type="button"
+                      className="btn btn--primary btn--block"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setPwOpen(true);
+                      }}
+                    >
+                      Ganti password
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--block"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      Tutup
+                    </button>
+                  </div>
                 </div>
               </>
             )}

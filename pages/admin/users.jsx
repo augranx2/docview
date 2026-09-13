@@ -107,7 +107,9 @@ export default function UsersPage() {
   }
 
   const cari = query.trim().toLowerCase();
-  const tampil = users.filter(
+  const tampil = [...users]
+    .sort((a, b) => String(a.nama || a.username).localeCompare(String(b.nama || b.username), "id"))
+    .filter(
     (u) =>
       !cari ||
       String(u.username).toLowerCase().includes(cari) ||
