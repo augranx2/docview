@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
   // ?sebab=idle dikirim oleh pengalih otomatis saat sesi hangus karena diam.
   const sesiHabis = router.query.sebab === "idle";
 
@@ -85,7 +86,8 @@ export default function LoginPage() {
         {/* ================= PANEL KANAN: FORM ================= */}
         <main className="form-side">
           <div className="form-wrap">
-            {/* Brand ringkas — hanya tampil saat panel kiri disembunyikan di layar sempit */}
+            {/* Pita gradasi — hanya tampil saat panel kiri disembunyikan di layar sempit,
+                supaya warna tema tetap hadir tanpa mendorong kolom isian ke bawah. */}
             <div className="hero-mobile">
               <div className="hero-mobile__grid" />
               <div className="brand-mobile">
@@ -97,9 +99,7 @@ export default function LoginPage() {
                   <p className="brand-sub">SIDOK — Sistem Dokumen Terkendali</p>
                 </div>
               </div>
-              <p className="hero-mobile__line">
-                Dokumen mutu, terkendali sampai ke pengguna.
-              </p>
+              <p className="hero-mobile__line">Dokumen mutu, terkendali sampai ke pengguna.</p>
             </div>
 
             <h2>Masuk ke SIDOK</h2>
@@ -178,37 +178,31 @@ export default function LoginPage() {
         </main>
       </div>
 
+      {/* Penegasan tanpa efek samping: hanya menghapus margin bawaan peramban dan
+          menyamakan warna latar. Tidak mengubah tata letak, tidak menimbulkan
+          batang gulir. */}
       <style jsx global>{`
-        /* Halaman masuk menempel penuh ke tepi layar. Tanpa penegasan ini,
-           margin bawaan peramban menyisakan bingkai putih di sekeliling panel. */
         html,
         body,
         #__next {
-          margin: 0 !important;
-          padding: 0 !important;
-          height: 100%;
+          margin: 0;
+          padding: 0;
           background: #020b17;
-          overflow: hidden;
         }
       `}</style>
 
       <style jsx>{`
-        /* Dipasang dengan position: fixed terhadap viewport, bukan mengandalkan
-           aliran dokumen. Dengan begitu margin atau padding apa pun yang
-           tersisa pada body tidak dapat menyisakan bingkai putih di tepi
-           layar — penyebab bingkai yang sebelumnya terlihat. */
         .split {
-          position: fixed;
-          inset: 0;
           display: grid;
           grid-template-columns: 1.05fr 1fr;
+          min-height: 100vh;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         /* ---------- PANEL KIRI ---------- */
         .panel {
           position: relative;
-          overflow-y: auto;
+          overflow: hidden;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
@@ -331,14 +325,13 @@ export default function LoginPage() {
           justify-content: center;
           padding: 40px 32px;
           background: #ffffff;
-          overflow-y: auto;
         }
         .form-wrap {
           width: 100%;
           max-width: 370px;
         }
-        /* Pita gradasi untuk layar sempit: membawa warna tema ke halaman masuk
-           yang tanpa panel kiri akan terasa kosong. */
+
+        /* Pita gradasi untuk layar sempit */
         .hero-mobile {
           display: none;
           position: relative;
@@ -371,15 +364,11 @@ export default function LoginPage() {
           position: relative;
           margin-bottom: 0;
         }
-        .brand-mobile .brand-mark {
-          background: #ffffff;
-        }
         .brand-mobile .brand-name {
           margin: 0;
-          font-size: 15px;
+          font-size: 13px;
           font-weight: 800;
           color: #ffffff;
-          letter-spacing: 0.06em;
         }
         .brand-mobile .brand-sub {
           margin: 2px 0 0;
@@ -531,8 +520,8 @@ export default function LoginPage() {
         }
 
         /* ---------- LAYAR SEMPIT ----------
-           Panel kiri disembunyikan, bukan ditumpuk di atas form: menumpuknya
-           akan mendorong kolom isian jauh ke bawah layar. */
+           Panel kiri disembunyikan, digantikan pita gradasi di atas form:
+           menumpuk panel penuh akan mendorong kolom isian jauh ke bawah layar. */
         @media (max-width: 900px) {
           .split {
             grid-template-columns: 1fr;
