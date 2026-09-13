@@ -42,23 +42,23 @@ export default function LoginPage() {
         <title>Masuk — SIDOK</title>
       </Head>
 
-      <div className="split">
+      <div className="lg-split">
         {/* ================= PANEL KIRI: IDENTITAS & NILAI SISTEM ================= */}
-        <aside className="panel">
-          <div className="grid-overlay" />
-          <div className="glow" />
+        <aside className="lg-panel">
+          <div className="lg-grid-overlay" />
+          <div className="lg-glow" />
 
-          <div className="brand">
-            <div className="brand-mark">
+          <div className="lg-brand">
+            <div className="lg-brand-mark">
               <img src="/logo-rama.png" alt="Logo PT. Rama Emerald Multi Sukses" />
             </div>
             <div>
-              <p className="brand-name">PT. Rama Emerald Multi Sukses</p>
-              <p className="brand-sub">SIDOK — Sistem Dokumen Terkendali</p>
+              <p className="lg-brand-name">PT. Rama Emerald Multi Sukses</p>
+              <p className="lg-brand-sub">SIDOK — Sistem Dokumen Terkendali</p>
             </div>
           </div>
 
-          <div className="headline">
+          <div className="lg-headline">
             <h1>
               Dokumen mutu,
               <br />
@@ -70,45 +70,45 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <ul className="points">
+          <ul className="lg-points">
             <li>
-              <span className="ico">👁</span> Hanya bisa dibaca — izin unduh diberikan per dokumen
+              <span className="lg-ico">👁</span> Hanya bisa dibaca — izin unduh diberikan per dokumen
             </li>
             <li>
-              <span className="ico">🔖</span> Watermark identitas pengguna di setiap halaman
+              <span className="lg-ico">🔖</span> Watermark identitas pengguna di setiap halaman
             </li>
             <li>
-              <span className="ico">🕘</span> Audit trail mencatat akses, unduh, dan perubahan hak
+              <span className="lg-ico">🕘</span> Audit trail mencatat akses, unduh, dan perubahan hak
             </li>
           </ul>
         </aside>
 
         {/* ================= PANEL KANAN: FORM ================= */}
-        <main className="form-side">
-          <div className="form-wrap">
+        <main className="lg-form-side">
+          <div className="lg-form-wrap">
             {/* Pita gradasi — hanya tampil saat panel kiri disembunyikan di layar sempit,
                 supaya warna tema tetap hadir tanpa mendorong kolom isian ke bawah. */}
-            <div className="hero-mobile">
-              <div className="hero-mobile__grid" />
-              <div className="brand-mobile">
-                <div className="brand-mark">
+            <div className="lg-hero-mobile">
+              <div className="lg-hero-mobile__grid" />
+              <div className="lg-brand-mobile">
+                <div className="lg-brand-mark">
                   <img src="/logo-rama.png" alt="Logo" />
                 </div>
                 <div>
-                  <p className="brand-name">PT. Rama Emerald Multi Sukses</p>
-                  <p className="brand-sub">SIDOK — Sistem Dokumen Terkendali</p>
+                  <p className="lg-brand-name">PT. Rama Emerald Multi Sukses</p>
+                  <p className="lg-brand-sub">SIDOK — Sistem Dokumen Terkendali</p>
                 </div>
               </div>
-              <p className="hero-mobile__line">Dokumen mutu, terkendali sampai ke pengguna.</p>
+              <p className="lg-hero-mobile__line">Dokumen mutu, terkendali sampai ke pengguna.</p>
             </div>
 
             <h2>Masuk ke SIDOK</h2>
-            <p className="lead">
+            <p className="lg-lead">
               Gunakan username dan password yang diberikan Administrator sistem.
             </p>
 
             <form onSubmit={handleSubmit}>
-              <div className="field">
+              <div className="lg-field">
                 <label htmlFor="username">Username</label>
                 <input
                   id="username"
@@ -122,9 +122,9 @@ export default function LoginPage() {
                 />
               </div>
 
-              <div className="field">
+              <div className="lg-field">
                 <label htmlFor="password">Password</label>
-                <div className="pw">
+                <div className="lg-pw">
                   <input
                     id="password"
                     type={showPassword ? "text" : "password"}
@@ -146,34 +146,34 @@ export default function LoginPage() {
               </div>
 
               {sesiHabis && !error && (
-                <p className="note">
+                <p className="lg-note">
                   Sesi Anda berakhir karena tidak ada aktivitas selama 30 menit. Silakan masuk
                   kembali.
                 </p>
               )}
 
-              {error && <p className="error">⚠️ {error}</p>}
+              {error && <p className="lg-error">⚠️ {error}</p>}
 
-              <button type="submit" className="submit" disabled={loading}>
+              <button type="submit" className="lg-submit" disabled={loading}>
                 {loading ? "Memproses..." : "Masuk"}
               </button>
             </form>
 
-            <p className="hint">Lupa password? Hubungi Administrator sistem untuk direset.</p>
+            <p className="lg-hint">Lupa password? Hubungi Administrator sistem untuk direset.</p>
 
-            <ul className="points points--mobile">
+            <ul className="lg-points lg-points--mobile">
               <li>
-                <span className="ico">👁</span> Hanya bisa dibaca — izin unduh diberikan per dokumen
+                <span className="lg-ico">👁</span> Hanya bisa dibaca — izin unduh diberikan per dokumen
               </li>
               <li>
-                <span className="ico">🔖</span> Watermark identitas pengguna di setiap halaman
+                <span className="lg-ico">🔖</span> Watermark identitas pengguna di setiap halaman
               </li>
               <li>
-                <span className="ico">🕘</span> Audit trail mencatat akses, unduh, dan perubahan hak
+                <span className="lg-ico">🕘</span> Audit trail mencatat akses, unduh, dan perubahan hak
               </li>
             </ul>
 
-            <p className="foot">Aktivitas login, akses, dan unduh tercatat dalam audit trail.</p>
+            <p className="lg-foot">Aktivitas login, akses, dan unduh tercatat dalam audit trail.</p>
           </div>
         </main>
       </div>
@@ -183,9 +183,12 @@ export default function LoginPage() {
           batang gulir. */}
       <style jsx global>{`
         /* Halaman masuk mengambil alih seluruh viewport.
-           border-radius dan overflow dinolkan secara tegas: sudut membulat dan
-           celah gelap di tepi berasal dari gaya tingkat halaman, bukan dari
-           tata letak panel itu sendiri. */
+
+           Catatan penyebab: sudut membulat dan celah gelap di tepi panel kiri
+           dahulu berasal dari kelas .panel di styles/globals.css yang kebetulan
+           bernama sama dengan kelas di halaman ini — aturan globalnya membawa
+           margin-top dan border-radius. Seluruh kelas halaman ini kini diberi
+           awalan lg- sehingga tabrakan nama tidak mungkin terjadi lagi. */
         html,
         body,
         #__next {
@@ -210,7 +213,7 @@ export default function LoginPage() {
            halaman yang dapat menyisakan bingkai di tepi layar.
            Tidak ada overflow: auto di mana pun, jadi batang gulir tidak
            mungkin muncul di dalam panel. */
-        .split {
+        .lg-split {
           position: fixed;
           inset: 0;
           display: grid;
@@ -219,7 +222,7 @@ export default function LoginPage() {
         }
 
         /* ---------- PANEL KIRI ---------- */
-        .panel {
+        .lg-panel {
           position: relative;
           overflow: hidden;
           display: flex;
@@ -230,7 +233,7 @@ export default function LoginPage() {
           background: linear-gradient(150deg, #020b17 0%, #0b2545 52%, #15427d 100%);
         }
         /* Garis kisi tipis — memberi tekstur tanpa mengganggu keterbacaan teks */
-        .grid-overlay {
+        .lg-grid-overlay {
           position: absolute;
           inset: 0;
           pointer-events: none;
@@ -240,7 +243,7 @@ export default function LoginPage() {
           -webkit-mask-image: radial-gradient(ellipse at 30% 40%, black, transparent 75%);
           mask-image: radial-gradient(ellipse at 30% 40%, black, transparent 75%);
         }
-        .glow {
+        .lg-glow {
           position: absolute;
           width: 520px;
           height: 520px;
@@ -252,14 +255,14 @@ export default function LoginPage() {
           pointer-events: none;
         }
 
-        .brand,
-        .brand-mobile {
+        .lg-brand,
+        .lg-brand-mobile {
           position: relative;
           display: flex;
           align-items: center;
           gap: 12px;
         }
-        .brand-mark {
+        .lg-brand-mark {
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -270,45 +273,45 @@ export default function LoginPage() {
           background: #ffffff;
           flex-shrink: 0;
         }
-        .brand-mark img {
+        .lg-brand-mark img {
           width: 100%;
           height: 100%;
           object-fit: contain;
         }
-        .brand .brand-name {
+        .lg-brand .lg-brand-name {
           margin: 0;
           font-size: 14px;
           font-weight: 800;
           letter-spacing: -0.01em;
         }
-        .brand .brand-sub {
+        .lg-brand .lg-brand-sub {
           margin: 2px 0 0;
           font-size: 11px;
           color: #bfdbfe;
         }
 
-        .headline {
+        .lg-headline {
           position: relative;
           max-width: 460px;
         }
-        .headline h1 {
+        .lg-headline h1 {
           font-size: 40px;
           line-height: 1.14;
           font-weight: 800;
           letter-spacing: -0.03em;
           margin: 0 0 16px;
         }
-        .headline h1 span {
+        .lg-headline h1 span {
           color: #60a5fa;
         }
-        .headline p {
+        .lg-headline p {
           font-size: 14px;
           line-height: 1.65;
           color: #cbd5e1;
           margin: 0;
         }
 
-        .points {
+        .lg-points {
           position: relative;
           list-style: none;
           margin: 0;
@@ -317,14 +320,14 @@ export default function LoginPage() {
           flex-direction: column;
           gap: 12px;
         }
-        .points li {
+        .lg-points li {
           display: flex;
           align-items: center;
           gap: 10px;
           font-size: 12.5px;
           color: #dbeafe;
         }
-        .ico {
+        .lg-ico {
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -338,20 +341,20 @@ export default function LoginPage() {
         }
 
         /* ---------- PANEL KANAN ---------- */
-        .form-side {
+        .lg-form-side {
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 40px 32px;
           background: #ffffff;
         }
-        .form-wrap {
+        .lg-form-wrap {
           width: 100%;
           max-width: 370px;
         }
 
         /* Pita gradasi untuk layar sempit */
-        .hero-mobile {
+        .lg-hero-mobile {
           display: none;
           position: relative;
           overflow: hidden;
@@ -360,7 +363,7 @@ export default function LoginPage() {
           background: linear-gradient(150deg, #020b17 0%, #0b2545 55%, #15427d 100%);
           border-radius: 0 0 24px 24px;
         }
-        .hero-mobile__grid {
+        .lg-hero-mobile__grid {
           position: absolute;
           inset: 0;
           pointer-events: none;
@@ -370,7 +373,7 @@ export default function LoginPage() {
           -webkit-mask-image: radial-gradient(ellipse at 25% 20%, black, transparent 78%);
           mask-image: radial-gradient(ellipse at 25% 20%, black, transparent 78%);
         }
-        .hero-mobile__line {
+        .lg-hero-mobile__line {
           position: relative;
           margin: 16px 0 0;
           font-size: 19px;
@@ -379,17 +382,17 @@ export default function LoginPage() {
           letter-spacing: -0.02em;
           color: #ffffff;
         }
-        .brand-mobile {
+        .lg-brand-mobile {
           position: relative;
           margin-bottom: 0;
         }
-        .brand-mobile .brand-name {
+        .lg-brand-mobile .lg-brand-name {
           margin: 0;
           font-size: 13px;
           font-weight: 800;
           color: #ffffff;
         }
-        .brand-mobile .brand-sub {
+        .lg-brand-mobile .lg-brand-sub {
           margin: 2px 0 0;
           font-size: 11px;
           color: #bfdbfe;
@@ -402,24 +405,24 @@ export default function LoginPage() {
           margin: 0 0 6px;
           letter-spacing: -0.02em;
         }
-        .lead {
+        .lg-lead {
           font-size: 13px;
           color: #64748b;
           margin: 0 0 26px;
           line-height: 1.55;
         }
 
-        .field {
+        .lg-field {
           margin-bottom: 16px;
         }
-        .field label {
+        .lg-field label {
           display: block;
           font-size: 12px;
           font-weight: 700;
           color: #334155;
           margin-bottom: 6px;
         }
-        .field input {
+        .lg-field input {
           width: 100%;
           padding: 12px 14px;
           border: 1px solid #cbd5e1;
@@ -430,21 +433,21 @@ export default function LoginPage() {
           outline: none;
           transition: border-color 0.15s, box-shadow 0.15s;
         }
-        .field input::placeholder {
+        .lg-field input::placeholder {
           color: #94a3b8;
         }
-        .field input:focus {
+        .lg-field input:focus {
           border-color: #1e4d8f;
           box-shadow: 0 0 0 3px rgba(30, 77, 143, 0.13);
         }
 
-        .pw {
+        .lg-pw {
           position: relative;
         }
-        .pw input {
+        .lg-pw input {
           padding-right: 44px;
         }
-        .pw button {
+        .lg-pw button {
           position: absolute;
           right: 6px;
           top: 50%;
@@ -457,11 +460,11 @@ export default function LoginPage() {
           cursor: pointer;
           opacity: 0.55;
         }
-        .pw button:hover {
+        .lg-pw button:hover {
           opacity: 1;
         }
 
-        .note {
+        .lg-note {
           color: #1e4d8f;
           font-size: 12px;
           background: #eff6ff;
@@ -472,7 +475,7 @@ export default function LoginPage() {
           line-height: 1.5;
         }
 
-        .error {
+        .lg-error {
           color: #dc2626;
           font-size: 12px;
           background: #fef2f2;
@@ -482,7 +485,7 @@ export default function LoginPage() {
           margin: 0 0 16px;
         }
 
-        .submit {
+        .lg-submit {
           width: 100%;
           padding: 13px 16px;
           margin-top: 6px;
@@ -495,41 +498,41 @@ export default function LoginPage() {
           cursor: pointer;
           transition: background 0.15s, transform 0.1s;
         }
-        .submit:hover:not(:disabled) {
+        .lg-submit:hover:not(:disabled) {
           background: #16406f;
         }
-        .submit:active:not(:disabled) {
+        .lg-submit:active:not(:disabled) {
           transform: translateY(1px);
         }
-        .submit:disabled {
+        .lg-submit:disabled {
           background: #94a3b8;
           cursor: not-allowed;
         }
 
         /* Poin nilai versi layar sempit: warna netral karena berada di atas
            latar putih, bukan di atas panel gradasi. */
-        .points--mobile {
+        .lg-points--mobile {
           display: none;
           margin-top: 26px;
           padding-top: 18px;
           border-top: 1px solid #f1f5f9;
         }
-        .points--mobile li {
+        .lg-points--mobile li {
           color: #64748b;
           font-size: 12px;
         }
-        .points--mobile .ico {
+        .lg-points--mobile .lg-ico {
           background: #eff6ff;
           border-color: #dbeafe;
         }
 
-        .hint {
+        .lg-hint {
           text-align: center;
           font-size: 11.5px;
           color: #94a3b8;
           margin: 16px 0 0;
         }
-        .foot {
+        .lg-foot {
           text-align: center;
           font-size: 11px;
           color: #cbd5e1;
@@ -544,21 +547,21 @@ export default function LoginPage() {
         @media (max-width: 900px) {
           /* Di layar sempit halaman kembali mengikuti aliran dokumen supaya
              isinya dapat digulir bila papan ketik virtual muncul. */
-          .split {
+          .lg-split {
             position: static;
             min-height: 100vh;
             grid-template-columns: 1fr;
           }
-          .panel {
+          .lg-panel {
             display: none;
           }
-          .hero-mobile {
+          .lg-hero-mobile {
             display: block;
           }
-          .points--mobile {
+          .lg-points--mobile {
             display: flex;
           }
-          .form-side {
+          .lg-form-side {
             padding: 52px 20px 28px;
             align-items: flex-start;
           }
