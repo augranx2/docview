@@ -182,20 +182,39 @@ export default function LoginPage() {
           menyamakan warna latar. Tidak mengubah tata letak, tidak menimbulkan
           batang gulir. */}
       <style jsx global>{`
+        /* Halaman masuk mengambil alih seluruh viewport.
+           border-radius dan overflow dinolkan secara tegas: sudut membulat dan
+           celah gelap di tepi berasal dari gaya tingkat halaman, bukan dari
+           tata letak panel itu sendiri. */
         html,
         body,
         #__next {
-          margin: 0;
-          padding: 0;
+          margin: 0 !important;
+          padding: 0 !important;
+          border-radius: 0 !important;
+          height: 100%;
           background: #020b17;
+        }
+
+        @media (min-width: 901px) {
+          html,
+          body {
+            overflow: hidden;
+          }
         }
       `}</style>
 
       <style jsx>{`
+        /* Ditambatkan ke viewport, bukan mengikuti aliran dokumen. Dengan
+           begitu tidak ada margin, padding, atau sudut membulat di tingkat
+           halaman yang dapat menyisakan bingkai di tepi layar.
+           Tidak ada overflow: auto di mana pun, jadi batang gulir tidak
+           mungkin muncul di dalam panel. */
         .split {
+          position: fixed;
+          inset: 0;
           display: grid;
           grid-template-columns: 1.05fr 1fr;
-          min-height: 100vh;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
@@ -523,7 +542,11 @@ export default function LoginPage() {
            Panel kiri disembunyikan, digantikan pita gradasi di atas form:
            menumpuk panel penuh akan mendorong kolom isian jauh ke bawah layar. */
         @media (max-width: 900px) {
+          /* Di layar sempit halaman kembali mengikuti aliran dokumen supaya
+             isinya dapat digulir bila papan ketik virtual muncul. */
           .split {
+            position: static;
+            min-height: 100vh;
             grid-template-columns: 1fr;
           }
           .panel {
